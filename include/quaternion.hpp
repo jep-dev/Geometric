@@ -30,52 +30,40 @@ template<class S, class T = S> struct Quaternion {
 			default: return w;
 		}
 	}
+	/** Square, as in product with itself. */
 	Common_type square(void) const {
+		return w*w - x*x - y*y - z*z;
+	}
+	/** Square of the norm, as in sum of squared elements. */
+	Common_type lengthSquared(void) const {
 		return w*w + x*x + y*y + z*z;
 	}
-	/** Get the norm of the quaternion. */
+	/** Euclidean norm. */
 	Common_type length(void) const {
 		return sqrt(square());
 	}
-	/*
-		// Simple version - include zeros (useful for column comparisons)
-		// auto i = 1;
-		// const char *labels[] = {"e", "i", "j", "k"};
-		// lhs << (rhs.w < rhs.w*0 ? "" : "+") << rhs.w << labels[0];
-		// for(auto const& v : {rhs.x, rhs.y, rhs.z})
-		// 	lhs << (v < v*0 ? "" : "+") << v << labels[i], i++;
-		// return lhs;
-
-		bool nz = false;
-		for(auto i : {'e', 'i', 'j', 'k'}) {
-			auto const& q = rhs[i];
-			auto q0 = q*0;
-			if(q == q0) continue;
-			auto q2 = q*q;
-			if(q2 == q) lhs << (nz ? "+" : "");
-			else if(q2 == -q) lhs << (nz ? "-" : "-");
-			else if(q > q0) lhs << (nz ? "+" : "") << q;
-			else lhs << (nz ? "-" : "-") << -q;
-			lhs << i;
-			nz = true;
-		}
-		if(!nz) lhs << '0';
-		return lhs;
-	}*/
+	/** Complex conjugate. */
 	Quaternion operator*(void) const { return {w, -x, -y, -z}; }
-	//template<class U, class SU = std::common_type_t<S,U>, class TU = std::common_type<T,U>>
+	/** (Right) scalar multiplication. */
 	template<class U>
 	Quaternion operator*(U const& u) const { return {w*u, x*u, y*u, z*u}; }
+	/** (Left) scalar multiplication. */
+	template<class U>
+	friend Quaternion operator*(U const& u, Quaternion const& q) const {
+		return {u*w, u*x, u*y, u*z};
+	}
+	/** Negation operator. */
 	Quaternion operator-(void) const { return {-w, -x, -y, -z}; }
-
+	/** Difference; currently relies on left addition and negation. */
 	template<class U> auto operator-(U && rhs) const -> decltype((*this) + -rhs) {
 		return (*this) + -rhs;
-		//return { w-r.w, x-r.x, y-r.y, z-r.z };
 	}
+	/** Component-wise sum. */
 	template<class... U> auto operator+(Quaternion<U...> const& r) const
 	-> Quaternion<decltype(w+r.w), decltype(x+r.x)> {
 		return { w+r.w, x+r.x, y+r.y, z+r.z };
 	}
+	/** Product. */
 	template<class... U> auto operator*(Quaternion<U...> const& r) const
 	-> Quaternion<decltype(w*r.w), decltype(x+r.x)> {
 		return {
