@@ -3,6 +3,7 @@
 
 #include <type_traits>
 
+/** A variadic tag, essentially a type sequence. */
 template<class...> struct Tag;
 template<class...> struct Tag {
 	typedef Tag<> head_type;
