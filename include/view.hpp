@@ -12,9 +12,11 @@
 
 namespace View {
 
+	/** Represents a GL attribute key, required value, and the comparator between values. */
 	template<SDL_GLattr A, template<class, class...> class CMP = std::equal_to, class... T>
 	struct Attribute {
 		int required = 0;
+		/** Applies the comparator to the required and current values. */
 		operator bool(void) const {
 			int current = 0;
 			SDL_GL_GetAttribute(A, &current);
@@ -36,6 +38,7 @@ namespace View {
 	 *     }
 	 */
 
+	/** Represents a window and associated GL context. */
 	struct Frame {
 	protected:
 		int center = SDL_WINDOWPOS_CENTERED,
@@ -44,12 +47,16 @@ namespace View {
 		SDL_GLContext ctx;
 		std::string message;
 	public:
+		/** Stream insertion operator; inserts the most recent message(s)/error(s). */
 		template<class S>
 		friend S& operator<<(S &s, Frame const& f) {
 			return s << f.message, s;
 		}
+		/** Const access of the context. */
 		SDL_GLContext const& getContext(void) const { return ctx; }
+		/** Const access of the window. */
 		SDL_Window *const getWindow(void) const { return win; }
+		/** Constructor; currently initializes and sets a handful of hard-coded GL attributes */
 		Frame(void) {
 			int init = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 			SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
@@ -78,13 +85,12 @@ namespace View {
 			}
 			message += SDL_GetError();
 		}
+		/** Destructor; destroys the stored window. */
 		~Frame(void) {
 			if(win)
 				SDL_DestroyWindow(win);
 			win = 0;
 		}
-	};
-	struct Window {
 	};
 }
 
