@@ -13,11 +13,15 @@
 #define PRETTY_FUNCTION __func__
 #endif
 
+/** Very simple function for retrieving a signature containing the given template arguments. */
 template<class... T> constexpr auto pretty(void) -> const char * { return PRETTY_FUNCTION; }
+/** Very simple function for retrieving a signature containing the given arguments' types. */
 template<class... T> constexpr auto pretty(T &&... t) -> const char * { return PRETTY_FUNCTION; }
-
+/** Provides a filtered stream insertion operator to represent types as strings. */
 template<class... T> struct Pretty {
+	/** Same as top-level definitions of 'pretty'; returns compiler-defined function signature. */
     static constexpr const char *pretty(void) { return PRETTY_FUNCTION; }
+	/** Stream insertion operator; strips all but the type sequence from 'pretty'. */
     template<class S>
     friend S& operator<<(S& s, Pretty const& p) {
         using namespace std;
@@ -42,6 +46,7 @@ template<class... T> struct Pretty {
     }
 };
 
+/** Returns an instance of Pretty with the given types in the style of make_tuple. */
 template<class... R>
 Pretty<R...> make_pretty(R &&... r) { return {}; }
 
