@@ -3,6 +3,7 @@
 
 #include <algorithm>
 
+/** A dual quaternion with a flat structure. */
 template<class S> struct DualQuaternion {
 	using type = S;
 	S s, t, u, v, w, x, y, z;
@@ -66,6 +67,7 @@ template<class S> struct DualQuaternion {
 				&& w == d.w && x == d.x && y == d.y && z == d.z; }
 };
 
+/** Stream insertion operator; left generic to support ostringstream, etc. exactly. */
 template<class L, class S>
 L& operator<<(L&, DualQuaternion<S> const&);
 
