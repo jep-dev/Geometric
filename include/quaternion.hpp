@@ -47,11 +47,6 @@ template<class S, class T = S> struct Quaternion {
 	/** (Right) scalar multiplication. */
 	template<class U>
 	Quaternion operator*(U const& u) const { return {w*u, x*u, y*u, z*u}; }
-	/** (Left) scalar multiplication. */
-	template<class U>
-	friend Quaternion operator*(U const& u, Quaternion const& q) const {
-		return {u*w, u*x, u*y, u*z};
-	}
 	/** Negation operator. */
 	Quaternion operator-(void) const { return {-w, -x, -y, -z}; }
 	/** Difference; currently relies on left addition and negation. */
@@ -71,6 +66,14 @@ template<class S, class T = S> struct Quaternion {
 			w*r.y + y*r.w - x*r.z + z*r.x,  w*r.z + z*r.w + x*r.y - y*r.x
 		};
 	}
+	/** (Left) scalar multiplication. */
+	/* // TODO reinstate but with lower precedence than product with quaternion
+	template<class U>
+	friend auto operator*(U const& u, Quaternion const& q)
+	-> Quaternion<decltype(q.w*u), decltype(q.x*u)> {
+		static_assert(!std::is_same<U,Quaternion>::value, "Quaternion product should be used");
+		return {u*q.w, u*q.x, u*q.y, u*q.z};
+	}*/
 };
 
 #endif
