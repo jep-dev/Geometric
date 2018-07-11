@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "dual.hpp"
 #include "dual.tpp"
 #include "quaternion.tpp"
 
@@ -18,7 +19,6 @@ int main(int argc, const char *argv[]) {
 	using namespace std;
 	using namespace chrono;
 	using namespace Timing;
-	using namespace Dual;
 
 	// using T = float;
 	using T = double;
