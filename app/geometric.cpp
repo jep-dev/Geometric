@@ -66,10 +66,9 @@ int main(int argc, const char *argv[]) {
 	auto res = oss.str();
 
 	using S2 = array<string, 2>;
-	for(auto const& it : vector<S2>{{"Tag", ""}, {"> >", ">>"}, {"<", "{"}, {">", "}"}}) {
+	for(auto const& it : vector<S2>{{"Detail::", ""},
+			{"Tag", ""}, {"> >", ">>"}, {"<", "{"}, {">", "}"}}) {
 		std::size_t pos;
-		/*while((pos = res.find(it.first)) != std::string::npos)
-			res.replace(pos, it.first.length(), it.second);*/
 		while((pos = res.find(it[0])) != std::string::npos)
 			res.replace(pos, it[0].length(), it[1]);
 	}
