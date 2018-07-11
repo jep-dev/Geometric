@@ -18,6 +18,7 @@ int main(int argc, const char *argv[]) {
 	using namespace std;
 	using namespace chrono;
 	using namespace Timing;
+	using namespace Dual;
 
 	// using T = float;
 	using T = double;

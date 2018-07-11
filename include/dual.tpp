@@ -7,6 +7,8 @@
 #include <iostream>
 #include <sstream>
 
+namespace Dual {
+
 template<class L, class S>
 L& operator<<(L &lhs, DualQuaternion<S> const& rhs) {
 	/*std::ostringstream oss;
@@ -36,6 +38,7 @@ L& operator<<(L &lhs, DualQuaternion<S> const& rhs) {
 	}
 	if(!nz) oss << '0';
 	return lhs << oss.str(), lhs;
+}
 }
 
 #endif

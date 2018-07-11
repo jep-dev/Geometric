@@ -2,6 +2,7 @@
 #include <iomanip>
 
 int main(int argc, const char *argv[]) {
+	using namespace Dual;
 	typedef DualQuaternion<float> Q;
 	//DualQuaternion<float> lhs = {1, 2, 3, 4, 5, 6, 7, 8}, rhs = {8, 7, 6, 5, 4, 3, 2, 1};;
 	//DualQuaternion<float> lhs = {1}, rhs = {0,1};
