@@ -21,6 +21,7 @@ int main(int argc, const char *argv[]) {
 	using std::string;
 	using std::array;
 	using std::vector;
+	using namespace Detail;
 
 	using E = Tag<>;
 	using U = Tag<u>;
