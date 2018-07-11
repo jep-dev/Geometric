@@ -1,13 +1,10 @@
 #ifndef DUAL_TPP
 #define DUAL_TPP
 
-#include "dual.hpp"
 #include "quaternion.hpp"
 #include "quaternion.tpp"
 #include <iostream>
 #include <sstream>
-
-namespace Dual {
 
 template<class L, class S>
 L& operator<<(L &lhs, DualQuaternion<S> const& rhs) {
@@ -38,7 +35,6 @@ L& operator<<(L &lhs, DualQuaternion<S> const& rhs) {
 	}
 	if(!nz) oss << '0';
 	return lhs << oss.str(), lhs;
-}
 }
 
 #endif

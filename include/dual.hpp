@@ -3,8 +3,6 @@
 
 #include <algorithm>
 
-namespace Dual {
-
 /** A dual quaternion with a flat structure. */
 template<class S> struct DualQuaternion {
 	using type = S;
@@ -12,26 +10,26 @@ template<class S> struct DualQuaternion {
 	/** Const member access by index and unit. */
 	const S& operator[](unsigned i) const {
 		switch(i) {
-			case 7: case 'K': return z;
-			case 6: case 'J': return y;
-			case 5: case 'I': return x;
-			case 4: case 'E': return w;
-			case 3: case 'k': return v;
-			case 2: case 'j': return u;
 			case 1: case 'i': return t;
+			case 2: case 'j': return u;
+			case 3: case 'k': return v;
+			case 4: case 'E': return w;
+			case 5: case 'I': return x;
+			case 6: case 'J': return y;
+			case 7: case 'K': return z;
 			default: return s;
 		}
 	}
 	/** Member access by index and unit. */
 	S& operator[](unsigned i) {
 		switch(i) {
-			case 7: case 'K': return z;
-			case 6: case 'J': return y;
-			case 5: case 'I': return x;
-			case 4: case 'E': return w;
-			case 3: case 'k': return v;
-			case 2: case 'j': return u;
 			case 1: case 'i': return t;
+			case 2: case 'j': return u;
+			case 3: case 'k': return v;
+			case 4: case 'E': return w;
+			case 5: case 'I': return x;
+			case 6: case 'J': return y;
+			case 7: case 'K': return z;
 			default: return s;
 		}
 	}
@@ -72,7 +70,5 @@ template<class S> struct DualQuaternion {
 /** Stream insertion operator; left generic to support ostringstream, etc. exactly. */
 template<class L, class S>
 L& operator<<(L&, DualQuaternion<S> const&);
-
-}
 
 #endif
