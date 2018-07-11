@@ -4,8 +4,8 @@
 #include <iostream>
 #include <sstream>
 
-template<class L, class S, class T>
-L& operator<<(L &lhs, Quaternion<S,T> const& rhs) {
+template<class L, class S>
+L& operator<<(L &lhs, Quaternion<S> const& rhs) {
 	// Simple version - include zeros (useful for column comparisons)
 	// auto i = 1;
 	// const char *labels[] = {"e", "i", "j", "k"};

@@ -25,6 +25,6 @@ int main(int argc, const char *argv[]) {
 	int n_digits = max(ceil(log10(M+1)), ceil(log10(N+1)));
 
 	auto flags = cout.flags();
-	cout << "Quaternion<T,T>:\n" << delta(Quaternion<T,T>{1}, 100, 1000, 10000) << endl;
+	cout << "Quaternion<T>:\n" << delta(Quaternion<T>{1}, 100, 1000, 10000) << endl;
 	cout << "DualQuaternion<T>:\n" << delta(DualQuaternion<T>{1}, 100, 1000, 10000) << endl;
 }
