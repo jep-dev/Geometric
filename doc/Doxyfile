@@ -2505,6 +2505,6 @@ EXCLUDE_PATTERNS = *.o, *.d, *.h, */obj/*
 EXTRACT_PACKAGE = YES 
 STRIP_FROM_PATH = ./ 
 OUTPUT_DIRECTORY = doc/ 
-INPUT = app/format.cpp app/pretty.cpp app/performance.cpp app/dual.cpp app/geometric.cpp app/main.cpp src/view.cpp include/view.hpp include/pretty.hpp include/events.hpp include/dual.hpp include/quaternion.hpp include/geometric.hpp include/dual.tpp include/quaternion.tpp 
+INPUT = app/utilities.cpp app/format.cpp app/pretty.cpp app/shaders.cpp app/performance.cpp app/streams.cpp app/dual.cpp app/geometric.cpp app/main.cpp src/reader.cpp src/view.cpp include/utilities.hpp include/events.hpp include/dual.hpp include/reader.hpp include/geometric.hpp include/view.hpp include/timing.hpp include/quaternion.hpp include/pretty.hpp include/quaternion.tpp include/dual.tpp 
 EXTRACT_ALL = YES 
 SHOW_INCLUDE_FILES = YES
