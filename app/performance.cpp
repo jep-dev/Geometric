@@ -7,7 +7,12 @@
 #include <utility>
 #include <vector>
 
+#ifdef DUAL2
+#include "dual2.hpp"
+#else
 #include "dual.hpp"
+#endif
+
 #include "dual.tpp"
 #include "quaternion.tpp"
 
