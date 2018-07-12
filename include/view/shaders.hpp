@@ -73,6 +73,28 @@ namespace View {
 		return true;
 	}
 
+	struct Shader {
+		GLuint value;
+		operator GLuint(void) const { return value; }
+		bool source(const char *fname) { return View::source(value, fname); }
+		bool compile(void) { return View::compile(value); }
+		Shader(GLuint value): value(value) {}
+		Shader(GLenum type = GL_VERTEX_SHADER): Shader(glCreateShader(type)) { }
+		virtual ~Shader(void) { glDeleteShader(value); value = 0; }
+	};
+	struct Program {
+		GLuint value;
+		operator GLuint(void) const { return value; }
+		template<class... S>
+		bool attach(S &&... s) {
+			return View::attach(value, std::forward<S>(s)...);
+		}
+		bool link(void) { return View::link(value); }
+		Program(GLuint value): value(value) {}
+		Program(void): Program(glCreateProgram()) {}
+		virtual ~Program(void) { glDeleteProgram(value); value = 0; }
+	};
+
 }
 
 #endif
