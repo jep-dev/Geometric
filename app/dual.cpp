@@ -1,5 +1,9 @@
-//#include "dual.hpp"
+#ifdef DUAL2
 #include "dual2.hpp"
+#else
+#include "dual.hpp"
+#endif
+
 #include "dual.tpp"
 #include <iomanip>
 
