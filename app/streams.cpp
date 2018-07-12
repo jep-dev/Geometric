@@ -16,6 +16,7 @@ namespace Main {
 	using std::vector;
 
 	using Streams::Reader;
+	using Streams::readLines;
 }
 
 template<class S>
@@ -40,15 +41,11 @@ int main(int argc, const char *argv[]) {
 	if(argc < 3) share = self.substr(0, pos+1) + ".." + delim + "share" + delim;
 	vert = (argc < 2) ? share + "default.vert" : argv[1];
 	frag = (argc < 3) ? share + "default.frag" : argv[2];
-	for(auto const& p : {vert, frag}) {
+	/*for(auto const& p : {vert, frag}) {
 		cout << "Reading " << p << "; ";
-
-		//vector<string> dest;
-		//Streams::readLines(p.c_str(), dest);
 
 		Reader reader(p.c_str());
 		auto &dest = reader.get();
-		//reader.source(p.c_str(), true);
 		if(!reader) {
 			cout << "failed!" << endl;
 		} else {
@@ -66,6 +63,16 @@ int main(int argc, const char *argv[]) {
 			}
 			cout.setf(flags);
 			cout << endl;
+		}
+	}*/
+	for(auto const& p : {vert, frag}) {
+		cout << "Reading " << p << "; ";
+		bool dest;
+		std::string res = readLines(p.c_str(), &dest);
+		if(dest) {
+			cout << "\n" << res << endl;
+		} else {
+			cout << "Failed!\n" << endl;
 		}
 	}
 }
