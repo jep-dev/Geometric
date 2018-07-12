@@ -20,11 +20,12 @@ bool readLines(const char *fname, std::vector<std::string> &dest, bool *status =
 	ifs.close();
 	return *status;
 }
-std::string readLines(const char *fname, bool *status) {
+std::string readLines(const char *fname, bool *status = 0) {
 	bool result;
 	if(!status) status = &result;
 
 	std::ifstream ifs(fname);
+	if(!ifs.good()) return *status = false, "";
 
 	ifs.seekg(0, std::ios::end);
 	auto len = ifs.tellg();
