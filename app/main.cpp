@@ -12,44 +12,46 @@ struct Hnd: Events::Handler<Hnd> {
 	std::ostringstream oss;
 	using Handler::operator();
 	template<class... T>
-	bool operator()(SDL_KeyboardEvent const& k, T &&... t) {
+	Events::Handled operator()(SDL_KeyboardEvent const& k, T &&... t) {
 		switch(k.keysym.sym) {
 			case SDLK_ESCAPE:
 				oss << "Caught escape keypress\n";
-				return false;
+				return { Events::Handled::CODE_QUIT };
 			default: break;
 		}
-		return true;
+		return { Events::Handled::CODE_PASS };
 	}
 	template<class... T>
-	bool operator()(SDL_WindowEvent const& w, T &&... t) {
+	Events::Handled operator()(SDL_WindowEvent const& w, T &&... t) {
 		switch(w.type) {
 			case SDL_WINDOWEVENT_CLOSE:
 				oss << "Caught window close event\n";
-				return false;
+				return { Events::Handled::CODE_QUIT };
 			case SDL_WINDOWEVENT_MOVED: break;
 				oss << "Window moved to " << w.data1 << ", " << w.data2 << "\n";
-				return true;
+				return { Events::Handled::CODE_PASS };
 			case SDL_WINDOWEVENT_ENTER:
 				oss << "Window entered\n";
-				return true;
+				return { Events::Handled::CODE_PASS };
 			case SDL_WINDOWEVENT_LEAVE: break;
 				oss << "Window left\n";
-				return true;
+				return { Events::Handled::CODE_PASS };
 			case SDL_WINDOWEVENT_RESIZED: break;
 				oss << "Window resized\n";
-				return true;
-			default: return true;
+				return { Events::Handled::CODE_PASS };
+			default: return { Events::Handled::CODE_PASS };
 		}
 	}
 	template<class... T>
-	bool operator()(SDL_QuitEvent const& q, T &&... t) {
+	Events::Handled operator()(SDL_QuitEvent const& q, T &&... t) {
 		oss << "Caught quit event\n";
-		return false;
+		return { Events::Handled::CODE_QUIT };
 	}
 
 	template<class S, class... T>
-	bool operator()(S const& s, T &&... t) { return true; }
+	Events::Handled operator()(S const& s, T &&... t) {
+		return { Events::Handled::CODE_PASS };
+	}
 
 	template<class S>
 	friend S& operator<<(S& s, Hnd const& hnd) {
@@ -66,6 +68,7 @@ int main(int argc, const char *argv[]) {
 	using namespace glbinding;
 	using std::cout;
 	using std::endl;
+	using std::string;
 
 	View::Frame f;
 	Binding::initialize(false);
@@ -76,31 +79,37 @@ int main(int argc, const char *argv[]) {
 	if(glErr != GL_NO_ERROR)
 		std::cout << "There was a GL ERROR! " << glErr << std::endl;
 
-	const char *vertPath = "../share/default.vert", *fragPath = "../share/default.frag";
+	string self = argv[0], delim = "/", share = "share" + delim;
+	auto pos = self.find_last_of(delim);
+	if(pos == string::npos)
+		delim = "\\", pos = self.find_last_of(delim);
+	share = self.substr(0, pos+1) + ".." + delim + "share" + delim;
+	cout << "self = " << self << "; share = " << share << "." << endl;
+	string vertPath = share + "default.vert", fragPath = share + "default.frag";
 	static constexpr GLenum VERT = GL_VERTEX_SHADER, FRAG = GL_FRAGMENT_SHADER;
 
-	/*{
-		const char *reason = nullptr;
-		GLuint vert, frag, prog;
-		do {
-			vert = glCreateShader(GL_VERTEX_SHADER);
-			if(!glIsShader(vert)) { reason = "not a shader"; break; }
-			frag = glCreateShader(GL_FRAGMENT_SHADER);
-			if(!glIsShader(frag)) { reason = "not a shader"; break; }
-			prog = glCreateProgram();
-			if(!glIsProgram(prog)) { reason = "not a program"; break; }
-			if(!source(vert, vertPath)) { reason = "couldn't source"; break; }
-			if(!source(frag, fragPath)) { reason = "couldn't source"; break; }
-			if(!compile(vert)) { reason = "couldn't compile"; break; }
-			if(!compile(frag)) { reason = "couldn't compile"; break; }
-			if(!attach(prog, vert, frag)) { reason = "couldn't attach"; break; }
-			if(!link(prog)) { reason = "couldn't link"; break; }
-		} while(0);
-			if(glIsProgram(prog)) glDeleteProgram(prog);
-		if(glIsShader(frag)) glDeleteShader(frag);
-		if(glIsShader(vert)) glDeleteShader(vert);
-		if(reason) cout << "Reason: " << reason;
-	}*/
+	Program program;
+	Shader vert{GL_VERTEX_SHADER}, frag{GL_FRAGMENT_SHADER};
+	do {
+		if(!vert.source(vertPath.c_str())) {
+			cout << "Could not source " << vertPath << endl;
+		} else if(!vert.compile()) {
+			cout << "Could not compile " << vertPath << endl;
+		} else if(!program.attach(vert)) {
+			cout << "Could not link " << vertPath << endl;
+		} else if(!frag.source(fragPath.c_str())) {
+			cout << "Could not source " << fragPath << endl;
+		} else if(!frag.compile()) {
+			cout << "Could not compile " << fragPath << endl;
+		} else if(!program.attach(frag)) {
+			cout << "Could not attach " << fragPath << endl;
+		} else if(!program.link()) {
+			cout << "Could not link program" << endl;
+		} else {
+			continue;
+		}
+		return 1;
+	} while(0);
 
 	Hnd hnd;
 	for(auto i = 0; i < 50; i++) {
