@@ -74,7 +74,6 @@ namespace View {
 		int set(S const& s) { return value = s; }
 		int set(void) const { return value; }
 		int get(void) const { return get_attr(A); }
-		//int get(void) const { int out; return SDL_GL_GetAttribute(A, &out), out; }
 		operator bool(void) const { return compare(set(), get()); }
 		bool operator&&(bool const& rhs) const { return bool(*this) && rhs; }
 		bool operator||(bool const& rhs) const { return bool(*this) || rhs; }
@@ -85,6 +84,8 @@ namespace View {
 		template<class S>
 		S& operator>>(S &s) { return s = value; }
 	};
+	/** Makes an attribute out of the given value-comparator pair, but can't form one
+	 * out of a reference (requires refactoring to support captures) */
 	template<SDL_GLattr A, class CMP>
 	auto make_attr(int value, CMP && comp = {})
 		-> Attribute<A> { return { value, std::forward<CMP>(comp) }; };
