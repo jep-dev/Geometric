@@ -20,23 +20,29 @@ bool readLines(const char *fname, std::vector<std::string> &dest, bool *status =
 	ifs.close();
 	return *status;
 }
+bool readLines(const char *fname, std::string &dest) {
+/*
+}
 std::string readLines(const char *fname, bool *status = 0) {
 	bool result;
 	if(!status) status = &result;
-
+*/
 	std::ifstream ifs(fname);
-	if(!ifs.good()) return *status = false, "";
+	//if(!ifs.good()) return *status = false, "";
+	if(!ifs.good()) return false;
 
 	ifs.seekg(0, std::ios::end);
 	auto len = ifs.tellg();
 	ifs.seekg(0, std::ios::beg);
 
-	std::string dest(len, '\0');
-	ifs.read(&dest[0], len);
-	*status = true;
+	std::string buf(len, '\0');
+	ifs.read(&buf[0], len);
+	// *status = true;
 	if(ifs.is_open())
 		ifs.close();
-	return dest;
+	//return buf;
+	dest = buf;
+	return true;
 }
 
 struct Reader {

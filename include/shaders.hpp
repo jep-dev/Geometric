@@ -32,8 +32,10 @@ namespace View {
 
 	bool source(GLuint shader, const char *filename) {
 		bool status;
-		std::string lines = Streams::readLines(filename, &status);
-		if(!status) return false;
+		//std::string lines = Streams::readLines(filename, &status);
+		std::string lines;
+		if(!Streams::readLines(filename, lines)) return false;
+		//if(!status) return false;
 		auto buf = lines.c_str();
 		auto gbuf = &lines[0];
 		glShaderSource(shader, 1, &gbuf, nullptr);

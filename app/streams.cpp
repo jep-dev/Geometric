@@ -68,8 +68,10 @@ int main(int argc, const char *argv[]) {
 	for(auto const& p : {vert, frag}) {
 		cout << "Reading " << p << "; ";
 		bool dest;
-		std::string res = readLines(p.c_str(), &dest);
-		if(dest) {
+		//std::string res = readLines(p.c_str(), &dest);
+		std::string res;
+		if(readLines(p.c_str(), res)) {
+		//if(dest) {
 			cout << "\n" << res << endl;
 		} else {
 			cout << "Failed!\n" << endl;
