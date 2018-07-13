@@ -4,7 +4,7 @@
 #include "events.hpp"
 
 #include "view.hpp"
-#include "view/shaders.hpp"
+#include "shaders.hpp"
 #include "dual.hpp"
 
 struct Hnd;
