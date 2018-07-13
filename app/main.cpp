@@ -89,14 +89,21 @@ int main(int argc, const char *argv[]) {
 	static constexpr GLenum VERT = GL_VERTEX_SHADER, FRAG = GL_FRAGMENT_SHADER;
 
 	Program program;
-	Shader vert{GL_VERTEX_SHADER}, frag{GL_FRAGMENT_SHADER};
-	do {
-		if(!vert.source(vertPath.c_str())) {
+	Shader vert(vertPath.c_str(), VERT), frag(fragPath.c_str(), FRAG);
+	if(!program.attach((vert.compile(), vert))) {
+		return cout << "Could not attach " << vertPath << endl, 1;
+	} else if(!program.attach((frag.compile(), frag))) {
+		return cout << "Could not attach " << fragPath << endl, 1;
+	} else if(!program.link()) {
+		return cout << "Could not link program" << endl, 1;
+	}
+	/*do {
+		if(!bool(vert)) {
 			cout << "Could not source " << vertPath << endl;
 		} else if(!vert.compile()) {
 			cout << "Could not compile " << vertPath << endl;
 		} else if(!program.attach(vert)) {
-			cout << "Could not link " << vertPath << endl;
+			cout << "Could not attach " << vertPath << endl;
 		} else if(!frag.source(fragPath.c_str())) {
 			cout << "Could not source " << fragPath << endl;
 		} else if(!frag.compile()) {
@@ -109,7 +116,7 @@ int main(int argc, const char *argv[]) {
 			continue;
 		}
 		return 1;
-	} while(0);
+	} while(0);*/
 
 	Hnd hnd;
 	for(auto i = 0; i < 50; i++) {
