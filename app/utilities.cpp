@@ -26,10 +26,10 @@ struct HasLength<S, Detail::Void_t<decltype(&S::length)>>
 	: True { typedef decltype(&S::length) type; };
 template<class S>
 struct HasSize<S, Detail::Void_t<decltype(&S::size)>>
-	: True { typedef True type; };
+	: True { typedef decltype(&S::size) type; };
 template<class S>
 struct HasTellg<S, Detail::Void_t<decltype(&S::tellg)>>
-	: True { typedef True type; };
+	: True { typedef decltype(&S::tellg) type; };
 template<class S>
 struct HasTellp<S, Detail::Void_t<decltype(&S::tellp)>>
 	: True { typedef True type; };
