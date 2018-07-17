@@ -104,24 +104,18 @@ int main(int argc, const char *argv[]) {
 	cout << "In file " << __FILE__ << "...\n";
 
 	ostringstream out;
-	out << " ...Line " << (__LINE__+1) << " -> line "
-		<< size(A()) << " (as " << Pretty<A>() << ")\n"
-			<< " ...Line " << (__LINE__+1) << " -> line "
-		<< size(B()) << " (as " << Pretty<B>() << ")\n"
-			<< " ...Line " << (__LINE__+1) << " -> line "
-		<< size(C()) << " (as " << Pretty<C>() << ")\n"
-			<< " ...Line " << (__LINE__+1) << " -> line "
-		<< size(D()) << " (as " << Pretty<D>() << ")\n"
-			" ...Line " << (__LINE__+1) << " -> line "
-		<< size(Z()) << " (as " << Pretty<Z>() << ")\n"
-			" ...Line " << (__LINE__+1) << " -> line "
-		<< size(vector<int>()) << " (as " << Pretty<vector<int>>() << ")\n"
-			" ...Line " << (__LINE__+1) << " -> line "
-		<< size(pair<int,int>()) << " (as " << Pretty<pair<int,int>>() << ")\n"
-			" ...Line " << (__LINE__+1) << " -> line "
-		<< size(ifstream()) << " (as " << Pretty<ifstream>() << ")\n"
-			<< " ...Line " << (__LINE__+1) << " -> line "
-		<< size(ofstream()) << " (as " << Pretty<ofstream>() << ")";
-	cout << out.str() << endl;
+	auto prn = [&out] (unsigned line, unsigned size, std::string prettied) {
+		out << " ...Line " << line << " -> line " << size << " (as " << prettied << ")\n";
+	};
+	prn(__LINE__, size(A()), Pretty<A>());                         // calls length
+	prn(__LINE__, size(B()), Pretty<B>());                         // calls tellp
+	prn(__LINE__, size(C()), Pretty<C>());                         // calls tellg
+	prn(__LINE__, size(D()), Pretty<D>());                         // calls size
+	prn(__LINE__, size(Z()), Pretty<Z>());                         // calls fallback
+	prn(__LINE__, size(vector<int>()), Pretty<vector<int>>());     // calls size
+	prn(__LINE__, size(pair<int,int>()), Pretty<pair<int,int>>()); // calls fallback
+	prn(__LINE__, size(ifstream()), Pretty<ifstream>());           // calls tellg
+	prn(__LINE__, size(ofstream()), Pretty<ofstream>());           // calls tellp
+	cout << out.str();
 
 }
