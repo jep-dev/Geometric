@@ -19,15 +19,6 @@ namespace Main {
 	using Streams::readLines;
 }
 
-template<class S>
-static constexpr const char *pretty(void) {
-	return __PRETTY_FUNCTION__;
-}
-template<class S>
-static constexpr const char *pretty(S && s) {
-	return __PRETTY_FUNCTION__;
-}
-
 int main(int argc, const char *argv[]) {
 	using namespace Main;
 	string self = argv[0], share, vert, frag;
@@ -41,7 +32,7 @@ int main(int argc, const char *argv[]) {
 	if(argc < 3) share = self.substr(0, pos+1) + ".." + delim + "share" + delim;
 	vert = (argc < 2) ? share + "default.vert" : argv[1];
 	frag = (argc < 3) ? share + "default.frag" : argv[2];
-	/*for(auto const& p : {vert, frag}) {
+	for(auto const& p : {vert, frag}) {
 		cout << "Reading " << p << "; ";
 
 		Reader reader(p.c_str());
@@ -64,7 +55,8 @@ int main(int argc, const char *argv[]) {
 			cout.setf(flags);
 			cout << endl;
 		}
-	}*/
+	}
+	cout << "Now reading in single calls." << endl;
 	for(auto const& p : {vert, frag}) {
 		cout << "Reading " << p << "; ";
 		bool dest;
