@@ -1,121 +1,76 @@
-#include "utilities.hpp"
-#include <utility>
-#include "pretty.hpp"
-
-#include <fstream>
+#include <array>
 #include <iostream>
 #include <sstream>
-#include <tuple>
+#include <utility>
 #include <vector>
 
-struct False : std::false_type { };
-struct True : std::true_type { };
+#include "geometric.hpp"
+#include "pretty.hpp"
 
-template<class S, class = void>
-struct HasLength : False { typedef False type; };
-template<class S, class = void>
-struct HasSize : False { typedef False type; };
-template<class S, class = void>
-struct HasTellp : False { typedef False type; };
-template<class S, class = void>
-struct HasTellg : False { typedef False type; };
-
-
-template<class S>
-struct HasLength<S, Detail::Void_t<decltype(&S::length)>>
-	: True { typedef decltype(&S::length) type; };
-template<class S>
-struct HasSize<S, Detail::Void_t<decltype(&S::size)>>
-	: True { typedef decltype(&S::size) type; };
-template<class S>
-struct HasTellg<S, Detail::Void_t<decltype(&S::tellg)>>
-	: True { typedef decltype(&S::tellg) type; };
-template<class S>
-struct HasTellp<S, Detail::Void_t<decltype(&S::tellp)>>
-	: True { typedef True type; };
-
-template<class S, class T> using HasLength_t = typename HasLength<S, T>::type;
-template<class S, class T> using HasSize_t = typename HasSize<S, T>::type;
-template<class S, class T> using HasTellg_t  = typename HasTellg<S, T>::type;
-template<class S, class T> using HasTellp_t = typename HasTellp<S, T>::type;
-
-/** Use the length method but return the line number for testing. */
-template<class T> std::enable_if_t<HasLength<T>::value, std::size_t>
-	size(T && t) { return t.length(), __LINE__; }
-/** Use the size method but return the line number for testing. */
-template<class T> std::enable_if_t<HasSize<T>::value && !HasLength<T>::value, std::size_t>
-	size(T && t) { return t.size(), __LINE__; }
-/** Use the tellp method but return the line number for testing. */
-template<class T> std::enable_if_t<HasTellp<T>::value, std::size_t>
-size(T && t) { return t.tellp(), __LINE__; }
-	/*
-	auto pos = t.tellp(), out = pos;
-	t.seekp(0, std::ios::end);
-	out = t.tellp();
-	t.seekp(pos);
-	return out;
-	*/
-/** Use the tellg method but return the line number for testing. */
-template<class T> std::enable_if_t<HasTellg<T>::value, std::size_t>
-size(T && t) { return t.tellg(), __LINE__; }
-	/*
-	auto pos = t.tellg(), out = pos;
-	t.seekg(0, std::ios::end);
-	out = t.tellg();
-	t.seekg(pos);
-	return out;
-	*/
-
-/** Fallback in case none are implemented; comment out to require one of the others */
-template<class T> std::enable_if_t<!HasTellp<T>::value && !HasTellg<T>::value
-		&& !HasLength<T>::value && !HasSize<T>::value, std::size_t>
-size(T& t) { return __LINE__; }
-template<class T>
-std::size_t size(T const& t) { return __LINE__; }
-
-struct A { constexpr std::size_t length(void) const { return __LINE__; } };
-struct B {
-	constexpr std::size_t tellp(void) const { return __LINE__; }
-	constexpr std::size_t seekp(int, const std::ios::seek_dir &) const { return __LINE__; }
-};
-struct C {
-	constexpr std::size_t tellg(void) const { return __LINE__; }
-	constexpr std::size_t seekg(int, const std::ios::seekdir&) const { return __LINE__; }
-};
-struct D { constexpr std::size_t size(void) const { return __LINE__; } };
-struct AB : A, B {};
-struct CD : C, D {};
-struct Z {};
+struct u{};
+struct v{};
+struct w{};
+struct x{};
+struct y{};
+struct z{};
 
 int main(int argc, const char *argv[]) {
 	using std::cout;
 	using std::endl;
-	using std::ifstream;
-	using std::ofstream;
-	using std::ostringstream;
-	using std::string;
 	using std::pair;
+	using std::string;
+	using std::array;
 	using std::vector;
+	using namespace Detail;
 
-	string buf = "Content in string";
-	ostringstream oss;
-	oss << "Content in ostringstream";
+	using E = Tag<>;
+	using U = Tag<u>;
+	using V = Tag<v>;
+	using W = Tag<w>;
+	using X = Tag<x>;
+	using Y = Tag<y>;
+	using Z = Tag<z>;
 
-	cout << "In file " << __FILE__ << "...\n";
+	std::ostringstream oss;
+	oss << "Basic types:\n\t"
+			"0 = " << make_pretty(E{}) << ";\n\t"
+			"U = " << make_pretty(U{}) << "; "
+			"V = " << make_pretty(V{}) << "; "
+			"W = " << make_pretty(W{}) << ";\n\t"
+			"X = " << make_pretty(X{}) << "; "
+			"Y = " << make_pretty(Y{}) << "; "
+			"Z = " << make_pretty(Z{}) << ".\n"
+		"Direct sums:\n\t"
+			"U+0 = " << make_pretty(U{}+E{}) << "; 0+X = " << make_pretty(E{}+X{}) << ";\n\t"
+			"(U+V)+W = U+(V+W) = " << make_pretty((U{}+V{})+W{}) << " (associative.)\n\t"
+			"U+V = " << make_pretty(U{}+V{})
+				<< " != V+U = " << make_pretty(V{}+U{}) << " (non-commutative!)\n"
+		"Inner product:\n\t"
+			"0*0 = " << make_pretty(E{}*E{}) << ";\n\t"
+			"U*X = " << make_pretty(U{}*X{}) << ";\n\t"
+			"(U+V) * (X+Y) = " << make_pretty(U{}+V{}) << " * " << make_pretty(X{}+Y{})
+				<< " = " << make_pretty((U{}+V{})*(X{}+Y{})) << "\n"
+		"Outer products:\n\t"
+			"0 ^ X = " << make_pretty(E{}^X{}) << ";\n\t"
+			"U ^ 0 = " << make_pretty(U{}^E{}) << ";\n\t"
+			"(U+V) ^ X = " << make_pretty((U{}+V{}) ^ X{}) << ";\n\t"
+			"U ^ (X+Y) = " << make_pretty(U{} ^ (X{}+Y{})) << ";\n\t"
+			"(U+V) ^ (X+Y) = " << make_pretty((U{}+V{}) ^ (X{}+Y{})) << ".\n\t"
+			"(U+V+W) ^ (X+Y) = " << make_pretty((U{}+V{}+W{}) ^ (X{}+Y{})) << ".\n\t"
+			"(U+V) ^ (X+Y+Z) = " << make_pretty((U{}+V{}) ^ (X{}+Y{}+Z{})) << ".\n\t"
+			"(U+V+W) ^ (X+Y+Z) = " << make_pretty((U{}+V{}+W{}) ^ (X{}+Y{}+Z{})) << ".";
+		/* I believe from a category/set/type theory standpoint, the orders of (U+V)^X and U^(X+Y)
+		 * are one shy of what they should be. If (U+V)^(X+Y) is {{{u,x},{u,y}}, {{v,x},{v,y}}},
+		 * then why wouldn't U^(X+Y) just be the same with the second element eliminated?
+		 * Instead, it appears to *be* the first element (not the set containing it.) */
+	auto res = oss.str();
 
-	ostringstream out;
-	auto prn = [&out] (unsigned line, unsigned size, std::string prettied) {
-		out << " ...Line " << line << " -> line " << size << " (as " << prettied << ")\n";
-	};
-	prn(__LINE__, size(A()), Pretty<A>());                         // calls length
-	prn(__LINE__, size(B()), Pretty<B>());                         // calls tellp
-	prn(__LINE__, size(C()), Pretty<C>());                         // calls tellg
-	prn(__LINE__, size(D()), Pretty<D>());                         // calls size
-	prn(__LINE__, size(Z()), Pretty<Z>());                         // calls fallback
-	prn(__LINE__, size(vector<int>()), Pretty<vector<int>>());     // calls size
-	prn(__LINE__, size(pair<int,int>()), Pretty<pair<int,int>>()); // calls fallback
-	prn(__LINE__, size(ifstream()), Pretty<ifstream>());           // calls tellg
-	prn(__LINE__, size(ofstream()), Pretty<ofstream>());           // calls tellp
-	cout << out.str();
-
+	using S2 = array<string, 2>;
+	for(auto const& it : vector<S2>{{"Detail::", ""},
+			{"Tag", ""}, {"> >", ">>"}, {"<", "{"}, {">", "}"}}) {
+		std::size_t pos;
+		while((pos = res.find(it[0])) != std::string::npos)
+			res.replace(pos, it[0].length(), it[1]);
+	}
+	cout << res << endl;
 }
