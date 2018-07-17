@@ -10,6 +10,7 @@ namespace Main {
 	using std::string;
 	using std::cout;
 	using std::endl;
+	using std::flush;
 	using std::setw;
 	using std::left;
 	using std::right;
@@ -32,8 +33,8 @@ int main(int argc, const char *argv[]) {
 	if(argc < 3) share = self.substr(0, pos+1) + ".." + delim + "share" + delim;
 	vert = (argc < 2) ? share + "default.vert" : argv[1];
 	frag = (argc < 3) ? share + "default.frag" : argv[2];
-	for(auto const& p : {vert, frag}) {
-		cout << "Reading " << p << "; ";
+	for(auto const& p : {vert}) {
+		cout << "Reading " << p << " line by line; ";
 
 		Reader reader(p.c_str());
 		auto &dest = reader.get();
@@ -56,15 +57,15 @@ int main(int argc, const char *argv[]) {
 			cout << endl;
 		}
 	}
-	cout << "Now reading in single calls." << endl;
-	for(auto const& p : {vert, frag}) {
-		cout << "Reading " << p << "; ";
+	for(auto const& p : {frag}) {
+		cout << "Reading " << p << " as a whole; ";
 		bool dest;
 		//std::string res = readLines(p.c_str(), &dest);
 		std::string res;
 		if(readLines(p.c_str(), res)) {
 		//if(dest) {
-			cout << "\n" << res << endl;
+			cout << "done (" << std::count(res.cbegin(), res.cend(), '\n')
+					<< " lines)\n" << res << flush;
 		} else {
 			cout << "Failed!\n" << endl;
 		}
