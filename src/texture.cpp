@@ -4,8 +4,10 @@
 
 namespace View {
 	Texture::Texture(const char *fname, unsigned int flags): fname(fname) {
+		value = 0;
 		glCreateTextures(GL_TEXTURE_2D, 1, &value);
 		if(!glIsTexture(value)) {
+			line = __LINE__;
 			created = sourced = false;
 			return;
 		}
@@ -13,13 +15,15 @@ namespace View {
 		if(err != GL_NO_ERROR) {
 			std::ostringstream oss;
 			oss << err;
-			message = oss.str();
+			message = "?"; //oss.str();
 			created = sourced = false;
+			line = __LINE__;
 			return;
 		}
 		created = true;
 		auto result = SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, value, flags);
-		sourced = !result;
+		sourced = result;
+		line = __LINE__;
 		message = SOIL_last_result();
 	}
 	/*Texture::Texture(const char *fname, unsigned int flags):

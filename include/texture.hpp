@@ -22,6 +22,7 @@ namespace View {
 		unsigned int flags;
 		GLuint value;
 		bool created = false, sourced = false;
+		unsigned int line = 0;
 		ILint width = 0, height = 0;
 		std::string message;
 		Texture(const char*, unsigned int = SOIL_FLAG_INVERT_Y | SOIL_FLAG_MIPMAPS);

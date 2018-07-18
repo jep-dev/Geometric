@@ -15,7 +15,7 @@ struct Hnd: Events::Handler<Hnd> {
 	Events::Handled operator()(SDL_KeyboardEvent const& k, T &&... t) {
 		switch(k.keysym.sym) {
 			case SDLK_ESCAPE:
-				oss << "Caught escape keypress\n";
+				//oss << "Caught escape keypress\n";
 				return { Events::Handled::CODE_QUIT };
 			default: break;
 		}
@@ -44,7 +44,7 @@ struct Hnd: Events::Handler<Hnd> {
 	}
 	template<class... T>
 	Events::Handled operator()(SDL_QuitEvent const& q, T &&... t) {
-		oss << "Caught quit event\n";
+		//oss << "Caught quit event\n";
 		return { Events::Handled::CODE_QUIT };
 	}
 
@@ -102,7 +102,7 @@ int main(int argc, const char *argv[]) {
 	} else if(!program.link()) {
 		return cout << "Could not link program" << endl, 1;
 	}
-	std::string imgPath = share + "link.jpg";
+	std::string imgPath = share + "brinstar.png";
 	cout << "Loading " << imgPath << "... " << flush;
 	{
 		std::ifstream ifs;
@@ -116,8 +116,8 @@ int main(int argc, const char *argv[]) {
 	cout << flush;
 	Texture img{imgPath.c_str()};
 	if(!img.sourced) {
-		cout << "failed ";
-		if(img.message.length())
+		cout << "failed (" << img.message << " at line " << img.line << " )";
+		//if(img.message.length())
 			cout << "(" << img.message << ")";
 		cout << endl;
 	}
