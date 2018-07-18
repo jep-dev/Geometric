@@ -3,7 +3,7 @@
 #include <sstream>
 
 namespace View {
-	bool Texture::source(const char *fname, bool force) {
+	/*bool Texture::source(const char *fname, bool force) {
 		if(!sourced || force) {
 			this -> fname = fname;
 			return source();
@@ -39,6 +39,12 @@ namespace View {
 	}
 	Texture::Texture(const char *fname): Texture() {
 		source(fname);
+	}
+	*/
+	Texture::Texture(const char *fname):
+			value(SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO,
+				SOIL_CREATE_NEW_ID, SOIL_FLAG_INVERT_Y)) {
+		message = SOIL_last_result();
 	}
 	Texture::~Texture(void) {
 		if(glIsTexture(value))
