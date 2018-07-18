@@ -102,7 +102,7 @@ int main(int argc, const char *argv[]) {
 	} else if(!program.link()) {
 		return cout << "Could not link program" << endl, 1;
 	}
-	std::string imgPath = share + "brinstar.png";
+	/*std::string imgPath = share + "brinstar.png";
 	cout << "Loading " << imgPath << "... " << flush;
 	{
 		std::ifstream ifs;
@@ -117,7 +117,7 @@ int main(int argc, const char *argv[]) {
 	Texture img{imgPath.c_str()};
 	if(!img.sourced) {
 		cout << "failed (" << img.message << " at line " << img.line << " )" << endl;
-	}
+	}*/
 
 
 	Hnd hnd;
