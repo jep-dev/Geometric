@@ -104,6 +104,16 @@ int main(int argc, const char *argv[]) {
 	}
 	std::string imgPath = share + "link.jpg";
 	cout << "Loading " << imgPath << "... " << flush;
+	{
+		std::ifstream ifs;
+		ifs.open(imgPath.c_str());
+		if(!ifs.good()) {
+			cout << "bad path; ";
+		}
+		if(ifs.is_open())
+			ifs.close();
+	}
+	cout << flush;
 	Texture img{imgPath.c_str()};
 	if(!img.sourced) {
 		cout << "failed ";

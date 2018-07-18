@@ -3,6 +3,7 @@
 
 #include "view.hpp"
 #include <IL/il.h>
+#include <SOIL/SOIL.h>
 
 namespace View {
 	struct Texture {
@@ -23,7 +24,7 @@ namespace View {
 		bool created = false, sourced = false;
 		ILint width = 0, height = 0;
 		std::string message;
-		Texture(const char*, unsigned int = 0);
+		Texture(const char*, unsigned int = SOIL_FLAG_INVERT_Y | SOIL_FLAG_MIPMAPS);
 		virtual ~Texture(void);
 	};
 }

@@ -3,55 +3,38 @@
 #include <sstream>
 
 namespace View {
-	/*bool Texture::source(const char *fname, bool force) {
-		if(!sourced || force) {
-			this -> fname = fname;
-			return source();
-		}
-		return sourced;
-	}
-	bool Texture::source(bool force) {
-		if(!created)
-			return sourced = false;
-		if(sourced && !force) return true;
-		auto flags = SOIL_FLAG_INVERT_Y;
-		if(created) {
-			SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, value, flags);
-		} else {
-			value = SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, flags);
-			if(!value) {
-				message = SOIL_last_result();
-				return width = height = created = sourced = false;
-			}
-		}
-		return created = sourced = true;
-	}
-	Texture::Texture(void) {
+	Texture::Texture(const char *fname, unsigned int flags): fname(fname) {
 		glCreateTextures(GL_TEXTURE_2D, 1, &value);
+		if(!glIsTexture(value)) {
+			created = sourced = false;
+			return;
+		}
 		auto err = glGetError();
-		if(err == GL_NO_ERROR) {
-			created = true;
-		} else {
+		if(err != GL_NO_ERROR) {
 			std::ostringstream oss;
 			oss << err;
 			message = oss.str();
+			created = sourced = false;
+			return;
 		}
+		created = true;
+		auto result = SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, value, flags);
+		sourced = !result;
+		message = SOIL_last_result();
 	}
-	Texture::Texture(const char *fname): Texture() {
-		source(fname);
-	}
-	*/
-	Texture::Texture(const char *fname, unsigned int flags):
+	/*Texture::Texture(const char *fname, unsigned int flags):
 			fname(fname), flags(flags) {
 		glCreateTextures(GL_TEXTURE_2D, 1, &value);
-		/*if(!glIsTexture(value)) {
+
+		if(!glIsTexture(value)) {
 			created = sourced = false;
 			auto err = glGetError();
 			std::ostringstream oss;
 			oss << err;
 			message = oss.str();
 			return;
-		}*/
+		}
+
 		created = true;
 		ilInit();
 		ILuint image;
@@ -70,7 +53,7 @@ namespace View {
 			message = "Failed; ";
 		}
 		message += iluErrorString(ilGetError());
-	}
+	}*/
 	Texture::~Texture(void) {
 		if(glIsTexture(value))
 			glDeleteTextures(1, &value);
