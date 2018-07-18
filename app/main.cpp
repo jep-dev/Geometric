@@ -44,7 +44,7 @@ struct Hnd: Events::Handler<Hnd> {
 	}
 	template<class... T>
 	Events::Handled operator()(SDL_QuitEvent const& q, T &&... t) {
-		//oss << "Caught quit event\n";
+		oss << "Caught quit event\n";
 		return { Events::Handled::CODE_QUIT };
 	}
 
@@ -102,7 +102,17 @@ int main(int argc, const char *argv[]) {
 	} else if(!program.link()) {
 		return cout << "Could not link program" << endl, 1;
 	}
-	/*std::string imgPath = share + "brinstar.png";
+	/*cout << "Generating a texture... ";
+	GLuint tex = 0;
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	if(GL_TRUE == glIsTexture(tex)) {
+		cout << "success" << endl;
+		glDeleteTextures(1, &tex);
+	} else {
+		cout << "failure: " << glGetError() << endl;
+	}*/
+	std::string imgPath = share + "link.jpg";
 	cout << "Loading " << imgPath << "... " << flush;
 	{
 		std::ifstream ifs;
@@ -117,7 +127,7 @@ int main(int argc, const char *argv[]) {
 	Texture img{imgPath.c_str()};
 	if(!img.sourced) {
 		cout << "failed (" << img.message << " at line " << img.line << " )" << endl;
-	}*/
+	}
 
 
 	Hnd hnd;
