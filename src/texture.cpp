@@ -3,7 +3,7 @@
 #include <sstream>
 
 namespace View {
-	Texture::Texture(const char *fname, unsigned int flags): fname(fname) {
+	/*Texture::Texture(const char *fname, unsigned int flags): fname(fname) {
 		value = 0;
 		glGenTextures(1, &value);
 		glBindTexture(GL_TEXTURE_2D, value);
@@ -25,18 +25,15 @@ namespace View {
 		created = true;
 		auto result = SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, value, flags);
 		sourced = true;
-		/*
-		//value = SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, flags);
-		sourced = true;
-		//sourced = result;
-		*/
+		// value = SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, flags);
+		// sourced = true;
 		line = __LINE__;
 		message = SOIL_last_result();
-	}
-	/*Texture::Texture(const char *fname, unsigned int flags):
+	}*/
+	Texture::Texture(const char *fname, unsigned int flags):
 			fname(fname), flags(flags) {
 		glCreateTextures(GL_TEXTURE_2D, 1, &value);
-
+		glBindTexture(GL_TEXTURE_2D, value);
 		if(!glIsTexture(value)) {
 			created = sourced = false;
 			auto err = glGetError();
@@ -64,7 +61,7 @@ namespace View {
 			message = "Failed; ";
 		}
 		message += iluErrorString(ilGetError());
-	}*/
+	}
 	Texture::~Texture(void) {
 		if(glIsTexture(value))
 			glDeleteTextures(1, &value);

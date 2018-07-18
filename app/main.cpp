@@ -112,7 +112,7 @@ int main(int argc, const char *argv[]) {
 	} else {
 		cout << "failure: " << glGetError() << endl;
 	}*/
-	/*std::string imgPath = share + "link.jpg";
+	std::string imgPath = share + "link.jpg";
 	cout << "Loading " << imgPath << "... " << flush;
 	{
 		std::ifstream ifs;
@@ -127,7 +127,7 @@ int main(int argc, const char *argv[]) {
 	Texture img{imgPath.c_str()};
 	if(!img.sourced) {
 		cout << "failed (" << img.message << " at line " << img.line << " )" << endl;
-	}*/
+	}
 
 
 	Hnd hnd;
