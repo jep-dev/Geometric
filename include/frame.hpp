@@ -44,10 +44,8 @@ namespace View {
 		/** Stream insertion operator; inserts the most recent message(s)/error(s). */
 		template<class S>
 		friend S& operator<<(S &s, Frame const& f) {
-			return f.message.length() ? (s << "Frame's message:\n" << f.message, s) : s;
-			/*if(f.message.length())
-				s << "Frame's message:\n" << f.message;
-			return s;*/
+			if(f.message.length()) s << "Frame's message:\n" << f.message;
+			return s;
 		}
 		/** Const access of the context. */
 		SDL_GLContext getContext(void) const { return ctx; }
