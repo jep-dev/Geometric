@@ -1,11 +1,10 @@
 #include <iostream>
 #include <iomanip>
 
-#include "events.hpp"
-
-#include "view.hpp"
-#include "shaders.hpp"
 #include "dual.hpp"
+#include "events.hpp"
+#include "frame.hpp"
+#include "shaders.hpp"
 
 struct Hnd;
 struct Hnd: Events::Handler<Hnd> {
@@ -90,10 +89,14 @@ int main(int argc, const char *argv[]) {
 
 	Program program;
 	Shader vert(vertPath.c_str(), VERT), frag(fragPath.c_str(), FRAG);
-	if(!program.attach((vert.compile(), vert))) {
-		return cout << "Could not build " << vertPath << endl, 1;
-	} else if(!program.attach((frag.compile(), frag))) {
-		return cout << "Could not build " << fragPath << endl, 1;
+	if(!vert.compile() || !program.attach(vert)) {
+		cout << "Could not build " << vertPath << endl;
+		if(vert.message.length()) cout << vert.message << endl;
+		return 1;
+	} else if(!frag.compile() || !program.attach(frag)) {
+		cout << "Could not build " << fragPath << endl;
+		if(frag.message.length()) cout << frag.message << endl;
+		return 1;
 	} else if(!program.link()) {
 		return cout << "Could not link program" << endl, 1;
 	}
