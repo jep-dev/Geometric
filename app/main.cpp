@@ -116,10 +116,7 @@ int main(int argc, const char *argv[]) {
 	cout << flush;
 	Texture img{imgPath.c_str()};
 	if(!img.sourced) {
-		cout << "failed (" << img.message << " at line " << img.line << " )";
-		//if(img.message.length())
-			cout << "(" << img.message << ")";
-		cout << endl;
+		cout << "failed (" << img.message << " at line " << img.line << " )" << endl;
 	}
 
 

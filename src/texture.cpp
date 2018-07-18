@@ -4,8 +4,9 @@
 
 namespace View {
 	Texture::Texture(const char *fname, unsigned int flags): fname(fname) {
-		value = 0;
-		glCreateTextures(GL_TEXTURE_2D, 1, &value);
+		/*value = 0;
+		glGenTextures(1, &value);
+		//glCreateTextures(GL_TEXTURE_2D, 1, &value);
 		if(!glIsTexture(value)) {
 			line = __LINE__;
 			created = sourced = false;
@@ -20,9 +21,12 @@ namespace View {
 			line = __LINE__;
 			return;
 		}
+		glBindTexture(GL_TEXTURE_2D, value);
 		created = true;
-		auto result = SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, value, flags);
-		sourced = result;
+		auto result = SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, value, flags);*/
+		value = SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, flags);
+		sourced = true;
+		//sourced = result;
 		line = __LINE__;
 		message = SOIL_last_result();
 	}
