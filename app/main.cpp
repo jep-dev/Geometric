@@ -101,8 +101,8 @@ int main(int argc, const char *argv[]) {
 	} else if(!program.link()) {
 		return cout << "Could not link program" << endl, 1;
 	}
-	auto lena = share + "lenna.png";
-	Texture tex(lena.c_str());
+	auto linkPath = share + "link.jpg";
+	Texture link(linkPath.c_str());
 
 	Hnd hnd;
 	for(auto i = 0; i < 50; i++) {
