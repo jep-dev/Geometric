@@ -7,6 +7,7 @@ namespace View {
 	struct Texture {
 		const char *fname;
 		GLuint value;
+		int width = 0, height = 0;
 		bool created = false, sourced = false;
 		std::string message;
 		bool source(bool force = true);

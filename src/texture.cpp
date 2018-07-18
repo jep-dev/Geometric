@@ -21,13 +21,9 @@ namespace View {
 			value = SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, flags);
 			if(!value) {
 				message = SOIL_last_result();
-				return created = sourced = false;
+				return width = height = created = sourced = false;
 			}
 		}
-		int width, height;
-		unsigned char *image = SOIL_load_image(fname, &width, &height, 0, SOIL_LOAD_AUTO);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-		SOIL_free_image_data(image);
 		return created = sourced = true;
 	}
 	Texture::Texture(void) {
@@ -41,7 +37,7 @@ namespace View {
 		}
 	}
 	Texture::Texture(const char *fname): Texture() {
-		source();
+		source(fname);
 	}
 	Texture::~Texture(void) {
 		if(glIsTexture(value))
