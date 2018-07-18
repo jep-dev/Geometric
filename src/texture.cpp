@@ -1,4 +1,5 @@
 #include "texture.hpp"
+#include <SOIL/SOIL.h>
 #include <sstream>
 
 namespace View {
@@ -10,24 +11,37 @@ namespace View {
 		return sourced;
 	}
 	bool Texture::source(bool force) {
-		glCreateTextures(GL_TEXTURE_2D, 1, &value);
-		std::ostringstream oss;
-		sourced = false;
-		auto err = glGetError();
-		oss << err;
-		switch(glGetError()) {
-			case GL_NO_ERROR:
-				message = "";
-				sourced = true;
-				break;
-			default: break;
-			/*case GL_INVALID_ENUM:
-			case GL_INVALID_VALUE:*/
+		if(!created)
+			return sourced = false;
+		if(sourced && !force) return true;
+		auto flags = SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y;
+		if(created) {
+			SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, value, flags);
+		} else {
+			value = SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, flags);
+			if(!value) {
+				message = SOIL_last_result();
+				return created = sourced = false;
+			}
 		}
-		if(!sourced) message = oss.str();
-		return sourced;
+		return created = sourced = true;
 	}
-	Texture::Texture(void): fname("") {}
-	Texture::Texture(const char *fname): fname(fname) {
+	Texture::Texture(void) {
+		auto err = glGetError();
+		if(err == GL_NO_ERROR) {
+			created = true;
+		} else {
+			std::ostringstream oss;
+			oss << err;
+			message = oss.str();
+		}
+	}
+	Texture::Texture(const char *fname): Texture() {
+		source();
+	}
+	Texture::~Texture(void) {
+		if(glIsTexture(value))
+			glDeleteTextures(1, &value);
+		value = 0;
 	}
 }

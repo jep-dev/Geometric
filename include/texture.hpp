@@ -7,12 +7,13 @@ namespace View {
 	struct Texture {
 		const char *fname;
 		GLuint value;
-		bool sourced = false;
+		bool created = false, sourced = false;
 		std::string message;
 		bool source(bool force = true);
 		bool source(const char*, bool force = true);
-		Texture(void);
 		Texture(const char *);
+		Texture(void);
+		virtual ~Texture(void);
 	};
 }
 
