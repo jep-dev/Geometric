@@ -85,7 +85,7 @@ int main(int argc, const char *argv[]) {
 	if(pos == string::npos)
 		delim = "\\", pos = self.find_last_of(delim);
 	share = self.substr(0, pos+1) + ".." + delim + "share" + delim;
-	cout << "self = " << self << "; share = " << share << "." << endl;
+	//cout << "self = " << self << "; share = " << share << "." << endl;
 	string vertPath = share + "default.vert", fragPath = share + "default.frag";
 	static constexpr GLenum VERT = GL_VERTEX_SHADER, FRAG = GL_FRAGMENT_SHADER;
 
@@ -112,7 +112,7 @@ int main(int argc, const char *argv[]) {
 	} else {
 		cout << "failure: " << glGetError() << endl;
 	}*/
-	std::string imgPath = share + "link.jpg";
+	/*std::string imgPath = share + "link.jpg";
 	cout << "Loading " << imgPath << "... " << flush;
 	{
 		std::ifstream ifs;
@@ -127,7 +127,7 @@ int main(int argc, const char *argv[]) {
 	Texture img{imgPath.c_str()};
 	if(!img.sourced) {
 		cout << "failed (" << img.message << " at line " << img.line << " )" << endl;
-	}
+	}*/
 
 
 	Hnd hnd;
