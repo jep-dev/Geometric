@@ -2,7 +2,7 @@
 #define TEXTURE_HPP
 
 #include "view.hpp"
-#include <SOIL/SOIL.h>
+#include <IL/il.h>
 
 namespace View {
 	struct Texture {
@@ -19,9 +19,11 @@ namespace View {
 		*/
 		const char *fname;
 		unsigned int flags;
-		GLuint value = SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, flags);
-		std::string message = SOIL_last_result();
-		Texture(const char*, unsigned int = SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y);
+		GLuint value;
+		bool created = false, sourced = false;
+		ILint width = 0, height = 0;
+		std::string message;
+		Texture(const char*, unsigned int = 0);
 		virtual ~Texture(void);
 	};
 }

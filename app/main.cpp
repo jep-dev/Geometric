@@ -68,6 +68,7 @@ int main(int argc, const char *argv[]) {
 	using namespace glbinding;
 	using std::cout;
 	using std::endl;
+	using std::flush;
 	using std::string;
 
 	View::Frame f;
@@ -102,12 +103,15 @@ int main(int argc, const char *argv[]) {
 		return cout << "Could not link program" << endl, 1;
 	}
 	std::string imgPath = share + "link.jpg";
-	cout << imgPath << ":" << endl;
+	cout << "Loading " << imgPath << "... " << flush;
 	Texture img{imgPath.c_str()};
-	//img.source(imgPath.c_str());
-	if(img.message.length()) {
-		cout << "Could not source " << imgPath << '\n' << img.message << endl;
+	if(!img.sourced) {
+		cout << "failed ";
+		if(img.message.length())
+			cout << "(" << img.message << ")";
+		cout << endl;
 	}
+
 
 	Hnd hnd;
 	for(auto i = 0; i < 50; i++) {
