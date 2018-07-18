@@ -4,7 +4,7 @@
 #include <glbinding/Meta.h>
 #include <glbinding/Version.h>
 
-#include "view.hpp"
+#include "frame.hpp"
 
 namespace View {
 
