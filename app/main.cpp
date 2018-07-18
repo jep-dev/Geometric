@@ -101,9 +101,9 @@ int main(int argc, const char *argv[]) {
 	} else if(!program.link()) {
 		return cout << "Could not link program" << endl, 1;
 	}
-	std::string imgPath = "../share/link.jpg";
+	std::string imgPath = share + "link.jpg";
 	cout << imgPath << ":" << endl;
-	Texture img(imgPath.c_str());
+	Texture img{imgPath.c_str()};
 	//img.source(imgPath.c_str());
 	if(img.message.length()) {
 		cout << "Could not source " << imgPath << '\n' << img.message << endl;

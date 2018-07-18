@@ -41,11 +41,8 @@ namespace View {
 		source(fname);
 	}
 	*/
-	Texture::Texture(const char *fname):
-			value(SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO,
-				SOIL_CREATE_NEW_ID, SOIL_FLAG_INVERT_Y)) {
-		message = SOIL_last_result();
-	}
+	Texture::Texture(const char *fname, unsigned int flags):
+		fname(fname), flags(flags) {}
 	Texture::~Texture(void) {
 		if(glIsTexture(value))
 			glDeleteTextures(1, &value);
