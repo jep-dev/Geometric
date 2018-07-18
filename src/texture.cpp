@@ -14,7 +14,7 @@ namespace View {
 		if(!created)
 			return sourced = false;
 		if(sourced && !force) return true;
-		auto flags = SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y;
+		auto flags = SOIL_FLAG_INVERT_Y;
 		if(created) {
 			SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, value, flags);
 		} else {
@@ -27,6 +27,7 @@ namespace View {
 		return created = sourced = true;
 	}
 	Texture::Texture(void) {
+		glCreateTextures(GL_TEXTURE_2D, 1, &value);
 		auto err = glGetError();
 		if(err == GL_NO_ERROR) {
 			created = true;

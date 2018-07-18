@@ -5,8 +5,8 @@
 
 namespace View {
 	struct Texture {
-		const char *fname;
-		GLuint value;
+		const char *fname = "";
+		GLuint value = 0;
 		int width = 0, height = 0;
 		bool created = false, sourced = false;
 		std::string message;

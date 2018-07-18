@@ -101,8 +101,13 @@ int main(int argc, const char *argv[]) {
 	} else if(!program.link()) {
 		return cout << "Could not link program" << endl, 1;
 	}
-	auto linkPath = share + "link.jpg";
-	Texture link(linkPath.c_str());
+	auto imgPath = share + "link.jpg";
+	Texture img;
+	cout << imgPath << ":" << endl;
+	img.source(imgPath.c_str());
+	if(img.message.length()) {
+		cout << "Could not source " << imgPath << '\n' << img.message << endl;
+	}
 
 	Hnd hnd;
 	for(auto i = 0; i < 50; i++) {
