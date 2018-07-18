@@ -32,10 +32,8 @@ namespace View {
 
 	bool source(GLuint shader, const char *filename) {
 		bool status;
-		//std::string lines = Streams::readLines(filename, &status);
 		std::string lines;
 		if(!Streams::readLines(filename, lines)) return false;
-		//if(!status) return false;
 		auto buf = lines.c_str();
 		auto gbuf = &lines[0];
 		glShaderSource(shader, 1, &gbuf, nullptr);
@@ -80,6 +78,7 @@ namespace View {
 	struct Shader {
 		GLuint value;
 		bool sourced = false, compiled = false;
+		std::string message;
 		operator GLuint(void) const { return value; }
 		bool source(const char *fname, bool force = true) {
 			compiled = false;
@@ -88,7 +87,12 @@ namespace View {
 		bool compile(bool force = true) {
 			if(!sourced) return false;
 			if(compiled && !force) return true;
-			return compiled = View::compile(value);
+			compiled = View::compile(value);
+			GLint len;
+			glGetShaderiv(value, GL_INFO_LOG_LENGTH, &len);
+			message = std::string(unsigned(len), '\0');
+			glGetShaderInfoLog(value, len, nullptr, &message[0]);
+			return compiled;
 		}
 		Shader(GLuint value): value(value) {}
 		Shader(GLuint value, const char *fname): Shader(value) { source(fname); }
