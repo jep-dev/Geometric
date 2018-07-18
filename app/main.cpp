@@ -4,7 +4,8 @@
 #include "dual.hpp"
 #include "events.hpp"
 #include "frame.hpp"
-#include "shaders.hpp"
+#include "shader.hpp"
+#include "texture.hpp"
 
 struct Hnd;
 struct Hnd: Events::Handler<Hnd> {
@@ -100,6 +101,8 @@ int main(int argc, const char *argv[]) {
 	} else if(!program.link()) {
 		return cout << "Could not link program" << endl, 1;
 	}
+	auto lena = share + "lenna.png";
+	Texture tex(lena.c_str());
 
 	Hnd hnd;
 	for(auto i = 0; i < 50; i++) {

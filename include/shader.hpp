@@ -1,5 +1,5 @@
-#ifndef SHADERS_HPP
-#define SHADERS_HPP
+#ifndef SHADER_HPP
+#define SHADER_HPP
 
 #include <deque>
 #include <map>
