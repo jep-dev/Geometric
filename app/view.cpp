@@ -22,26 +22,24 @@ struct Hnd: Events::Handler<Hnd> {
 	}
 	template<class... T>
 	Events::Handled operator()(SDL_WindowEvent const& w, T &&... t) {
-		//oss << "Caught literally any event\n";
-		oss << "Caught window event type " << int(w.event) << ";\n";
 		switch(w.event) {
 			case SDL_WINDOWEVENT_CLOSE:
 				oss << "Caught window close event";
 				return { Events::Handled::CODE_QUIT };
-			case SDL_WINDOWEVENT_ENTER: oss << "Window entered\n"; break;
-			case SDL_WINDOWEVENT_EXPOSED: oss << "Window exposed\n"; break;
-			case SDL_WINDOWEVENT_LEAVE: oss << "Window left\n"; break;
-			case SDL_WINDOWEVENT_MOVED: oss << "Window moved\n"; break;
-			case SDL_WINDOWEVENT_NONE: oss << "Window... none?\n"; break;
-			case SDL_WINDOWEVENT_MAXIMIZED: oss << "Window maximized\n"; break;
-			case SDL_WINDOWEVENT_RESTORED: oss << "Window restored\n"; break;
+			case SDL_WINDOWEVENT_ENTER: /*oss << "Window entered\n"; */ break;
+			case SDL_WINDOWEVENT_EXPOSED: /*oss << "Window exposed\n"; */ break;
+			case SDL_WINDOWEVENT_LEAVE: /*oss << "Window left\n"; */ break;
+			case SDL_WINDOWEVENT_MOVED: /*oss << "Window moved\n"; */ break;
+			case SDL_WINDOWEVENT_NONE: /*oss << "Window... none?\n"; */ break;
+			case SDL_WINDOWEVENT_MAXIMIZED: /*oss << "Window maximized\n"; */ break;
+			case SDL_WINDOWEVENT_RESTORED: /*oss << "Window restored\n"; */ break;
 			case SDL_WINDOWEVENT_HIDDEN:
 			case SDL_WINDOWEVENT_MINIMIZED:
-			case SDL_WINDOWEVENT_SHOWN: oss << "Window visibility toggled\n"; break;
+			case SDL_WINDOWEVENT_SHOWN: /*oss << "Window visibility toggled\n"; */ break;
 			case SDL_WINDOWEVENT_RESIZED:
-			case SDL_WINDOWEVENT_SIZE_CHANGED: oss << "Window resized\n"; break;
+			case SDL_WINDOWEVENT_SIZE_CHANGED: /*oss << "Window resized\n"; */ break;
 			case SDL_WINDOWEVENT_FOCUS_GAINED:
-			case SDL_WINDOWEVENT_FOCUS_LOST: oss << "Window focus changed\n"; break;
+			case SDL_WINDOWEVENT_FOCUS_LOST: /*oss << "Window focus changed\n"; */ break;
 			default: break;
 		}
 		return { Events::Handled::CODE_PASS };
