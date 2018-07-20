@@ -14,8 +14,7 @@ struct Hnd: Events::Handler<Hnd> {
 	template<class... T>
 	Events::Handled operator()(SDL_KeyboardEvent const& k, T &&... t) {
 		switch(k.keysym.sym) {
-			case SDLK_ESCAPE:
-				//oss << "Caught escape keypress\n";
+			case SDLK_ESCAPE: case SDLK_q:
 				return { Events::Handled::CODE_QUIT };
 			default: break;
 		}
@@ -23,29 +22,35 @@ struct Hnd: Events::Handler<Hnd> {
 	}
 	template<class... T>
 	Events::Handled operator()(SDL_WindowEvent const& w, T &&... t) {
+		//oss << "Caught literally any event\n";
 		switch(w.type) {
 			case SDL_WINDOWEVENT_CLOSE:
-				oss << "Caught window close event\n";
+				oss << "Caught window close event";
 				return { Events::Handled::CODE_QUIT };
-			case SDL_WINDOWEVENT_MOVED: break;
-				oss << "Window moved to " << w.data1 << ", " << w.data2 << "\n";
-				return { Events::Handled::CODE_PASS };
-			case SDL_WINDOWEVENT_ENTER:
-				oss << "Window entered\n";
-				return { Events::Handled::CODE_PASS };
-			case SDL_WINDOWEVENT_LEAVE: break;
-				oss << "Window left\n";
-				return { Events::Handled::CODE_PASS };
-			case SDL_WINDOWEVENT_RESIZED: break;
-				oss << "Window resized\n";
-				return { Events::Handled::CODE_PASS };
-			default: return { Events::Handled::CODE_PASS };
+			case SDL_WINDOWEVENT_ENTER: oss << "Window entered\n"; break;
+			case SDL_WINDOWEVENT_HIDDEN: oss << "Window hidden\n"; break;
+			case SDL_WINDOWEVENT_LEAVE: oss << "Window left\n"; break;
+			case SDL_WINDOWEVENT_MAXIMIZED: oss << "Window maximized\n"; break;
+			case SDL_WINDOWEVENT_MOVED: oss << "Window moved\n"; break;
+			case SDL_WINDOWEVENT_NONE: oss << "Window... none?\n"; break;
+			case SDL_WINDOWEVENT_RESIZED: oss << "Window resized\n"; break;
+			case SDL_WINDOWEVENT_RESTORED: oss << "Window restored\n"; break;
+			case SDL_WINDOWEVENT_SIZE_CHANGED: oss << "Window resized\n"; break;
+			default: break;
 		}
+		return { Events::Handled::CODE_PASS };
 	}
 	template<class... T>
 	Events::Handled operator()(SDL_QuitEvent const& q, T &&... t) {
-		oss << "Caught quit event\n";
+		oss << "Caught quit event";
 		return { Events::Handled::CODE_QUIT };
+	}
+	template<class... T>
+	Events::Handled operator()(SDL_MouseButtonEvent const& q, T &&... t) {
+		oss << "Caught mouse " << int(q.button)
+			<< " " << ((q.type == SDL_MOUSEBUTTONDOWN) ? "press" : "release")
+			<< " at (" << q.x << ", " << q.y << ")\n";
+		return { Events::Handled::CODE_PASS };
 	}
 
 	template<class S, class... T>
@@ -57,7 +62,7 @@ struct Hnd: Events::Handler<Hnd> {
 	friend S& operator<<(S& s, Hnd const& hnd) {
 		auto res = hnd.oss.str();
 		if(res.length())
-			s << "Hnd reports:\n" << res;
+			s << res;
 		return s;
 	}
 };
@@ -102,6 +107,7 @@ int main(int argc, const char *argv[]) {
 	} else if(!program.link()) {
 		return cout << "Could not link program" << endl, 1;
 	}
+	glUseProgram(program);
 	/*cout << "Generating a texture... ";
 	GLuint tex = 0;
 	glGenTextures(1, &tex);
@@ -140,6 +146,6 @@ int main(int argc, const char *argv[]) {
 
 		SDL_Delay(100);
 	}
-	std::cout << hnd;
-	std::cout << f;
+	std::cout << "Hnd's message:\n" << hnd << "\n"
+		"Frame's message:\n" << f << std::endl;
 }
