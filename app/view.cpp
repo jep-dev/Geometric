@@ -78,7 +78,7 @@ int main(int argc, const char *argv[]) {
 	glClear(GL_COLOR_BUFFER_BIT);
 	auto glErr = glGetError();
 	if(glErr != GL_NO_ERROR)
-		std::cout << "There was a GL ERROR! " << glErr << std::endl;
+		std::cout << "A GL error occurred: " << glErr << std::endl;
 
 	string self = argv[0], delim = "/", share = "share" + delim;
 	auto pos = self.find_last_of(delim);
@@ -112,7 +112,7 @@ int main(int argc, const char *argv[]) {
 	} else {
 		cout << "failure: " << glGetError() << endl;
 	}*/
-	std::string imgPath = share + "link.jpg";
+	/*std::string imgPath = share + "link.jpg";
 	cout << "Loading " << imgPath << "... " << flush;
 	{
 		std::ifstream ifs;
@@ -127,7 +127,7 @@ int main(int argc, const char *argv[]) {
 	Texture img{imgPath.c_str()};
 	if(!img.sourced) {
 		cout << "failed (" << img.message << " at line " << img.line << " )" << endl;
-	}
+	}*/
 
 
 	Hnd hnd;
