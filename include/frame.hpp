@@ -20,7 +20,7 @@ namespace View {
 		/** Stream insertion operator; inserts the most recent message(s)/error(s). */
 		template<class S>
 		friend S& operator<<(S &s, Frame const& f) {
-			if(f.message.length()) s << "Frame's message: " << f.message << '\n';
+			if(f.message.length()) s << f.message;
 			return s;
 		}
 		/** Const access of the context. */
