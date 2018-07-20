@@ -17,14 +17,7 @@ namespace View {
 		BlueSize blue = {8, &meet_attr};
 		SDL_GLContext ctx;
 		Context& set(void) {
-			set_attr(Major::key, major.value);
-			set_attr(Minor::key, minor.value);
-			set_attr(Mask::key, mask.value);
-			set_attr(DoubleBuffer::key, buffered.value);
-			set_attr(AlphaSize::key, alpha.value);
-			set_attr(RedSize::key, red.value);
-			set_attr(GreenSize::key, green.value);
-			set_attr(BlueSize::key, blue.value);
+			set_attrs(major, minor, mask, buffered, alpha, red, green, blue);
 			return *this;
 		}
 		operator SDL_GLContext(void) const { return ctx; }
@@ -44,7 +37,7 @@ namespace View {
 		/** Stream insertion operator; inserts the most recent message(s)/error(s). */
 		template<class S>
 		friend S& operator<<(S &s, Frame const& f) {
-			if(f.message.length()) s << "Frame's message:\n" << f.message;
+			if(f.message.length()) s << "Frame's message: " << f.message << '\n';
 			return s;
 		}
 		/** Const access of the context. */
