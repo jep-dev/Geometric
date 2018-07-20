@@ -25,6 +25,22 @@ namespace View {
 	void set_attr(SDL_GLattr key, int value) {
 		SDL_GL_SetAttribute(key, value);
 	}
+	template<class T>
+	void set_attr(T const& t) {
+		set_attr(T::key, t.value);
+	}
+	template<class... T>
+	void set_attrs(T &&... t) {}
+	template<class S, class... T>
+	void set_attrs(S && s, T &&... t) {
+		set_attr(s);
+		set_attrs(std::forward<T>(t)...);
+	}
+	template<class... T>
+	void set_attrs(SDL_GLattr key, int value, T &&... t) {
+		set_attr(key, value);
+		set_attrs(std::forward<T>(t)...);
+	}
 	bool ignore_attr(int, int) { return true; }
 	bool ignore_attr(SDL_GLattr, int) { return true; }
 	bool match_attr(int lhs, int rhs) { return lhs == rhs; }
