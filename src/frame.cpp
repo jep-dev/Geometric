@@ -15,17 +15,6 @@ Frame::Frame(void) {
 
 	int init = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 
-	static constexpr auto
-		key_major = SDL_GL_CONTEXT_MAJOR_VERSION,
-			key_minor = SDL_GL_CONTEXT_MINOR_VERSION,
-		key_doubled = SDL_GL_DOUBLEBUFFER,
-		key_alpha = SDL_GL_ALPHA_SIZE, key_red = SDL_GL_RED_SIZE,
-			key_green = SDL_GL_GREEN_SIZE, key_blue = SDL_GL_BLUE_SIZE;
-	static constexpr int
-		value_major = 3, value_minor = 3, value_mask = SDL_GL_CONTEXT_PROFILE_CORE,
-		value_buffered = 1, value_alpha = 8, value_red = 8, value_green = 8, value_blue = 8;
-
-
 	do {
 		if(init) {
 			oss << "Unable to initialize.\n";
@@ -71,7 +60,7 @@ Frame::Frame(void) {
 			if(!(ctx.alpha && ctx.red && ctx.green && ctx.blue))
 				print_format(oss << "; expected ", ctx.alpha.set(), ctx.red.set(),
 					ctx.green.set(), ctx.blue.set());
-			oss << ".\n";
+			oss << ".";
 		}
 	} while(0);
 	message += oss.str();

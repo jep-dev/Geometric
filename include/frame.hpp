@@ -3,34 +3,17 @@
 
 #include "view.hpp"
 #include "attribute.hpp"
+#include "context.hpp"
 
 namespace View {
-
-	struct Context {
-		Major major = {3, &meet_attr};
-		Minor minor = {3, &meet_attr};
-		Mask mask = {SDL_GL_CONTEXT_PROFILE_CORE, &mask_attr};
-		DoubleBuffer buffered = {true, &meet_attr};
-		AlphaSize alpha = {8, &ignore_attr};
-		RedSize red = {8, &meet_attr};
-		GreenSize green = {8, &meet_attr};
-		BlueSize blue = {8, &meet_attr};
-		SDL_GLContext ctx;
-		Context& set(void) {
-			set_attrs(major, minor, mask, buffered, alpha, red, green, blue);
-			return *this;
-		}
-		operator SDL_GLContext(void) const { return ctx; }
-		virtual ~Context(void) { if(ctx) SDL_GL_DeleteContext(ctx); }
-	};
 
 	/** Represents a window and associated GL context. */
 	struct Frame {
 	public:
+		int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
 		std::string message;
 	protected:
-		int center = SDL_WINDOWPOS_CENTERED,
-			flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
+		static constexpr int center = SDL_WINDOWPOS_CENTERED;
 		SDL_Window *win = 0;
 		Context ctx;
 	public:
@@ -47,7 +30,7 @@ namespace View {
 		/** Constructor; currently initializes and sets a handful of hard-coded GL attributes */
 		Frame(void);
 		/** Destructor; destroys the stored window. */
-		~Frame(void) {
+		virtual ~Frame(void) {
 			if(win)
 				SDL_DestroyWindow(win);
 			win = 0;
