@@ -15,9 +15,7 @@ namespace View {
 		BlueSize blue = {8, &meet_attr};
 		SDL_GLContext ctx;
 		Context& set(void);
-			/*set_attrs(major, minor, mask, buffered, alpha, red, green, blue);
-			return *this;*/
-		operator SDL_GLContext(void) const;// { return ctx; }
+		operator SDL_GLContext(void) const;
 		virtual ~Context(void) { if(ctx) SDL_GL_DeleteContext(ctx); }
 	};
 }
