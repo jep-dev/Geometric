@@ -136,6 +136,14 @@ int main(int argc, const char *argv[]) {
 	}
 	glUseProgram(program);
 
+	auto mvpString = "mvp";
+	auto mvp = glGetUniformLocation(program, mvpString);
+	if(mvp < 0) {
+		cout << "Could not find uniform " << mvpString << '!' << endl;
+		return 1;
+	}
+
+
 	Hnd hnd;
 	for(auto i = 0; i < 50; i++) {
 		if(!hnd.poll())
