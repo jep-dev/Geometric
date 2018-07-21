@@ -142,6 +142,13 @@ int main(int argc, const char *argv[]) {
 		cout << "Could not find uniform " << mvpString << '!' << endl;
 		return 1;
 	}
+	GLfloat mvpData[16] = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	};
+	glUniformMatrix4fv(mvp, 1, GL_FALSE, mvpData);
 
 
 	Hnd hnd;
