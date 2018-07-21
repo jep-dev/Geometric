@@ -112,6 +112,21 @@ int main(int argc, const char *argv[]) {
 		return 1;
 	}
 
+	GLfloat points[][3] = {
+		{-1, -1, 0}, {1, -1, 0}, {1, 1, 0},
+		{-1, -1, 0}, {1, 1, 0}, {-1, 1, 0}
+	};
+
+	GLuint vao, vbo;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
+	glBindAttribLocation(program, 0, "pos");
+
 	if(!program.link()) {
 		cout << "Could not link program";
 		if(program.message.length())
