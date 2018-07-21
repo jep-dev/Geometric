@@ -103,6 +103,7 @@ namespace View {
 	struct Program {
 		GLuint value;
 		bool attached = false, linked = false;
+		std::string message;
 		operator GLuint(void) const { return value; }
 		template<class... S>
 		bool attach(S &&... s) {
@@ -113,7 +114,13 @@ namespace View {
 		bool link(bool force = true) {
 			if(!attached && force) linked = false;
 			if(linked && !force) return true;
-			return linked = View::link(value);
+			linked = View::link(value);
+			int len;
+			glGetProgramiv(*this, GL_INFO_LOG_LENGTH, &len);
+			if(len <= 0) return linked;
+			message = std::string(len, '\0');
+			glGetProgramInfoLog(*this, len, nullptr, &message[0]);
+			return linked;
 		}
 		Program(GLuint value): value(value) {}
 		Program(void): Program(glCreateProgram()) {}
