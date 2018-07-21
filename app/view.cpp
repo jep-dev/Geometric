@@ -72,6 +72,7 @@ struct Hnd: Events::Handler<Hnd> {
 };
 
 int main(int argc, const char *argv[]) {
+	static constexpr int N = -1;
 	using namespace View;
 	using namespace gl;
 	using namespace glbinding;
@@ -152,7 +153,7 @@ int main(int argc, const char *argv[]) {
 
 
 	Hnd hnd;
-	for(auto i = 0; i < 50; i++) {
+	for(auto i = 0;; i++) {
 		if(!hnd.poll())
 			break;
 		// Task
@@ -160,7 +161,9 @@ int main(int argc, const char *argv[]) {
 		// Render
 
 		SDL_Delay(100);
+		if((N >= 0) && (i >= N)) break;
 	}
 	std::cout << "Hnd's message:\n" << hnd << "\n"
 		"Frame's message:\n" << f << std::endl;
+	SDL_Quit();
 }
