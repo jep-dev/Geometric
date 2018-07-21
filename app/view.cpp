@@ -101,44 +101,25 @@ int main(int argc, const char *argv[]) {
 	Program program;
 	Shader vert(vertPath.c_str(), VERT), frag(fragPath.c_str(), FRAG);
 	if(!vert.compile() || !program.attach(vert)) {
-		cout << "Could not build " << vertPath << endl;
-		if(vert.message.length()) cout << vert.message << endl;
+		cout << "Could not build " << vertPath;
+		if(vert.message.length()) cout << ": " << vert.message;
+		cout << endl;
 		return 1;
 	} else if(!frag.compile() || !program.attach(frag)) {
-		cout << "Could not build " << fragPath << endl;
-		if(frag.message.length()) cout << frag.message << endl;
+		cout << "Could not build " << fragPath;
+		if(frag.message.length()) cout << ": " << frag.message;
+		cout << endl;
 		return 1;
-	} else if(!program.link()) {
-		return cout << "Could not link program" << endl, 1;
+	}
+
+	if(!program.link()) {
+		cout << "Could not link program";
+		if(program.message.length())
+			cout << ": " << program.message;
+		cout << endl;
+		return 1;
 	}
 	glUseProgram(program);
-	/*cout << "Generating a texture... ";
-	GLuint tex = 0;
-	glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	if(GL_TRUE == glIsTexture(tex)) {
-		cout << "success" << endl;
-		glDeleteTextures(1, &tex);
-	} else {
-		cout << "failure: " << glGetError() << endl;
-	}*/
-	/*std::string imgPath = share + "link.jpg";
-	cout << "Loading " << imgPath << "... " << flush;
-	{
-		std::ifstream ifs;
-		ifs.open(imgPath.c_str());
-		if(!ifs.good()) {
-			cout << "bad path; ";
-		}
-		if(ifs.is_open())
-			ifs.close();
-	}
-	cout << flush;
-	Texture img{imgPath.c_str()};
-	if(!img.sourced) {
-		cout << "failed (" << img.message << " at line " << img.line << " )" << endl;
-	}*/
-
 
 	Hnd hnd;
 	for(auto i = 0; i < 50; i++) {
