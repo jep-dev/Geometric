@@ -10,7 +10,6 @@
 auto lambda = [](char) { return ""; };
 auto make_lambda(void) { return [](char) { return ""; }; }
 int main(int argc, const char *argv[]) {
-	//auto lambda2 = [] (unsigned) -> std::string { return ""; };
 	using std::cout;
 	using std::endl;
 	using std::flush;
