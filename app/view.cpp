@@ -72,7 +72,6 @@ struct Hnd: Events::Handler<Hnd> {
 };
 
 int main(int argc, const char *argv[]) {
-	static constexpr int N = -1;
 	using namespace View;
 	using namespace gl;
 	using namespace glbinding;
@@ -80,6 +79,14 @@ int main(int argc, const char *argv[]) {
 	using std::endl;
 	using std::flush;
 	using std::string;
+
+	int N = -1;
+	if(argc > 1) {
+		std::stringstream ss;
+		ss << argv[1];
+		ss >> N;
+		if(ss.fail()) N = -1;
+	}
 
 	View::Frame f;
 	Binding::initialize(false);
