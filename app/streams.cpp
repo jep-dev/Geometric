@@ -6,7 +6,7 @@
 #include "reader.hpp"
 #include "utilities.hpp"
 
-namespace Main {
+int main(int argc, const char *argv[]) {
 	using std::string;
 	using std::cout;
 	using std::endl;
@@ -18,10 +18,6 @@ namespace Main {
 
 	using Streams::Reader;
 	using Streams::readLines;
-}
-
-int main(int argc, const char *argv[]) {
-	using namespace Main;
 	string self = argv[0], share, vert, frag;
 	string delim = "/", sep = " | ";
 	auto pos = self.find_last_of(delim);
