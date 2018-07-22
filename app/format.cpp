@@ -1,13 +1,11 @@
 #include <iostream>
-#include <sstream>
 #include <iomanip>
 #include <array>
 #include <vector>
 #include <limits>
-#include <math.h>
 #include <functional>
 
-#include "pretty.hpp"
+#include "pretty.tpp"
 
 #include "quaternion.hpp"
 #include "quaternion.tpp"
