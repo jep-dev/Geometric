@@ -1,12 +1,11 @@
-#include "utilities.hpp"
-#include <utility>
-#include "pretty.hpp"
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <tuple>
 #include <vector>
+
+#include "utilities.hpp"
+#include "pretty.tpp"
 
 struct False : std::false_type { };
 struct True : std::true_type { };
