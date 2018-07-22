@@ -17,3 +17,6 @@ You will also probably need to install drivers for your CPU/GPU; check for avail
 
 ## Building
 Simply run `make` to build all of the libraries and executables. To build a specific executable, e.g. `bin/view`, run `make bin/view`. This project can be built in parallel using `make -jN` for N threads, or just `make -j` to let Make decide the number of threads.
+
+## Installation
+Currently, there is no mechanism to install any of the executables or libraries; however, installation is not necessary to run the executables or use the libraries. See 'Usage' for more information.
