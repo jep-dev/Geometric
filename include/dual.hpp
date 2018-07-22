@@ -1,7 +1,9 @@
 #ifndef DUAL_HPP
 #define DUAL_HPP
 
+///@cond
 #include <algorithm>
+///@endcond
 
 /** A dual quaternion with a flat structure. */
 template<class S> struct DualQuaternion {
