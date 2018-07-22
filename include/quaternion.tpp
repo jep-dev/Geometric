@@ -1,7 +1,6 @@
 #ifndef QUATERNION_TPP
 #define QUATERNION_TPP
 
-#include <iostream>
 #include <sstream>
 
 template<class L, class S>
