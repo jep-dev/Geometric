@@ -1,7 +1,8 @@
 #ifndef PRETTY_HPP
 #define PRETTY_HPP
 
-#include <sstream>
+#include <string>
+
 // Future support for reflection may add "typename(type)" to replace all of this.
 
 #if defined(__unix__)
@@ -25,31 +26,9 @@ template<class... T> struct Pretty {
 	/** Stream insertion operator; strips all but the type sequence from 'pretty'. */
     template<class S>
     friend S& operator<<(S& s, Pretty const& p) {
-		using namespace std;
-		string unknown = "(unknown)", orig = pretty(), lhs, rhs;
-#ifdef HAS_FUNCSIG
-		lhs = "<", rhs = ">";
-#elif defined HAS_PRETTY
-		lhs = "{", rhs = "}";
-#else
-		return s << unknown, s;
-#endif
-		// Match the earliest opening and latest closing brackets
-		auto p0 = orig.find_first_of(lhs), p1 = orig.find_last_of(rhs);
-		if(p0 == string::npos || p1 == string::npos) return s << unknown, s;
-		p0++; // Offset by the width of the opening character
-		auto dp = p1 - p0; // Resulting width
-		if(p0 > p1) return s << unknown, s; // Inverted range
-		auto result = orig.substr(p0, dp); // Range interior
-		// Trim the space possibly used to separate adjacent brackets
-		if(result[result.length()-1] == ' ') result.erase(result.length()-1);
-		return s << result, s;
-    }
-	operator std::string(void) const {
-		std::ostringstream ss;
-		ss << *this;
-		return ss.str();
+		return s << std::string(p), s;
 	}
+	operator std::string(void) const;
 };
 
 /** Returns an instance of Pretty with the given types in the style of make_tuple. */
