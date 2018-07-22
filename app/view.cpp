@@ -127,8 +127,10 @@ int main(int argc, const char *argv[]) {
 			mzw = 2*far*near/(near-far),
 			mwz = -1;
 	GLfloat points[][3] = {
-		{-1, -1, 0}, {1, -1, 0}, {1, 1, 0},
-		{-1, -1, 0}, {1, 1, 0}, {-1, 1, 0}
+		/*{-1, -1, 0}, {1, -1, 0}, {1, 1, 0},
+		{-1, -1, 0}, {1, 1, 0}, {-1, 1, 0}*/
+		{-1, mid, -1}, {1, mid, -1}, {1, mid, 1},
+		{-1, mid, -1}, {1, mid, 1}, {-1, mid, 1}
 	};
 
 	GLuint vao, vbo;
@@ -137,7 +139,7 @@ int main(int argc, const char *argv[]) {
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
 	glBindAttribLocation(program, 0, "pos");
 
@@ -159,8 +161,8 @@ int main(int argc, const char *argv[]) {
 	GLfloat mvpData[16] = {
 		mx, 0, 0, 0,
 		0, my, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 0
+		0, 0, mzw, mzz,
+		0, 0, 0, mwz
 	};
 	glUniformMatrix4fv(mvp, 1, GL_FALSE, mvpData);
 
