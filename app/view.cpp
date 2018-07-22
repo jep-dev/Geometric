@@ -127,10 +127,10 @@ int main(int argc, const char *argv[]) {
 			mzw = 2*far*near/(near-far),
 			mwz = -1;
 	GLfloat points[][3] = {
-		/*{-1, -1, 0}, {1, -1, 0}, {1, 1, 0},
-		{-1, -1, 0}, {1, 1, 0}, {-1, 1, 0}*/
-		{-1, mid, -1}, {1, mid, -1}, {1, mid, 1},
-		{-1, mid, -1}, {1, mid, 1}, {-1, mid, 1}
+		{-.5, -.5, 0}, {.5, -.5, 0}, {.5, .5, 0},
+		{-.5, -.5, 0}, {.5, .5, 0}, {-.5, .5, 0}
+		/*{-1, mid, -1}, {1, mid, -1}, {1, mid, 1},
+		{-1, mid, -1}, {1, mid, 1}, {-1, mid, 1}*/
 	};
 
 	GLuint vao, vbo;
@@ -159,13 +159,16 @@ int main(int argc, const char *argv[]) {
 		return 1;
 	}
 	GLfloat mvpData[16] = {
-		mx, 0, 0, 0,
+		/*mx, 0, 0, 0,
 		0, my, 0, 0,
 		0, 0, mzw, mzz,
-		0, 0, 0, mwz
+		0, 0, 0, mwz*/
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
 	};
 	glUniformMatrix4fv(mvp, 1, GL_FALSE, mvpData);
-
 
 	Hnd hnd;
 	for(auto i = 0;; i++) {
