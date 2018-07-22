@@ -1,9 +1,8 @@
 #include <functional>
 #include <iostream>
-#include <sstream>
 #include <iomanip>
 
-#include "pretty.hpp"
+#include "pretty.tpp"
 
 #define LINE() " [" << __LINE__ << "]  "
 
