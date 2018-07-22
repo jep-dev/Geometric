@@ -1,0 +1,21 @@
+body {
+    background: black;
+    color: white;
+}
+img[src$='.png'] {
+    background: white;
+    filter: invert(100%) hue-rotate(180deg);
+}
+.memberdecls td, h2, .memtitle, .memitem, .memproto, .memdoc, .title, .headertitle {
+    background: black;
+}
+.directory .even td {
+    background: #101010;
+}
+.directory tr:not(.even) td {
+    background: #151515;
+}
+.memdoc, .memproto {
+    text-shadow: -1px -1px white;
+}
+#MSearchBox img { background: transparent; }
