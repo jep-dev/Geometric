@@ -67,4 +67,13 @@ Frame::Frame(void) {
 	message += SDL_GetError();
 }
 
+Frame& Frame::clear(void) {
+	glClear(GL_COLOR_BUFFER_BIT);
+	return *this;
+}
+Frame& Frame::draw(void) {
+	SDL_GL_SwapWindow(win);
+	return *this;
+}
+
 }

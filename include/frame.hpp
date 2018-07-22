@@ -22,6 +22,8 @@ public:
 		if(f.message.length()) s << f.message;
 		return s;
 	}
+	Frame& clear(void);
+	Frame& draw(void);
 	/** Const access of the context. */
 	SDL_GLContext getContext(void) const { return ctx; }
 	/** Const access of the window. */
