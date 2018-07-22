@@ -15,6 +15,12 @@ Altogether, you can install the requirements using the following:
 
 You will also probably need to install drivers for your CPU/GPU; check for available drivers in the "Additional Drivers" section of your settings.
 
+Finally, if you'd like to build the documentation, you'll need:
+* Doxygen: `sudo apt-get install doxygen{,-latex}`
+* Graphviz: `sudo apt-get install graphviz`
+The documentation is written in Doxygen format, so other documentation tools that can parse Doxygen
+comments will work as well.
+
 ## Building
 Simply run `make` to build all of the libraries and executables. To build a specific executable, e.g. `bin/view`, run `make bin/view`. This project can be built in parallel using `make -jN` for N threads, or just `make -j` to let Make decide the number of threads.
 
