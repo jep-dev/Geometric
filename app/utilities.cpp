@@ -1,5 +1,6 @@
 #include <array>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 #include "utilities.hpp"
