@@ -20,3 +20,6 @@ Simply run `make` to build all of the libraries and executables. To build a spec
 
 ## Installation
 Currently, there is no mechanism to install any of the executables or libraries; however, installation is not necessary to run the executables or use the libraries. See 'Usage' for more information.
+
+## Usage
+Most executables ignore command-line arguments; run from the project's root directory, as in `bin/view` to run the executable corresponding to `app/view.cpp`. Without static linkage or additional steps, none of the executables are expected to work from another directory, including their own, as in `./view` from `bin/`. Static linkage is not currently implemented, but will be by the first release.
