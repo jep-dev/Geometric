@@ -1,11 +1,13 @@
 #ifndef UTILITIES_HPP
 #define UTILITIES_HPP
 
+///@cond
 #include <algorithm>
 #include <limits>
 #include <string>
 #include <utility>
 #include <math.h>
+///@endcond
 
 namespace Detail {
 

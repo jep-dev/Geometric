@@ -1,7 +1,9 @@
 #ifndef EVENTS_HPP
 #define EVENTS_HPP
 
+///@cond
 #include <utility>
+///@endcond
 
 #include <SDL.h>
 

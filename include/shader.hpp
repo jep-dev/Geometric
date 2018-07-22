@@ -1,16 +1,15 @@
 #ifndef SHADER_HPP
 #define SHADER_HPP
 
+///@cond
 #include <deque>
 #include <map>
 #include <utility>
 #include <vector>
+///@endcond
 
 #include "reader.hpp"
 #include "view.hpp"
-
-#include <glbinding/Binding.h>
-#include <glbinding/gl/gl.h>
 
 namespace View {
 
