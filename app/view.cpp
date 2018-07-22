@@ -120,6 +120,12 @@ int main(int argc, const char *argv[]) {
 		return 1;
 	}
 
+	float near = 1, far = 5, mid = (near + far)/2,
+			right = 1, top = 1, width = 2*right, height = 2*top,
+			mx = near/right, my = near/top,
+			mzz = (far+near)/(near-far),
+			mzw = 2*far*near/(near-far),
+			mwz = -1;
 	GLfloat points[][3] = {
 		{-1, -1, 0}, {1, -1, 0}, {1, 1, 0},
 		{-1, -1, 0}, {1, 1, 0}, {-1, 1, 0}
@@ -151,10 +157,10 @@ int main(int argc, const char *argv[]) {
 		return 1;
 	}
 	GLfloat mvpData[16] = {
-		1, 0, 0, 0,
-		0, 1, 0, 0,
+		mx, 0, 0, 0,
+		0, my, 0, 0,
 		0, 0, 1, 0,
-		0, 0, 0, 1
+		0, 0, 0, 0
 	};
 	glUniformMatrix4fv(mvp, 1, GL_FALSE, mvpData);
 
@@ -166,11 +172,16 @@ int main(int argc, const char *argv[]) {
 		// Task
 
 		// Render
-
+		f.clear();
+		glUseProgram(program);
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		f.draw();
 		SDL_Delay(100);
 		if((N >= 0) && (i >= N)) break;
 	}
-	std::cout << "Hnd's message:\n" << hnd << "\n"
-		"Frame's message:\n" << f << std::endl;
+	if(hnd.oss.str().length())
+		cout << "Hnd's message:\n" << hnd << "\n";
+	cout << "Frame's message:\n" << f << endl;
 	SDL_Quit();
 }
