@@ -26,20 +26,9 @@ struct Hnd: Events::Handler<Hnd> {
 			case SDL_WINDOWEVENT_CLOSE:
 				oss << "Caught window close event";
 				return { Events::Handled::CODE_QUIT };
-			case SDL_WINDOWEVENT_ENTER: /*oss << "Window entered\n"; */ break;
-			case SDL_WINDOWEVENT_EXPOSED: /*oss << "Window exposed\n"; */ break;
-			case SDL_WINDOWEVENT_LEAVE: /*oss << "Window left\n"; */ break;
 			case SDL_WINDOWEVENT_MOVED: /*oss << "Window moved\n"; */ break;
-			case SDL_WINDOWEVENT_NONE: /*oss << "Window... none?\n"; */ break;
-			case SDL_WINDOWEVENT_MAXIMIZED: /*oss << "Window maximized\n"; */ break;
-			case SDL_WINDOWEVENT_RESTORED: /*oss << "Window restored\n"; */ break;
-			case SDL_WINDOWEVENT_HIDDEN:
-			case SDL_WINDOWEVENT_MINIMIZED:
-			case SDL_WINDOWEVENT_SHOWN: /*oss << "Window visibility toggled\n"; */ break;
 			case SDL_WINDOWEVENT_RESIZED:
 			case SDL_WINDOWEVENT_SIZE_CHANGED: /*oss << "Window resized\n"; */ break;
-			case SDL_WINDOWEVENT_FOCUS_GAINED:
-			case SDL_WINDOWEVENT_FOCUS_LOST: /*oss << "Window focus changed\n"; */ break;
 			default: break;
 		}
 		return { Events::Handled::CODE_PASS };
@@ -102,7 +91,6 @@ int main(int argc, const char *argv[]) {
 	if(pos == string::npos)
 		delim = "\\", pos = self.find_last_of(delim);
 	share = self.substr(0, pos+1) + ".." + delim + "share" + delim;
-	//cout << "self = " << self << "; share = " << share << "." << endl;
 	string vertPath = share + "default.vert", fragPath = share + "default.frag";
 	static constexpr GLenum VERT = GL_VERTEX_SHADER, FRAG = GL_FRAGMENT_SHADER;
 
@@ -129,8 +117,6 @@ int main(int argc, const char *argv[]) {
 	GLfloat points[][3] = {
 		{-.5, -.5, 0}, {.5, -.5, 0}, {.5, .5, 0},
 		{-.5, -.5, 0}, {.5, .5, 0}, {-.5, .5, 0}
-		/*{-1, mid, -1}, {1, mid, -1}, {1, mid, 1},
-		{-1, mid, -1}, {1, mid, 1}, {-1, mid, 1}*/
 	};
 
 	GLuint vao, vbo;
@@ -159,14 +145,8 @@ int main(int argc, const char *argv[]) {
 		return 1;
 	}
 	GLfloat mvpData[16] = {
-		/*mx, 0, 0, 0,
-		0, my, 0, 0,
-		0, 0, mzw, mzz,
-		0, 0, 0, mwz*/
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
+		1, 0, 0, 0,  0, 1, 0, 0,
+		0, 0, 1, 0,  0, 0, 0, 1
 	};
 	glUniformMatrix4fv(mvp, 1, GL_FALSE, mvpData);
 
