@@ -17,7 +17,6 @@ enum Handled_Status {
 		StatusWarn = StatusPass | StatusError, StatusFail = StatusQuit | StatusError
 };
 struct Handled {
-
 	uint32_t code = StatusPass;
 	uint64_t timestamp = SDL_GetPerformanceCounter();
 
