@@ -12,7 +12,7 @@ namespace Events {
 namespace Detail {
 	template<class S> S&& (*Fwd)(S &&) = &std::forward<S>;
 }
-enum Handled_Status {
+enum Status {
 	StatusPass = 1, StatusQuit = StatusPass << 1, StatusError = StatusQuit << 1,
 		StatusWarn = StatusPass | StatusError, StatusFail = StatusQuit | StatusError
 };
