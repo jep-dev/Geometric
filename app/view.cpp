@@ -50,7 +50,13 @@ struct Hnd: Events::Handler<Hnd> {
 	Events::Handled operator()(S const& s, T &&... t) {
 		return { Events::Handled::CODE_PASS };
 	}
-
+	std::size_t size(void) {
+		return oss.tellp();
+	}
+	Hnd& clear(void) {
+		oss.str("");
+		return *this;
+	}
 	template<class S>
 	friend S& operator<<(S& s, Hnd const& hnd) {
 		auto res = hnd.oss.str();
@@ -155,7 +161,10 @@ int main(int argc, const char *argv[]) {
 		if(!hnd.poll())
 			break;
 		// Task
-
+		if(hnd.size()) {
+			cout << hnd << endl;
+			hnd.clear();
+		}
 		// Render
 		f.clear();
 		glUseProgram(program);
@@ -165,8 +174,8 @@ int main(int argc, const char *argv[]) {
 		SDL_Delay(100);
 		if((N >= 0) && (i >= N)) break;
 	}
-	if(hnd.oss.str().length())
-		cout << "Hnd's message:\n" << hnd << "\n";
+	if(hnd.size())
+		cout << hnd << "\n";
 	cout << "Frame's message:\n" << f << endl;
 	SDL_Quit();
 }
