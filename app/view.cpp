@@ -76,7 +76,6 @@ int main(int argc, const char *argv[]) {
 	}
 
 	View::Frame f;
-	Binding::initialize(false);
 	glClear(GL_COLOR_BUFFER_BIT);
 	SDL_GL_SwapWindow(f.getWindow());
 	glClear(GL_COLOR_BUFFER_BIT);

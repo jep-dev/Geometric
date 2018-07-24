@@ -61,6 +61,7 @@ Frame::Frame(void) {
 				print_format(oss << "; expected ", ctx.alpha.set(), ctx.red.set(),
 					ctx.green.set(), ctx.blue.set());
 			oss << ".";
+			glbinding::Binding::initialize(false);
 		}
 	} while(0);
 	status.code = Events::StatusWarn;
