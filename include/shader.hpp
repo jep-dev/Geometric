@@ -19,59 +19,61 @@ struct Program;
 
 using namespace gl;
 
-bool is_error(GLenum e) { return e == GL_NO_ERROR; }
-bool get_error(void) { return is_error(glGetError()); }
+namespace Detail {
+	bool is_error(GLenum e) { return e == GL_NO_ERROR; }
+	bool get_error(void) { return is_error(glGetError()); }
 
-bool is_sourced(GLuint shader) {
-	if(!glIsShader(shader)) return false;
-	GLint len;
-	glGetShaderiv(shader, GL_SHADER_SOURCE_LENGTH, &len);
-	return len;
-}
-
-bool source(GLuint shader, const char *filename) {
-	bool status;
-	std::string lines;
-	if(!Streams::readLines(filename, lines)) return false;
-	auto buf = lines.c_str();
-	auto gbuf = &lines[0];
-	glShaderSource(shader, 1, &gbuf, nullptr);
-	return is_sourced(shader);
-}
-
-bool is_compiled(GLuint shader) {
-	if(!glIsShader(shader)) return false;
-	GLint cmp;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &cmp);
-	return GL_TRUE == cmp;
-}
-bool compile(GLuint shader) {
-	if(is_compiled(shader)) return true;
-	glCompileShader(shader);
-	return is_compiled(shader);
-}
-template<class... S>
-bool attach(GLuint program, S &&... s) {
-	for(auto sh : {GLuint(s)...}) {
-		if(!is_compiled(sh))
-			return false;
-		glAttachShader(program, sh);
+	bool is_sourced(GLuint shader) {
+		if(!glIsShader(shader)) return false;
+		GLint len;
+		glGetShaderiv(shader, GL_SHADER_SOURCE_LENGTH, &len);
+		return len;
 	}
-	return true;
-}
-bool is_linked(GLuint program) {
-	if(!glIsProgram(program)) return false;
-	GLint cmp;
-	glGetProgramiv(program, GL_LINK_STATUS, &cmp);
-	return GL_TRUE == cmp;
-}
-bool link(GLuint program) {
-	if(!is_linked(program)) {
-		glLinkProgram(program);
-		if(!is_linked(program))
-			return false;
+
+	bool source(GLuint shader, const char *filename) {
+		bool status;
+		std::string lines;
+		if(!Streams::readLines(filename, lines)) return false;
+		auto buf = lines.c_str();
+		auto gbuf = &lines[0];
+		glShaderSource(shader, 1, &gbuf, nullptr);
+		return is_sourced(shader);
 	}
-	return true;
+
+	bool is_compiled(GLuint shader) {
+		if(!glIsShader(shader)) return false;
+		GLint cmp;
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &cmp);
+		return GL_TRUE == cmp;
+	}
+	bool compile(GLuint shader) {
+		if(is_compiled(shader)) return true;
+		glCompileShader(shader);
+		return is_compiled(shader);
+	}
+	template<class... S>
+	bool attach(GLuint program, S &&... s) {
+		for(auto sh : {GLuint(s)...}) {
+			if(!is_compiled(sh))
+				return false;
+			glAttachShader(program, sh);
+		}
+		return true;
+	}
+	bool is_linked(GLuint program) {
+		if(!glIsProgram(program)) return false;
+		GLint cmp;
+		glGetProgramiv(program, GL_LINK_STATUS, &cmp);
+		return GL_TRUE == cmp;
+	}
+	bool link(GLuint program) {
+		if(!is_linked(program)) {
+			glLinkProgram(program);
+			if(!is_linked(program))
+				return false;
+		}
+		return true;
+	}
 }
 
 struct Shader {
@@ -81,12 +83,12 @@ struct Shader {
 	operator GLuint(void) const { return value; }
 	bool source(const char *fname, bool force = true) {
 		compiled = false;
-		return sourced = View::source(value, fname);
+		return sourced = Detail::source(value, fname);
 	}
 	bool compile(bool force = true) {
 		if(!sourced) return false;
 		if(compiled && !force) return true;
-		compiled = View::compile(value);
+		compiled = Detail::compile(value);
 		GLint len;
 		glGetShaderiv(value, GL_INFO_LOG_LENGTH, &len);
 		message = std::string(unsigned(len), '\0');
@@ -106,14 +108,14 @@ struct Program {
 	operator GLuint(void) const { return value; }
 	template<class... S>
 	bool attach(S &&... s) {
-		for(auto b : {(glIsShader(s) && is_sourced(s) && is_compiled(s))...})
+		for(auto b : {(glIsShader(s) && Detail::is_sourced(s) && Detail::is_compiled(s))...})
 			if(!b) return attached = false;
-		return attached = View::attach(value, std::forward<S>(s)...);
+		return attached = Detail::attach(value, std::forward<S>(s)...);
 	}
 	bool link(bool force = true) {
 		if(!attached && force) linked = false;
 		if(linked && !force) return true;
-		linked = View::link(value);
+		linked = Detail::link(value);
 		int len;
 		glGetProgramiv(*this, GL_INFO_LOG_LENGTH, &len);
 		if(len <= 0) return linked;
