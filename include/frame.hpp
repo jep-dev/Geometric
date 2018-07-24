@@ -2,7 +2,6 @@
 #define FRAME_HPP
 
 #include "view.hpp"
-#include "events.hpp"
 #include "context.hpp"
 
 namespace View {

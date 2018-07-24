@@ -8,7 +8,6 @@
 #include <vector>
 ///@endcond
 
-#include "events.hpp"
 #include "reader.hpp"
 #include "view.hpp"
 

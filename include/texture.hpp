@@ -5,8 +5,6 @@
 #include <IL/il.h>
 #include <SOIL/SOIL.h>
 
-#include "events.hpp"
-
 namespace View {
 
 struct Texture {

@@ -5,9 +5,8 @@
 #endif
 
 #include "dual.tpp"
+#include <iostream>
 #include <iomanip>
-
-
 
 int main(int argc, const char *argv[]) {
 	DualQuaternion<float> LHS[] = {{1}, {0,1}, {0,0,1}, {0,0,0,1},

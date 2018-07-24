@@ -3,7 +3,6 @@
 
 #include "quaternion.hpp"
 #include "quaternion.tpp"
-#include <iostream>
 #include <sstream>
 
 template<class L, class S>

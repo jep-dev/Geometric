@@ -1,7 +1,6 @@
 #include <iostream>
 #include <iomanip>
 
-#include "dual.hpp"
 #include "presenter.hpp"
 #include "shader.hpp"
 #include "texture.hpp"
