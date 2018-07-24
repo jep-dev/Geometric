@@ -63,17 +63,13 @@ struct Hnd: Events::Handler<Hnd> {
 };
 
 int main(int argc, const char *argv[]) {
+	using namespace std;
 	using namespace View;
-	using namespace gl;
 	using namespace glbinding;
-	using std::cout;
-	using std::endl;
-	using std::flush;
-	using std::string;
 
 	int N = -1;
 	if(argc > 1) {
-		std::stringstream ss;
+		stringstream ss;
 		ss << argv[1];
 		ss >> N;
 		if(ss.fail()) N = -1;
@@ -86,7 +82,7 @@ int main(int argc, const char *argv[]) {
 	glClear(GL_COLOR_BUFFER_BIT);
 	auto glErr = glGetError();
 	if(glErr != GL_NO_ERROR)
-		std::cout << "A GL error occurred: " << glErr << std::endl;
+		cout << "A GL error occurred: " << glErr << endl;
 
 	string self = argv[0], delim = "/", share = "share" + delim;
 	auto pos = self.find_last_of(delim);
@@ -151,8 +147,8 @@ int main(int argc, const char *argv[]) {
 	GLfloat mvpData[16] = {
 		mx, 0, 0, 0,
 		0, my, 0, 0,
-		0, 0, mzz, mzw,
-		0, 0, mwz, 0
+		0, 0, 0, mzw,
+		0, 0, mwz, mzz,
 	};
 	glUniformMatrix4fv(mvp, 1, GL_FALSE, mvpData);
 
