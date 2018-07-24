@@ -4,8 +4,7 @@
 #include <vector>
 #include "dual.hpp"
 
-namespace Model {
-
-}
+struct Model {
+};
 
 #endif
