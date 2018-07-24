@@ -3,7 +3,6 @@
 
 #include "presenter.hpp"
 #include "shader.hpp"
-#include "texture.hpp"
 
 struct Hnd;
 struct Hnd: Presenter<Hnd> {
@@ -103,15 +102,15 @@ int main(int argc, const char *argv[]) {
 		return 1;
 	}
 
-	float near = 1, far = 5, mid = (near + far)/2,
+	float near = 1, far = 2, mid = (near + far)/2,
 			right = 1, top = 1, width = 2*right, height = 2*top,
 			mx = near/right, my = near/top,
 			mzz = (far+near)/(near-far),
 			mzw = 2*far*near/(near-far),
 			mwz = -1;
 	GLfloat points[][3] = {
-		{-.5, 1.5, -.5}, {.5, 1.5, -.5}, {.5, 1.5, .5},
-		{-.5, 1.5, -.5}, {.5, 1.5, .5}, {-.5, 1.5, .5}
+		{-right, mid, -top}, {right, mid, -top}, {right, mid, top},
+		{-right, mid, -top}, {right, mid, top}, {-right, mid, top}
 	};
 
 	GLuint vao, vbo;
@@ -141,9 +140,9 @@ int main(int argc, const char *argv[]) {
 	}
 	GLfloat mvpData[16] = {
 		mx, 0, 0, 0,
-		0, 0, -mzz, -mzw,
+		0, 0, -mzz, -mwz,
 		0, my, 0, 0,
-		0, 0, mwz, 0,
+		0, 0, mzw, 0,
 	};
 	glUniformMatrix4fv(mvp, 1, GL_FALSE, mvpData);
 
