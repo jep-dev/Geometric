@@ -54,7 +54,8 @@ struct Handler {
 			case SDL_DOLLARGESTURE: return self(ev.dgesture, Fwd<T>(t)...);
 			case SDL_JOYAXISMOTION: return self(ev.jaxis, Fwd<T>(t)...);
 			case SDL_JOYBALLMOTION: return self(ev.jball, Fwd<T>(t)...);
-			case SDL_JOYBUTTONDOWN: return self(ev.jbutton, Fwd<T>(t)...);
+			case SDL_JOYBUTTONDOWN:
+			case SDL_JOYBUTTONUP: return self(ev.jbutton, Fwd<T>(t)...);
 			case SDL_JOYDEVICEADDED:
 			case SDL_JOYDEVICEREMOVED: return self(ev.jdevice, Fwd<T>(t)...);
 			case SDL_JOYHATMOTION: return self(ev.jhat, Fwd<T>(t)...);
