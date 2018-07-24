@@ -63,8 +63,9 @@ Frame::Frame(void) {
 			oss << ".";
 		}
 	} while(0);
-	message += oss.str();
-	message += SDL_GetError();
+	status.code = Events::StatusWarn;
+	status.message += oss.str();
+	status.message += SDL_GetError();
 }
 
 Frame& Frame::clear(void) {

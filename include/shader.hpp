@@ -8,6 +8,7 @@
 #include <vector>
 ///@endcond
 
+#include "events.hpp"
 #include "reader.hpp"
 #include "view.hpp"
 
@@ -79,7 +80,7 @@ namespace Detail {
 struct Shader {
 	GLuint value;
 	bool sourced = false, compiled = false;
-	std::string message;
+	Events::Status status;
 	operator GLuint(void) const { return value; }
 	bool source(const char *fname, bool force = true) {
 		compiled = false;
@@ -91,8 +92,9 @@ struct Shader {
 		compiled = Detail::compile(value);
 		GLint len;
 		glGetShaderiv(value, GL_INFO_LOG_LENGTH, &len);
-		message = std::string(unsigned(len), '\0');
-		glGetShaderInfoLog(value, len, nullptr, &message[0]);
+		status.code = Events::StatusFail;
+		status.message = std::string(unsigned(len), '\0');
+		glGetShaderInfoLog(value, len, nullptr, &status.message[0]);
 		return compiled;
 	}
 	Shader(GLuint value): value(value) {}
@@ -104,7 +106,7 @@ struct Shader {
 struct Program {
 	GLuint value;
 	bool attached = false, linked = false;
-	std::string message;
+	Events::Status status;
 	operator GLuint(void) const { return value; }
 	template<class... S>
 	bool attach(S &&... s) {
@@ -119,8 +121,8 @@ struct Program {
 		int len;
 		glGetProgramiv(*this, GL_INFO_LOG_LENGTH, &len);
 		if(len <= 0) return linked;
-		message = std::string(len, '\0');
-		glGetProgramInfoLog(*this, len, nullptr, &message[0]);
+		status.message = std::string(len, '\0');
+		glGetProgramInfoLog(*this, len, nullptr, &status.message[0]);
 		return linked;
 	}
 	Program(GLuint value): value(value) {}

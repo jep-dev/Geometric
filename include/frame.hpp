@@ -2,6 +2,7 @@
 #define FRAME_HPP
 
 #include "view.hpp"
+#include "events.hpp"
 #include "context.hpp"
 
 namespace View {
@@ -10,7 +11,7 @@ namespace View {
 struct Frame {
 public:
 	int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
-	std::string message;
+	Events::Status status;
 protected:
 	static constexpr int center = SDL_WINDOWPOS_CENTERED;
 	SDL_Window *win = 0;
@@ -19,7 +20,7 @@ public:
 	/** Stream insertion operator; inserts the most recent message(s)/error(s). */
 	template<class S>
 	friend S& operator<<(S &s, Frame const& f) {
-		if(f.message.length()) s << f.message;
+		if(f.status.message.length()) s << f.status.message;
 		return s;
 	}
 	Frame& clear(void);

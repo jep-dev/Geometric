@@ -11,7 +11,7 @@ struct Hnd;
 struct Hnd: Events::Handler<Hnd> {
 	std::ostringstream oss;
 	using Handler::operator();
-	Events::Handled operator()(SDL_KeyboardEvent const& k) {
+	Events::Status operator()(SDL_KeyboardEvent const& k) {
 		switch(k.keysym.sym) {
 			case SDLK_ESCAPE: case SDLK_q:
 				return { Events::StatusQuit };
@@ -19,7 +19,7 @@ struct Hnd: Events::Handler<Hnd> {
 		}
 		return {};
 	}
-	Events::Handled operator()(SDL_WindowEvent const& w) {
+	Events::Status operator()(SDL_WindowEvent const& w) {
 		switch(w.event) {
 			case SDL_WINDOWEVENT_CLOSE:
 				*this << "Caught window close event";
@@ -31,7 +31,7 @@ struct Hnd: Events::Handler<Hnd> {
 		}
 		return { };
 	}
-	Events::Handled operator()(SDL_MouseButtonEvent const& q) {
+	Events::Status operator()(SDL_MouseButtonEvent const& q) {
 		*this << "";
 		oss << "Caught mouse " << int(q.button)
 			<< " " << ((q.type == SDL_MOUSEBUTTONDOWN) ? "press" : "release")
@@ -40,7 +40,7 @@ struct Hnd: Events::Handler<Hnd> {
 	}
 
 	template<class S>
-	Events::Handled operator()(S const& s) {
+	Events::Status operator()(S const& s) {
 		return { };
 	}
 	std::size_t size(void) {
@@ -100,12 +100,12 @@ int main(int argc, const char *argv[]) {
 	Shader vert(vertPath.c_str(), VERT), frag(fragPath.c_str(), FRAG);
 	if(!vert.compile() || !program.attach(vert)) {
 		cout << "Could not build " << vertPath;
-		if(vert.message.length()) cout << ": " << vert.message;
+		if(vert.status.length()) cout << ": " << vert.status.message;
 		cout << endl;
 		return 1;
 	} else if(!frag.compile() || !program.attach(frag)) {
 		cout << "Could not build " << fragPath;
-		if(frag.message.length()) cout << ": " << frag.message;
+		if(frag.status.length()) cout << ": " << frag.status.message;
 		cout << endl;
 		return 1;
 	}
@@ -133,8 +133,8 @@ int main(int argc, const char *argv[]) {
 
 	if(!program.link()) {
 		cout << "Could not link program";
-		if(program.message.length())
-			cout << ": " << program.message;
+		if(program.status.length())
+			cout << ": " << program.status.message;
 		cout << endl;
 		return 1;
 	}

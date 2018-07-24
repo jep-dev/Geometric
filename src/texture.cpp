@@ -18,7 +18,7 @@ namespace View {
 	if(err != GL_NO_ERROR) {
 		std::ostringstream oss;
 		oss << err;
-		message = "?"; //oss.str();
+		status.message = "?"; //oss.str();
 		created = sourced = false;
 		line = __LINE__;
 		return;
@@ -29,7 +29,7 @@ namespace View {
 	// value = SOIL_load_OGL_texture(fname, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, flags);
 	// sourced = true;
 	line = __LINE__;
-	message = SOIL_last_result();
+	status.message = SOIL_last_result();
 }*/
 Texture::Texture(const char *fname, unsigned int flags):
 		fname(fname), flags(flags) {
@@ -40,7 +40,7 @@ Texture::Texture(const char *fname, unsigned int flags):
 		auto err = glGetError();
 		std::ostringstream oss;
 		oss << err;
-		message = oss.str();
+		status.message = oss.str();
 		return;
 	}
 
@@ -59,9 +59,9 @@ Texture::Texture(const char *fname, unsigned int flags):
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_INT, data);
 		ilDeleteImages(1, &image);
 	} else {
-		message = "Failed; ";
+		status.message = "Failed; ";
 	}
-	message += iluErrorString(ilGetError());
+	status.message += iluErrorString(ilGetError());
 }
 Texture::~Texture(void) {
 	if(glIsTexture(value))
