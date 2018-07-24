@@ -146,9 +146,9 @@ int main(int argc, const char *argv[]) {
 	}
 	GLfloat mvpData[16] = {
 		mx, 0, 0, 0,
+		0, 0, -mzz, -mzw,
 		0, my, 0, 0,
-		0, 0, 0, mzw,
-		0, 0, mwz, mzz,
+		0, 0, mwz, 0,
 	};
 	glUniformMatrix4fv(mvp, 1, GL_FALSE, mvpData);
 
