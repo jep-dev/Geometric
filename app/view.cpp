@@ -11,8 +11,7 @@ struct Hnd;
 struct Hnd: Events::Handler<Hnd> {
 	std::ostringstream oss;
 	using Handler::operator();
-	template<class... T>
-	Events::Handled operator()(SDL_KeyboardEvent const& k, T &&... t) {
+	Events::Handled operator()(SDL_KeyboardEvent const& k) {
 		switch(k.keysym.sym) {
 			case SDLK_ESCAPE: case SDLK_q:
 				return { Events::Handled::CODE_QUIT };
@@ -20,48 +19,49 @@ struct Hnd: Events::Handler<Hnd> {
 		}
 		return { Events::Handled::CODE_PASS };
 	}
-	template<class... T>
-	Events::Handled operator()(SDL_WindowEvent const& w, T &&... t) {
+	Events::Handled operator()(SDL_WindowEvent const& w) {
 		switch(w.event) {
 			case SDL_WINDOWEVENT_CLOSE:
-				oss << "Caught window close event";
+				*this << "Caught window close event";
 				return { Events::Handled::CODE_QUIT };
-			case SDL_WINDOWEVENT_MOVED: /*oss << "Window moved\n"; */ break;
+			case SDL_WINDOWEVENT_MOVED: break;
 			case SDL_WINDOWEVENT_RESIZED:
-			case SDL_WINDOWEVENT_SIZE_CHANGED: /*oss << "Window resized\n"; */ break;
+			case SDL_WINDOWEVENT_SIZE_CHANGED: break;
 			default: break;
 		}
 		return { Events::Handled::CODE_PASS };
 	}
-	template<class... T>
-	Events::Handled operator()(SDL_QuitEvent const& q, T &&... t) {
-		oss << "Caught quit event";
+	Events::Handled operator()(SDL_QuitEvent const& q) {
+		*this << "Caught quit event.";
 		return { Events::Handled::CODE_QUIT };
 	}
-	template<class... T>
-	Events::Handled operator()(SDL_MouseButtonEvent const& q, T &&... t) {
+	Events::Handled operator()(SDL_MouseButtonEvent const& q) {
+		*this << "";
 		oss << "Caught mouse " << int(q.button)
 			<< " " << ((q.type == SDL_MOUSEBUTTONDOWN) ? "press" : "release")
-			<< " at (" << q.x << ", " << q.y << ")\n";
+			<< " at (" << q.x << ", " << q.y << ")";
 		return { Events::Handled::CODE_PASS };
 	}
 
-	template<class S, class... T>
-	Events::Handled operator()(S const& s, T &&... t) {
+	template<class S>
+	Events::Handled operator()(S const& s) {
 		return { Events::Handled::CODE_PASS };
 	}
 	std::size_t size(void) {
 		return oss.tellp();
 	}
 	Hnd& clear(void) {
-		oss.str("");
-		return *this;
+		return oss.str(""), *this;
+	}
+	template<class S>
+	Hnd& operator<<(S const& s) {
+		if(size()) oss << '\n';
+		return oss << s, *this;
 	}
 	template<class S>
 	friend S& operator<<(S& s, Hnd const& hnd) {
 		auto res = hnd.oss.str();
-		if(res.length())
-			s << res;
+		if(res.length()) s << res;
 		return s;
 	}
 };
