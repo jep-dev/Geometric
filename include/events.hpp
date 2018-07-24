@@ -12,13 +12,15 @@ namespace Events {
 namespace Detail {
 	template<class S> S&& (*Fwd)(S &&) = &std::forward<S>;
 }
-enum Status {
+enum EStatus {
 	StatusPass = 1, StatusQuit = StatusPass << 1, StatusError = StatusQuit << 1,
 		StatusWarn = StatusPass | StatusError, StatusFail = StatusQuit | StatusError
 };
-struct Handled {
+struct Status {
 	uint32_t code = StatusPass;
+	std::string message = "";
 	uint64_t timestamp = SDL_GetPerformanceCounter();
+	std::size_t length(void) const { return message.length(); }
 
 	static bool passed(uint32_t h) { return h & StatusPass; }
 	static bool quit(uint32_t h) { return h & StatusQuit; }
@@ -34,10 +36,10 @@ struct Handled {
 template<class C>
 struct Handler {
 	template<class... T>
-	Handled operator()(SDL_QuitEvent const&, T &&...) { return {StatusQuit}; }
+	Status operator()(SDL_QuitEvent const&, T &&...) { return {StatusQuit}; }
 
 	template<class... T>
-	Handled operator()(SDL_Event const& ev, T &&... t) {
+	Status operator()(SDL_Event const& ev, T &&... t) {
 		using namespace Detail;
 		auto &self = static_cast<C&>(*this);
 		switch(ev.type) {
