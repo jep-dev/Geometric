@@ -14,38 +14,34 @@ struct Hnd: Events::Handler<Hnd> {
 	Events::Handled operator()(SDL_KeyboardEvent const& k) {
 		switch(k.keysym.sym) {
 			case SDLK_ESCAPE: case SDLK_q:
-				return { Events::Handled::CODE_QUIT };
+				return { Events::StatusQuit };
 			default: break;
 		}
-		return { Events::Handled::CODE_PASS };
+		return {};
 	}
 	Events::Handled operator()(SDL_WindowEvent const& w) {
 		switch(w.event) {
 			case SDL_WINDOWEVENT_CLOSE:
 				*this << "Caught window close event";
-				return { Events::Handled::CODE_QUIT };
+				return { Events::StatusQuit };
 			case SDL_WINDOWEVENT_MOVED: break;
 			case SDL_WINDOWEVENT_RESIZED:
 			case SDL_WINDOWEVENT_SIZE_CHANGED: break;
 			default: break;
 		}
-		return { Events::Handled::CODE_PASS };
-	}
-	Events::Handled operator()(SDL_QuitEvent const& q) {
-		*this << "Caught quit event.";
-		return { Events::Handled::CODE_QUIT };
+		return { };
 	}
 	Events::Handled operator()(SDL_MouseButtonEvent const& q) {
 		*this << "";
 		oss << "Caught mouse " << int(q.button)
 			<< " " << ((q.type == SDL_MOUSEBUTTONDOWN) ? "press" : "release")
 			<< " at (" << q.x << ", " << q.y << ")";
-		return { Events::Handled::CODE_PASS };
+		return { };
 	}
 
 	template<class S>
 	Events::Handled operator()(S const& s) {
-		return { Events::Handled::CODE_PASS };
+		return { };
 	}
 	std::size_t size(void) {
 		return oss.tellp();

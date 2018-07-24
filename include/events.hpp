@@ -12,23 +12,20 @@ namespace Events {
 namespace Detail {
 	template<class S> S&& (*Fwd)(S &&) = &std::forward<S>;
 }
+enum Handled_Status {
+	StatusPass = 1, StatusQuit = StatusPass << 1, StatusError = StatusQuit << 1,
+		StatusWarn = StatusPass | StatusError, StatusFail = StatusQuit | StatusError
+};
 struct Handled {
-	typedef enum {
-		CODE_PASS = 1,
-		CODE_QUIT = CODE_PASS << 1,
-		CODE_ERROR = CODE_QUIT << 1,
-			CODE_WARN = CODE_ERROR | CODE_PASS,
-			CODE_FAIL = CODE_ERROR | CODE_QUIT
-	} E_Code;
 
-	uint32_t code = CODE_PASS;
+	uint32_t code = StatusPass;
 	uint64_t timestamp = SDL_GetPerformanceCounter();
 
-	static bool passed(uint32_t h) { return h & CODE_PASS; }
-	static bool quit(uint32_t h) { return h & CODE_QUIT; }
-	static bool errored(uint32_t h) { return h & CODE_ERROR; }
-	static bool warned(uint32_t h) { return (h & CODE_WARN) == CODE_WARN; }
-	static bool failed(uint32_t h) { return (h & CODE_FAIL) == CODE_FAIL; }
+	static bool passed(uint32_t h) { return h & StatusPass; }
+	static bool quit(uint32_t h) { return h & StatusQuit; }
+	static bool errored(uint32_t h) { return h & StatusError; }
+	static bool warned(uint32_t h) { return (h & StatusWarn) == StatusWarn; }
+	static bool failed(uint32_t h) { return (h & StatusFail) == StatusFail; }
 	static bool bad(uint32_t h) { return quit(h) || errored(h); }
 	static bool good(uint32_t h) { return passed(h) && !bad(h); }
 
@@ -38,7 +35,7 @@ struct Handled {
 template<class C>
 struct Handler {
 	template<class... T>
-	Handled operator()(SDL_QuitEvent const&, T &&...) { return {Handled::CODE_QUIT}; }
+	Handled operator()(SDL_QuitEvent const&, T &&...) { return {StatusQuit}; }
 
 	template<class... T>
 	Handled operator()(SDL_Event const& ev, T &&... t) {
@@ -71,7 +68,7 @@ struct Handler {
 			case SDL_TEXTEDITING: return self(ev.edit, Fwd<T>(t)...);
 			case SDL_TEXTINPUT: return self(ev.text, Fwd<T>(t)...);
 			case SDL_WINDOWEVENT: return self(ev.window, Fwd<T>(t)...);
-			default: return {Handled::CODE_PASS};
+			default: return {};
 		}
 	}
 	template<class... T>
