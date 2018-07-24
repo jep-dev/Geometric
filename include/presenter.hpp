@@ -1,6 +1,7 @@
 #ifndef PRESENTER_HPP
 #define PRESENTER_HPP
 
+#include "events.hpp"
 #include "frame.hpp"
 #include "model.hpp"
 
