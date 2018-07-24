@@ -100,12 +100,12 @@ int main(int argc, const char *argv[]) {
 	Shader vert(vertPath.c_str(), VERT), frag(fragPath.c_str(), FRAG);
 	if(!vert.compile() || !program.attach(vert)) {
 		cout << "Could not build " << vertPath;
-		if(vert.status.length()) cout << ": " << vert.status.message;
+		if(vert.status.length()) cout << ": " << vert.status;
 		cout << endl;
 		return 1;
 	} else if(!frag.compile() || !program.attach(frag)) {
 		cout << "Could not build " << fragPath;
-		if(frag.status.length()) cout << ": " << frag.status.message;
+		if(frag.status.length()) cout << ": " << frag.status;
 		cout << endl;
 		return 1;
 	}
@@ -134,7 +134,7 @@ int main(int argc, const char *argv[]) {
 	if(!program.link()) {
 		cout << "Could not link program";
 		if(program.status.length())
-			cout << ": " << program.status.message;
+			cout << ": " << program.status;
 		cout << endl;
 		return 1;
 	}

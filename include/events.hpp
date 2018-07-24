@@ -29,6 +29,10 @@ struct Status {
 	static bool failed(uint32_t h) { return (h & StatusFail) == StatusFail; }
 	static bool bad(uint32_t h) { return quit(h) || errored(h); }
 	static bool good(uint32_t h) { return passed(h) && !bad(h); }
+	template<class S>
+	friend S& operator<<(S &lhs, Status const& rhs) {
+		return lhs << rhs.message, lhs;
+	}
 
 	operator bool(void) const { return good(code); }
 };

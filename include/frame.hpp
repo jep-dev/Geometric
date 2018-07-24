@@ -20,8 +20,7 @@ public:
 	/** Stream insertion operator; inserts the most recent message(s)/error(s). */
 	template<class S>
 	friend S& operator<<(S &s, Frame const& f) {
-		if(f.status.message.length()) s << f.status.message;
-		return s;
+		return s << f.status, s;
 	}
 	Frame& clear(void);
 	Frame& draw(void);
