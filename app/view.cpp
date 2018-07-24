@@ -2,13 +2,12 @@
 #include <iomanip>
 
 #include "dual.hpp"
-#include "events.hpp"
-#include "frame.hpp"
+#include "presenter.hpp"
 #include "shader.hpp"
 #include "texture.hpp"
 
 struct Hnd;
-struct Hnd: Events::Handler<Hnd> {
+struct Hnd: Presenter<Hnd> {
 	std::ostringstream oss;
 	using Handler::operator();
 	Events::Status operator()(SDL_KeyboardEvent const& k) {
@@ -75,9 +74,9 @@ int main(int argc, const char *argv[]) {
 		if(ss.fail()) N = -1;
 	}
 
-	View::Frame f;
+	Hnd hnd;
 	glClear(GL_COLOR_BUFFER_BIT);
-	SDL_GL_SwapWindow(f.getWindow());
+	SDL_GL_SwapWindow(hnd.frame.getWindow());
 	glClear(GL_COLOR_BUFFER_BIT);
 	auto glErr = glGetError();
 	if(glErr != GL_NO_ERROR)
@@ -149,7 +148,6 @@ int main(int argc, const char *argv[]) {
 	};
 	glUniformMatrix4fv(mvp, 1, GL_FALSE, mvpData);
 
-	Hnd hnd;
 	for(auto i = 0;; i++) {
 		if(!hnd.poll())
 			break;
@@ -159,16 +157,16 @@ int main(int argc, const char *argv[]) {
 			hnd.clear();
 		}
 		// Render
-		f.clear();
+		hnd.frame.clear();
 		glUseProgram(program);
 		glBindVertexArray(vao);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		f.draw();
+		hnd.frame.draw();
 		SDL_Delay(100);
 		if((N >= 0) && (i >= N)) break;
 	}
 	if(hnd.size())
 		cout << hnd << "\n";
-	cout << "Frame's message:\n" << f << endl;
+	cout << "Frame's message:\n" << hnd.frame << endl;
 	SDL_Quit();
 }
