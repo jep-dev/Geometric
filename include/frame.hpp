@@ -23,10 +23,8 @@ public:
 	}
 	Frame& clear(void);
 	Frame& draw(void);
-	/** Const access of the context. */
-	SDL_GLContext getContext(void) const { return ctx; }
-	/** Const access of the window. */
-	SDL_Window *const getWindow(void) const { return win; }
+	operator SDL_GLContext(void) const { return ctx; }
+	operator SDL_Window *const (void) const { return win; }
 	/** Constructor; currently initializes and sets a handful of hard-coded GL attributes */
 	Frame(void);
 	/** Destructor; destroys the stored window. */
