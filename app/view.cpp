@@ -64,6 +64,7 @@ int main(int argc, const char *argv[]) {
 	using namespace View;
 	using namespace glbinding;
 
+	// Get/set number of iterations, using -1 as unlimited
 	int N = -1;
 	if(argc > 1) {
 		stringstream ss;
@@ -73,10 +74,8 @@ int main(int argc, const char *argv[]) {
 	}
 
 	Hnd hnd;
-	auto glErr = glGetError();
-	if(glErr != GL_NO_ERROR)
-		cout << "A GL error occurred: " << glErr << endl;
 
+	// Locate shaders from execution path
 	string self = argv[0], delim = "/", share = "share" + delim;
 	auto pos = self.find_last_of(delim);
 	if(pos == string::npos)
@@ -85,6 +84,7 @@ int main(int argc, const char *argv[]) {
 	string vertPath = share + "default.vert", fragPath = share + "default.frag";
 	static constexpr GLenum VERT = GL_VERTEX_SHADER, FRAG = GL_FRAGMENT_SHADER;
 
+	// Compile, attach, and link shader program
 	Program program;
 	Shader vert(vertPath.c_str(), VERT), frag(fragPath.c_str(), FRAG);
 	if(!vert.compile() || !program.attach(vert)) {
@@ -98,13 +98,6 @@ int main(int argc, const char *argv[]) {
 		cout << endl;
 		return 1;
 	}
-
-	float near = 1, far = 2, mid = (near + far)/2, right = 1, top = 1;
-	GLfloat points[][3] = {
-		{-right, mid, -top}, {right, mid, -top}, {right, mid, top},
-		{-right, mid, -top}, {right, mid, top}, {-right, mid, top}
-	};
-
 	if(!program.link()) {
 		cout << "Could not link program";
 		if(program.status.length())
@@ -113,11 +106,19 @@ int main(int argc, const char *argv[]) {
 		return 1;
 	}
 	glUseProgram(program);
+
+	// Locate and initialize MVP matrix
 	auto mvp = program.locate("mvp");
 	if(mvp < 0)
 		return cout << program.status, 1;
+	float near = 1, far = 2, mid = (near + far)/2, right = 1, top = 1;
+	GLfloat points[][3] = {
+		{-right, mid, -top}, {right, mid, -top}, {right, mid, top},
+		{-right, mid, -top}, {right, mid, top}, {-right, mid, top}
+	};
 	hnd.project(mvp, top, right, near, far);
 
+	// Create and initialize vertex array and buffer
 	GLuint vao, vbo;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -128,6 +129,7 @@ int main(int argc, const char *argv[]) {
 	glEnableVertexAttribArray(0);
 	glBindAttribLocation(program, 0, "pos");
 
+	// Poll/render loop
 	for(auto i = 0;; i++) {
 		if(!hnd.poll())
 			break;
@@ -142,10 +144,12 @@ int main(int argc, const char *argv[]) {
 		SDL_Delay(100);
 		if((N >= 0) && (i >= N)) break;
 	}
+
 	if(hnd.size())
 		cout << hnd << "\n";
 	cout << "Frame's message:\n" << hnd.frame << endl;
 
+	// Clean up what isn't done through RAII already
 	glDeleteVertexArrays(1, &vao);
 	glDeleteBuffers(1, &vbo);
 	SDL_Quit();
