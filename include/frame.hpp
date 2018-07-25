@@ -22,7 +22,9 @@ public:
 		return s << f.status, s;
 	}
 	Frame& clear(void);
-	Frame& draw(void);
+	Frame& use(GLuint);
+	Frame& draw(GLuint, GLenum, GLint, GLsizei);
+	Frame& flip(void);
 	operator SDL_GLContext(void) const { return ctx; }
 	operator SDL_Window *const (void) const { return win; }
 	/** Constructor; currently initializes and sets a handful of hard-coded GL attributes */

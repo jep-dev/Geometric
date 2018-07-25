@@ -73,8 +73,17 @@ Frame& Frame::clear(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
 	return *this;
 }
-Frame& Frame::draw(void) {
+Frame& Frame::flip(void) {
 	SDL_GL_SwapWindow(win);
+	return *this;
+}
+Frame& Frame::draw(GLuint vao, GLenum mode, GLint first, GLsizei count) {
+	glBindVertexArray(vao);
+	glDrawArrays(mode, first, count);
+	return *this;
+}
+Frame& Frame::use(GLuint program) {
+	glUseProgram(program);
 	return *this;
 }
 

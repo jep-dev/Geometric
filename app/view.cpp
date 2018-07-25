@@ -144,11 +144,8 @@ int main(int argc, const char *argv[]) {
 			hnd.clear();
 		}
 		// Render
-		hnd.frame.clear();
-		glUseProgram(program);
-		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		hnd.frame.draw();
+		hnd.frame.clear().use(program)
+			.draw(vao, GL_TRIANGLES, 0, 6).flip();
 		SDL_Delay(100);
 		if((N >= 0) && (i >= N)) break;
 	}
