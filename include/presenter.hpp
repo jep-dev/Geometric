@@ -13,8 +13,8 @@ struct Presenter: Events::Handler<S> {
 	View::Frame frame;
 	Model model;
 
-	View::GLfloat projection[16] = {0};
-	S& project(View::GLuint dest, float right, float top, float near, float far) {
+	gl::GLfloat projection[16] = {0};
+	S& project(gl::GLuint dest, float right, float top, float near, float far) {
 		using namespace View;
 		float mx = near / right, mz = near / top, mwy = -1,
 			dy = near - far,
