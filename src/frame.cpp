@@ -82,9 +82,5 @@ Frame& Frame::draw(GLuint vao, GLenum mode, GLint first, GLsizei count) {
 	glDrawArrays(mode, first, count);
 	return *this;
 }
-Frame& Frame::use(GLuint program) {
-	glUseProgram(program);
-	return *this;
-}
 
 }

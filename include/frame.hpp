@@ -22,7 +22,6 @@ public:
 		return s << f.status, s;
 	}
 	Frame& clear(void);
-	Frame& use(GLuint);
 	Frame& draw(GLuint, GLenum, GLint, GLsizei);
 	Frame& flip(void);
 	operator SDL_GLContext(void) const { return ctx; }

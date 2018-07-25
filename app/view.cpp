@@ -72,8 +72,12 @@ int main(int argc, const char *argv[]) {
 		ss >> N;
 		if(ss.fail()) N = -1;
 	}
-
-	Hnd hnd;
+	// Initialize projection matrix values and vertices
+	float near = 1, far = 2, mid = (near + far)/2, right = 1, top = 1;
+	GLfloat points[][3] = {
+		{-right, mid, -top}, {right, mid, -top}, {right, mid, top},
+		{-right, mid, -top}, {right, mid, top}, {-right, mid, top}
+	};
 
 	// Locate shaders from execution path
 	string self = argv[0], delim = "/", share = "share" + delim;
@@ -82,11 +86,13 @@ int main(int argc, const char *argv[]) {
 		delim = "\\", pos = self.find_last_of(delim);
 	share = self.substr(0, pos+1) + ".." + delim + "share" + delim;
 	string vertPath = share + "default.vert", fragPath = share + "default.frag";
-	static constexpr GLenum VERT = GL_VERTEX_SHADER, FRAG = GL_FRAGMENT_SHADER;
+
+	Hnd hnd;
 
 	// Compile, attach, and link shader program
 	Program program;
-	Shader vert(vertPath.c_str(), VERT), frag(fragPath.c_str(), FRAG);
+	Shader vert(vertPath.c_str(), GL_VERTEX_SHADER),
+		frag(fragPath.c_str(), GL_FRAGMENT_SHADER);
 	if(!vert.compile() || !program.attach(vert)) {
 		cout << "Could not build " << vertPath;
 		if(vert.status.length()) cout << ": " << vert.status;
@@ -105,17 +111,12 @@ int main(int argc, const char *argv[]) {
 		cout << endl;
 		return 1;
 	}
-	glUseProgram(program);
+	hnd.use(program);
 
 	// Locate and initialize MVP matrix
 	auto mvp = program.locate("mvp");
 	if(mvp < 0)
 		return cout << program.status, 1;
-	float near = 1, far = 2, mid = (near + far)/2, right = 1, top = 1;
-	GLfloat points[][3] = {
-		{-right, mid, -top}, {right, mid, -top}, {right, mid, top},
-		{-right, mid, -top}, {right, mid, top}, {-right, mid, top}
-	};
 	hnd.project(mvp, top, right, near, far);
 
 	// Create and initialize vertex array and buffer
@@ -139,8 +140,7 @@ int main(int argc, const char *argv[]) {
 			hnd.clear();
 		}
 		// Render
-		hnd.frame.clear().use(program)
-			.draw(vao, GL_TRIANGLES, 0, 6).flip();
+		hnd.frame.clear().draw(vao, GL_TRIANGLES, 0, 6).flip();
 		SDL_Delay(100);
 		if((N >= 0) && (i >= N)) break;
 	}

@@ -13,6 +13,10 @@ struct Presenter: Events::Handler<S> {
 	View::Frame frame;
 	Model model;
 
+	S& use(gl::GLuint program) {
+		gl::glUseProgram(program);
+		return static_cast<S&>(*this);
+	}
 	gl::GLfloat projection[16] = {0};
 	S& project(gl::GLuint dest, float right, float top, float near, float far) {
 		using namespace View;
