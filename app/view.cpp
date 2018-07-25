@@ -103,11 +103,11 @@ int main(int argc, const char *argv[]) {
 	}
 
 	float near = 1, far = 2, mid = (near + far)/2,
-			right = 1, top = 1, width = 2*right, height = 2*top,
-			mx = near/right, my = near/top,
+			right = 1, top = 1, width = 2*right, height = 2*top;
+			/*mx = near/right, my = near/top,
 			mzz = (far+near)/(near-far),
 			mzw = 2*far*near/(near-far),
-			mwz = -1;
+			mwz = -1;*/
 	GLfloat points[][3] = {
 		{-right, mid, -top}, {right, mid, -top}, {right, mid, top},
 		{-right, mid, -top}, {right, mid, top}, {-right, mid, top}
@@ -138,13 +138,7 @@ int main(int argc, const char *argv[]) {
 		cout << "Could not find uniform " << mvpString << '!' << endl;
 		return 1;
 	}
-	GLfloat mvpData[16] = {
-		mx, 0, 0, 0,
-		0, 0, -mzz, -mwz,
-		0, my, 0, 0,
-		0, 0, mzw, 0,
-	};
-	glUniformMatrix4fv(mvp, 1, GL_FALSE, mvpData);
+	hnd.project(mvp, top, right, near, far);
 
 	for(auto i = 0;; i++) {
 		if(!hnd.poll())
