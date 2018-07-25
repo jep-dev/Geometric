@@ -60,7 +60,8 @@ struct Program {
 	operator GLuint(void) const;
 	template<class... S>
 	bool attach(S &&... s) {
-		for(auto b : {(glIsShader(s) && Detail::is_sourced(s) && Detail::is_compiled(s))...})
+		using namespace Detail;
+		for(auto b : {(glIsShader(s) && is_sourced(s) && is_compiled(s))...})
 			if(!b) return attached = false;
 		return attached = Detail::attach(value, std::forward<S>(s)...);
 	}
