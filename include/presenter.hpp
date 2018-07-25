@@ -28,6 +28,10 @@ struct Presenter: Events::Handler<S> {
 		glUniformMatrix4fv(0, 1, GL_FALSE, projection);
 		return static_cast<S&>(*this);
 	}
+	auto draw(void) -> decltype(frame.draw()) { return frame.draw(); }
+	auto clear(void) -> decltype(frame.clear()) { return frame.clear(); }
+	auto getWindow(void) -> decltype(frame.getWindow()) { return frame.getWindow(); }
+	auto getContext(void) -> decltype(frame.getContext()) { return frame.getContext(); }
 
 	template<class... T>
 	Presenter(T &&... t): frame(std::forward<T>(t)...) {}

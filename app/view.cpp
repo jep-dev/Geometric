@@ -74,7 +74,7 @@ int main(int argc, const char *argv[]) {
 
 	Hnd hnd;
 	glClear(GL_COLOR_BUFFER_BIT);
-	SDL_GL_SwapWindow(hnd.frame.getWindow());
+	SDL_GL_SwapWindow(hnd.getWindow());
 	glClear(GL_COLOR_BUFFER_BIT);
 	auto glErr = glGetError();
 	if(glErr != GL_NO_ERROR)
@@ -102,12 +102,7 @@ int main(int argc, const char *argv[]) {
 		return 1;
 	}
 
-	float near = 1, far = 2, mid = (near + far)/2,
-			right = 1, top = 1, width = 2*right, height = 2*top;
-			/*mx = near/right, my = near/top,
-			mzz = (far+near)/(near-far),
-			mzw = 2*far*near/(near-far),
-			mwz = -1;*/
+	float near = 1, far = 2, mid = (near + far)/2, right = 1, top = 1;
 	GLfloat points[][3] = {
 		{-right, mid, -top}, {right, mid, -top}, {right, mid, top},
 		{-right, mid, -top}, {right, mid, top}, {-right, mid, top}
