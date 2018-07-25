@@ -11,34 +11,34 @@ struct Hnd: Presenter<Hnd> {
 	Events::Status operator()(SDL_KeyboardEvent const& k) {
 		switch(k.keysym.sym) {
 			case SDLK_ESCAPE: case SDLK_q:
-				return { Events::StatusQuit };
+				return { Events::StatusQuit, k.timestamp };
 			default: break;
 		}
-		return {};
+		return { Events::StatusPass, k.timestamp };
 	}
 	Events::Status operator()(SDL_WindowEvent const& w) {
 		switch(w.event) {
 			case SDL_WINDOWEVENT_CLOSE:
 				*this << "Caught window close event";
-				return { Events::StatusQuit };
+				return { Events::StatusQuit, w.timestamp };
 			case SDL_WINDOWEVENT_MOVED: break;
 			case SDL_WINDOWEVENT_RESIZED:
 			case SDL_WINDOWEVENT_SIZE_CHANGED: break;
 			default: break;
 		}
-		return { };
+		return { Events::StatusPass, w.timestamp };
 	}
-	Events::Status operator()(SDL_MouseButtonEvent const& q) {
+	Events::Status operator()(SDL_MouseButtonEvent const& b) {
 		*this << "";
-		oss << "Caught mouse " << int(q.button)
-			<< " " << ((q.type == SDL_MOUSEBUTTONDOWN) ? "press" : "release")
-			<< " at (" << q.x << ", " << q.y << ")";
-		return { };
+		oss << "Caught mouse " << int(b.button)
+			<< " " << ((b.type == SDL_MOUSEBUTTONDOWN) ? "press" : "release")
+			<< " at (" << b.x << ", " << b.y << ")";
+		return { Events::StatusPass, b.timestamp };
 	}
 
 	template<class S>
 	Events::Status operator()(S const& s) {
-		return { };
+		return { Events::StatusPass, s.timestamp };
 	}
 	std::size_t size(void) {
 		return oss.tellp();

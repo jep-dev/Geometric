@@ -18,8 +18,8 @@ enum EStatus {
 };
 struct Status {
 	uint32_t code = StatusPass;
-	std::string message = "";
 	uint64_t timestamp = SDL_GetPerformanceCounter();
+	std::string message = "";
 	std::size_t length(void) const { return message.length(); }
 
 	static bool passed(uint32_t h) { return h & StatusPass; }
