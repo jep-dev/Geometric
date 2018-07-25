@@ -105,6 +105,19 @@ int main(int argc, const char *argv[]) {
 		{-right, mid, -top}, {right, mid, top}, {-right, mid, top}
 	};
 
+	if(!program.link()) {
+		cout << "Could not link program";
+		if(program.status.length())
+			cout << ": " << program.status;
+		cout << endl;
+		return 1;
+	}
+	glUseProgram(program);
+	auto mvp = program.locate("mvp");
+	if(mvp < 0)
+		return cout << program.status, 1;
+	hnd.project(mvp, top, right, near, far);
+
 	GLuint vao, vbo;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -114,20 +127,6 @@ int main(int argc, const char *argv[]) {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
 	glBindAttribLocation(program, 0, "pos");
-
-	if(!program.link()) {
-		cout << "Could not link program";
-		if(program.status.length())
-			cout << ": " << program.status;
-		cout << endl;
-		return 1;
-	}
-	glUseProgram(program);
-
-	auto mvp = program.locate("mvp");
-	if(mvp < 0)
-		return cout << program.status, 1;
-	hnd.project(mvp, top, right, near, far);
 
 	for(auto i = 0;; i++) {
 		if(!hnd.poll())
@@ -146,5 +145,8 @@ int main(int argc, const char *argv[]) {
 	if(hnd.size())
 		cout << hnd << "\n";
 	cout << "Frame's message:\n" << hnd.frame << endl;
+
+	glDeleteVertexArrays(1, &vao);
+	glDeleteBuffers(1, &vbo);
 	SDL_Quit();
 }
