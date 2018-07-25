@@ -124,12 +124,9 @@ int main(int argc, const char *argv[]) {
 	}
 	glUseProgram(program);
 
-	auto mvpString = "mvp";
-	auto mvp = glGetUniformLocation(program, mvpString);
-	if(mvp < 0) {
-		cout << "Could not find uniform " << mvpString << '!' << endl;
-		return 1;
-	}
+	auto mvp = program.locate("mvp");
+	if(mvp < 0)
+		return cout << program.status, 1;
 	hnd.project(mvp, top, right, near, far);
 
 	for(auto i = 0;; i++) {

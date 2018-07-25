@@ -124,6 +124,15 @@ struct Program {
 		glGetProgramInfoLog(*this, len, nullptr, &status.message[0]);
 		return linked;
 	}
+	GLuint locate(const char *name) {
+		auto location = glGetUniformLocation(value, name);
+		if(location < 0) {
+			status.code = Events::StatusWarn;
+			status.message = "Could not find uniform ";
+			status.message += name;
+		}
+		return location;
+	}
 	Program(GLuint value): value(value) {}
 	Program(void): Program(glCreateProgram()) {}
 	virtual ~Program(void) { glDeleteProgram(value); value = 0; }
