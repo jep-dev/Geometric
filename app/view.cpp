@@ -73,9 +73,6 @@ int main(int argc, const char *argv[]) {
 	}
 
 	Hnd hnd;
-	glClear(GL_COLOR_BUFFER_BIT);
-	SDL_GL_SwapWindow(hnd.frame);
-	glClear(GL_COLOR_BUFFER_BIT);
 	auto glErr = glGetError();
 	if(glErr != GL_NO_ERROR)
 		cout << "A GL error occurred: " << glErr << endl;
