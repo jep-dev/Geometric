@@ -20,37 +20,15 @@ struct Program;
 using namespace gl;
 
 namespace Detail {
-	bool is_error(GLenum e) { return e == GL_NO_ERROR; }
-	bool get_error(void) { return is_error(glGetError()); }
+	bool is_error(GLenum e);
+	bool get_error(void);
+	bool is_sourced(GLuint shader);
+	bool source(GLuint shader, const char *filename);
+	bool is_compiled(GLuint shader);
+	bool compile(GLuint shader);
+	bool is_linked(GLuint program);
+	bool link(GLuint program);
 
-	bool is_sourced(GLuint shader) {
-		if(!glIsShader(shader)) return false;
-		GLint len;
-		glGetShaderiv(shader, GL_SHADER_SOURCE_LENGTH, &len);
-		return len;
-	}
-
-	bool source(GLuint shader, const char *filename) {
-		bool status;
-		std::string lines;
-		if(!Streams::readLines(filename, lines)) return false;
-		auto buf = lines.c_str();
-		auto gbuf = &lines[0];
-		glShaderSource(shader, 1, &gbuf, nullptr);
-		return is_sourced(shader);
-	}
-
-	bool is_compiled(GLuint shader) {
-		if(!glIsShader(shader)) return false;
-		GLint cmp;
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &cmp);
-		return GL_TRUE == cmp;
-	}
-	bool compile(GLuint shader) {
-		if(is_compiled(shader)) return true;
-		glCompileShader(shader);
-		return is_compiled(shader);
-	}
 	template<class... S>
 	bool attach(GLuint program, S &&... s) {
 		for(auto sh : {GLuint(s)...}) {
@@ -60,81 +38,36 @@ namespace Detail {
 		}
 		return true;
 	}
-	bool is_linked(GLuint program) {
-		if(!glIsProgram(program)) return false;
-		GLint cmp;
-		glGetProgramiv(program, GL_LINK_STATUS, &cmp);
-		return GL_TRUE == cmp;
-	}
-	bool link(GLuint program) {
-		if(!is_linked(program)) {
-			glLinkProgram(program);
-			if(!is_linked(program))
-				return false;
-		}
-		return true;
-	}
 }
 
 struct Shader {
 	GLuint value;
 	bool sourced = false, compiled = false;
 	Events::Status status;
-	operator GLuint(void) const { return value; }
-	bool source(const char *fname, bool force = true) {
-		compiled = false;
-		return sourced = Detail::source(value, fname);
-	}
-	bool compile(bool force = true) {
-		if(!sourced) return false;
-		if(compiled && !force) return true;
-		compiled = Detail::compile(value);
-		GLint len;
-		glGetShaderiv(value, GL_INFO_LOG_LENGTH, &len);
-		status.code = Events::StatusFail;
-		status.message = std::string(unsigned(len), '\0');
-		glGetShaderInfoLog(value, len, nullptr, &status.message[0]);
-		return compiled;
-	}
-	Shader(GLuint value): value(value) {}
-	Shader(GLuint value, const char *fname): Shader(value) { source(fname); }
-	Shader(GLenum type = GL_VERTEX_SHADER): Shader(glCreateShader(type)) { }
-	Shader(const char *fname, GLenum type = GL_VERTEX_SHADER): Shader(type) { source(fname); }
+	operator GLuint(void) const;
+	bool source(const char *fname, bool force = true);
+	bool compile(bool force = true);
+	Shader(GLuint value);
+	Shader(GLuint value, const char *fname);
+	Shader(GLenum type = GL_VERTEX_SHADER);
+	Shader(const char *fname, GLenum type = GL_VERTEX_SHADER);
 	virtual ~Shader(void) { glDeleteShader(value); value = 0; }
 };
 struct Program {
 	GLuint value;
 	bool attached = false, linked = false;
 	Events::Status status;
-	operator GLuint(void) const { return value; }
+	operator GLuint(void) const;
 	template<class... S>
 	bool attach(S &&... s) {
 		for(auto b : {(glIsShader(s) && Detail::is_sourced(s) && Detail::is_compiled(s))...})
 			if(!b) return attached = false;
 		return attached = Detail::attach(value, std::forward<S>(s)...);
 	}
-	bool link(bool force = true) {
-		if(!attached && force) linked = false;
-		if(linked && !force) return true;
-		linked = Detail::link(value);
-		int len;
-		glGetProgramiv(*this, GL_INFO_LOG_LENGTH, &len);
-		if(len <= 0) return linked;
-		status.message = std::string(len, '\0');
-		glGetProgramInfoLog(*this, len, nullptr, &status.message[0]);
-		return linked;
-	}
-	GLuint locate(const char *name) {
-		auto location = glGetUniformLocation(value, name);
-		if(location < 0) {
-			status.code = Events::StatusWarn;
-			status.message = "Could not find uniform ";
-			status.message += name;
-		}
-		return location;
-	}
-	Program(GLuint value): value(value) {}
-	Program(void): Program(glCreateProgram()) {}
+	bool link(bool force = true);
+	GLuint locate(const char *name);
+	Program(GLuint value);
+	Program(void);
 	virtual ~Program(void) { glDeleteProgram(value); value = 0; }
 };
 
