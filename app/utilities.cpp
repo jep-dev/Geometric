@@ -25,10 +25,14 @@ int main(int argc, const char *argv[]) {
 	using E = Tag<>;
 	using U = Tag<u>;
 	using V = Tag<v>;
+	using UV = Tag<u, v>;
 	using W = Tag<w>;
+	using UVW = Tag<u, v, w>;
 	using X = Tag<x>;
 	using Y = Tag<y>;
+	using XY = Tag<x, y>;
 	using Z = Tag<z>;
+	using XYZ = Tag<x, y, z>;
 
 	std::ostringstream oss;
 	oss << "Basic types:\n\t"
@@ -60,10 +64,15 @@ int main(int argc, const char *argv[]) {
 			"(U+V) ^ (X+Y+Z) = " << make_pretty((U{}+V{}) ^ (X{}+Y{}+Z{})) << ".\n\t"
 			"(U+V+W) ^ (X+Y+Z) = " << make_pretty((U{}+V{}+W{}) ^ (X{}+Y{}+Z{})) << ".\n"
 		"Evaluations:\n\t"
-			"0 ~= " << make_pretty(eval(E{})) << ";\n\t"
-			"U ~= " << make_pretty(eval(U{})) << ";\n\t"
-			"U+V ~= " << make_pretty(eval(U{}+V{})) << ";\n\t"
-			"(U+V)^(X+Y) ~= " << make_pretty(eval((U{}+V{})^(X{}+Y{}))) << ".";
+			"[0] = " << make_pretty(eval(E{})) << ";\n\t"
+			"[U] = " << make_pretty(eval(U{})) << ";\n\t"
+			"[U+V] = " << make_pretty(eval(U{}+V{})) << ";\n\t"
+			"[(U+V)^(X+Y)] = " << make_pretty(eval((U{}+V{})^(X{}+Y{}))) << ".\n"
+		"Access:\n\t"
+			"[U+V]_0 = " << make_pretty(access<0>(eval(U{}+V{}))) << ";\n\t"
+			"[U+V]_1 = " << make_pretty(access<1>(eval(U{}+V{}))) << ";\n\t"
+			"[(U+V)^(X+Y)]_1 = " << make_pretty(access<1>(eval((U{}+V{})^(X{}+Y{})))) << ";\n\t"
+			"[(U+V)^(X+Y)]_1_1 = " << make_pretty(access<1,1>(eval((U{}+V{})^(X{}+Y{})))) << ".";
 	auto res = oss.str();
 
 	using S2 = array<string, 2>;
