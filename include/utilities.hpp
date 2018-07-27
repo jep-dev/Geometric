@@ -77,11 +77,14 @@ auto ext(Tag<U, V...>, Tag<X, Y...>) -> decltype(Tag<Tag<U, X>, Tag<U, Y>...>{}
 template<class... U, class... X>
 auto operator^(Tag<U...> u, Tag<X...> x) -> decltype(ext(u, x)) { return ext(u, x); }
 
+/** Equivalent to std::tuple; imbues Tag<...> and any Tags it contains with corresponding values */
 template<class... U>
 using Val = std::tuple<U...>;
 
+/** Identity with perfect forwarding */
 template<class U>
 auto eval(U && u = {}) { return std::forward<U>(u); }
+/** Maps a value-free Tag to a tag-free Val (tuple) */
 template<class... U>
 auto eval(Tag<U...>) -> Val<decltype(eval(std::declval<U>()))...> { return {eval(U{})...}; }
 
