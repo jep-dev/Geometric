@@ -73,7 +73,7 @@ auto ext(U &&, Tag<>) -> Tag<> { return {}; }
 template<class X>
 auto ext(Tag<>, X &&) -> Tag<> { return {}; }
 template<class U, class X>
-auto ext(Tag<U>, Tag<X>) -> Tag<U,X> { return {}; }
+auto ext(Tag<U>, Tag<X>) -> Tag<Tag<U,X>> { return {}; }
 template<class U, class... V, class X>
 auto ext(Tag<U, V...>, Tag<X>) -> Tag<Tag<U, X>, Tag<V, X>...> { return {}; }
 template<class U, class X, class... Y>
