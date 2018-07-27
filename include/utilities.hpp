@@ -81,30 +81,37 @@ auto operator^(Tag<U...> u, Tag<X...> x) -> decltype(ext(u, x)) { return ext(u, 
 template<class... U>
 using Val = std::tuple<U...>;
 
-/** Identity with perfect forwarding */
+/** Eval's default case; identity with perfect forwarding */
 template<class U>
 auto eval(U && u = {}) { return std::forward<U>(u); }
 /** Maps a value-free Tag to a tag-free Val (tuple) */
 template<class... U>
 auto eval(Tag<U...>) -> Val<decltype(eval(std::declval<U>()))...> { return {eval(U{})...}; }
 
+/** Access's default case; identity with perfect forwarding */
 template<class T>
 auto access(T && t) -> decltype(t) { return std::forward<T>(t); }
 
+/** (Const reference) access's base case; delegates to std::get */
 template<unsigned I, class... T>
 auto access(Val<T...> const& t) -> decltype(std::get<I>(t)) { return std::get<I>(t); }
+/** (Const reference) access's inductive case; recurses to compose the tail with std::get */
 template<unsigned I, unsigned J, unsigned... K, class... T>
 auto access(Val<T...> const& t) -> decltype(access<J, K...>(std::get<I>(t))) {
 	return access<J, K...>(std::get<I>(t));
 }
+/** (Reference) access's base case; delegates to std::get */
 template<unsigned I, class... T>
 auto access(Val<T...> & t) -> decltype(std::get<I>(t)) { return std::get<I>(t); }
+/** (Reference) access's inductive case; recurses to compose the tail with std::get */
 template<unsigned I, unsigned J, unsigned... K, class... T>
 auto access(Val<T...> & t) -> decltype(access<J, K...>(std::get<I>(t))) {
 	return access<J, K...>(std::get<I>(t));
 }
+/** (Rvalue) access's base case; delegates to std::get */
 template<unsigned I, class... T>
 auto access(Val<T...> && t) -> decltype(std::get<I>(t)) { return std::get<I>(t); }
+/** (Rvalue) access's inductive case; recurses to compose the tail with std::get */
 template<unsigned I, unsigned J, unsigned... K, class... T>
 auto access(Val<T...> && t) -> decltype(access<J, K...>(std::get<I>(t))) {
 	return access<J, K...>(std::get<I>(t));
