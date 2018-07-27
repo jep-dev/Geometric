@@ -12,20 +12,24 @@
 
 namespace Detail {
 
-/** Allows SFINAE for missing members. */
-template<class... T> struct Void;
 /** Tags a type with no value; only impacts compile-time resolution */
 template<class...> struct Tag;
+/** Delimiter tag; only impacts compile-time resolution */
+struct Delim {};
 
+/** Allows SFINAE for missing members. */
+template<class... T> struct Void;
 /** Helper for Void's type */
 template<class... T> using Void_t = typename Void<T...>::value_type;
 
 /** A variadic tag, essentially a type sequence. */
 template<class...> struct Tag;
 
+/** Abstract minimax (pair with first=min and second=max) */
 template<class T> std::pair<long, long> minimax(T && t);
+template<class T> long numDigits(T const& t);
 
-template<class... T> struct Void { using value_type = void; };
+
 
 template<class...> struct Tag {
 	typedef Tag<> head_type;
@@ -93,6 +97,13 @@ auto access(Val<T...> && t) -> decltype(access<J, K...>(std::get<I>(t))) {
 	return access<J, K...>(std::get<I>(t));
 }
 
+
+template<class U, class... V, class X = Tag<>>
+auto reverse(Tag<U, V...>, X x = {})
+-> decltype(reverse(Tag<V...>{}, Tag<U>{} + x)) { return {}; }
+template<class... X>
+auto reverse(Tag<>, Tag<X...> x = {}) -> decltype(x) { return {}; }
+
 }
 
 
@@ -107,6 +118,8 @@ std::pair<long, long> minimax(T && t) {
 	if(m0 > m1) m0 = m1;
 	return {m0, m1};
 }
+
+template<class... T> struct Void { using value_type = void; };
 
 template<class T>
 long numDigits(T const& t) {
