@@ -117,10 +117,11 @@ auto access(Val<T...> && t) -> decltype(access<J, K...>(std::get<I>(t))) {
 	return access<J, K...>(std::get<I>(t));
 }
 
-
+/** Reverse's inductive case; recurses after moving the head of the LHS to the RHS */
 template<class U, class... V, class X = Tag<>>
 auto reverse(Tag<U, V...>, X x = {})
 -> decltype(reverse(Tag<V...>{}, Tag<U>{} + x)) { return {}; }
+/** Reverse's base case; simply returns the RHS */
 template<class... X>
 auto reverse(Tag<>, Tag<X...> x = {}) -> decltype(x) { return {}; }
 
@@ -138,8 +139,6 @@ std::pair<long, long> minimax(T && t) {
 	if(m0 > m1) m0 = m1;
 	return {m0, m1};
 }
-
-template<class... T> struct Void { using value_type = void; };
 
 template<class T>
 long numDigits(T const& t) {
