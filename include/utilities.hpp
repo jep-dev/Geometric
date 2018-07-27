@@ -71,6 +71,28 @@ auto eval(U && u = {}) { return std::forward<U>(u); }
 template<class... U>
 auto eval(Tag<U...>) -> Val<decltype(eval(std::declval<U>()))...> { return {eval(U{})...}; }
 
+template<class T>
+auto access(T && t) -> decltype(t) { return std::forward<T>(t); }// return t; }
+
+template<unsigned I, class... T>
+auto access(Val<T...> const& t) -> decltype(std::get<I>(t)) { return std::get<I>(t); }
+template<unsigned I, unsigned J, unsigned... K, class... T>
+auto access(Val<T...> const& t) -> decltype(access<J, K...>(std::get<I>(t))) {
+	return access<J, K...>(std::get<I>(t));
+}
+template<unsigned I, class... T>
+auto access(Val<T...> & t) -> decltype(std::get<I>(t)) { return std::get<I>(t); }
+template<unsigned I, unsigned J, unsigned... K, class... T>
+auto access(Val<T...> & t) -> decltype(access<J, K...>(std::get<I>(t))) {
+	return access<J, K...>(std::get<I>(t));
+}
+template<unsigned I, class... T>
+auto access(Val<T...> && t) -> decltype(std::get<I>(t)) { return std::get<I>(t); }
+template<unsigned I, unsigned J, unsigned... K, class... T>
+auto access(Val<T...> && t) -> decltype(access<J, K...>(std::get<I>(t))) {
+	return access<J, K...>(std::get<I>(t));
+}
+
 }
 
 
