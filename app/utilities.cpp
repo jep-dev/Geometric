@@ -26,7 +26,7 @@ struct z; struct z : Base<z> { using Base::operator=; };
 
 template<class S, class T>
 S& operator<<(S &s, Base<T> const& b) {
-	return s << Pretty<T>() << ":" << b.value;
+	return s << Pretty<T>() << '(' << b.value << ')';
 }
 
 int main(int argc, const char *argv[]) {
@@ -108,21 +108,31 @@ int main(int argc, const char *argv[]) {
 			"(U+V+W) ^ (X+Y) = " << make_pretty(UVW{} ^ XY{}) << ".\n\t"
 			"(U+V) ^ (X+Y+Z) = " << make_pretty(UV{} ^ XYZ{}) << ".\n\t"
 			"(U+V+W) ^ (X+Y+Z) = " << make_pretty(UVW{} ^ XYZ{}) << ".\n"
-		"Evaluations:\n\t"
+		"Evaluation:\n\t"
 			"[0] = " << make_pretty(eval(E{})) << ";\n\t"
 			"[U] = " << make_pretty(eval(U{})) << ";\n\t"
 			"[U+V] = " << make_pretty(eval(UV{})) << ";\n\t"
-			"[(U+V)^(X+Y)] = " << make_pretty(eval(UV{}^XY{})) << ".\n"
-		"Access:\n\t"
+			"[(U+V)^(X+Y)] = " << make_pretty(eval(UV{}^XY{})) << ".\n";
+	auto uv = eval(UV{});
+	static_assert(std::is_same<decltype(access<0>(uv)), u&>::value
+			&& std::is_same<decltype(access<1>(uv)), v&>::value,
+		"Access<I> must emulate std::get<I>");
+	oss << "Access:\n\t"
 			"[U+V]_0 = " << make_pretty(access<0>(eval(UV{}))) << ";\n\t"
 			"[U+V]_1 = " << make_pretty(access<1>(eval(UV{}))) << ";\n\t"
 			"[(U+V)^(X+Y)]_1 = " << make_pretty(access<1>(eval(UV{}^XY{}))) << ";\n\t"
-			"[(U+V)^(X+Y)]_1_1 = " << make_pretty(access<1,1>(eval(UV{}^XY{}))) << ";\n\t";
-	auto uv = eval(UV{});
-	access<0>(uv) = 1;
-	access<1>(uv) = 2;
-	oss << "[U+V](1,2) = (" << access<0>(uv) << ", " << access<1>(uv) << ").\n"
-		"Reversal:\n\t"
+			"[(U+V)^(X+Y)]_1_1 = " << make_pretty(access<1,1>(eval(UV{}^XY{}))) << ";\n\t"
+			"[U+V]_0 . 1 = " << (access<0>(uv) = 1) << ";\n\t"
+			"[U+V]_1 . 2 = " << (access<1>(uv) = 2) << ".\n";
+
+	static_assert(std::is_same<decltype(reverse(UVW{})), decltype(W{}+V{}+U{})>::value,
+		"Reverse must distribute over addition");
+	static_assert(std::is_same<decltype(reverse(UV{}^XY{})),
+				decltype(reverse(UV{})^reverse(XY{}))>::value
+			&& std::is_same<decltype(reverse(UV{}*XY{})),
+				decltype(reverse(UV{})*reverse(XY{}))>::value,
+		"Reverse must distribute over multiplication");
+	oss << "Reversal:\n\t"
 			"rev(U+V) = " << make_pretty(reverse(UV{})) << ";\n\t"
 			"rev(U+V+W) = " << make_pretty(reverse(UVW{})) << ";\n\t"
 			"rev((U+V)^(X+Y)) = " << make_pretty(reverse(UV{}^XY{})) << ";\n\t";
