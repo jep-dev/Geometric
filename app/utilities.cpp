@@ -52,16 +52,13 @@ int main(int argc, const char *argv[]) {
 		"Outer products:\n\t"
 			"0 ^ X = " << make_pretty(E{}^X{}) << ";\n\t"
 			"U ^ 0 = " << make_pretty(U{}^E{}) << ";\n\t"
+			"U ^ X = " << make_pretty(U{}^X{}) << ";\n\t"
 			"(U+V) ^ X = " << make_pretty((U{}+V{}) ^ X{}) << ";\n\t"
 			"U ^ (X+Y) = " << make_pretty(U{} ^ (X{}+Y{})) << ";\n\t"
 			"(U+V) ^ (X+Y) = " << make_pretty((U{}+V{}) ^ (X{}+Y{})) << ".\n\t"
 			"(U+V+W) ^ (X+Y) = " << make_pretty((U{}+V{}+W{}) ^ (X{}+Y{})) << ".\n\t"
 			"(U+V) ^ (X+Y+Z) = " << make_pretty((U{}+V{}) ^ (X{}+Y{}+Z{})) << ".\n\t"
 			"(U+V+W) ^ (X+Y+Z) = " << make_pretty((U{}+V{}+W{}) ^ (X{}+Y{}+Z{})) << ".";
-		/* I believe from a category/set/type theory standpoint, the orders of (U+V)^X and U^(X+Y)
-		 * are one shy of what they should be. If (U+V)^(X+Y) is {{{u,x},{u,y}}, {{v,x},{v,y}}},
-		 * then why wouldn't U^(X+Y) just be the same with the second element eliminated?
-		 * Instead, it appears to *be* the first element (not the set containing it.) */
 	auto res = oss.str();
 
 	using S2 = array<string, 2>;
