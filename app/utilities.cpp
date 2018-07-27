@@ -6,13 +6,28 @@
 #include "utilities.hpp"
 #include "pretty.tpp"
 
-struct Base { int value = 0; };
-struct u : Base {};
-struct v : Base {};
-struct w : Base {};
-struct x : Base {};
-struct y : Base {};
-struct z : Base {};
+template<class CRTP>
+struct Base {
+	int value = 0;
+	template<class T>
+	CRTP& operator=(T && t) {
+		value = std::forward<T>(t);
+		return static_cast<CRTP&>(*this);
+	}
+};
+
+struct u; struct u : Base<u> { using Base::operator=; };
+struct v; struct v : Base<v> { using Base::operator=; };
+struct w; struct w : Base<w> { using Base::operator=; };
+struct x; struct x : Base<x> { using Base::operator=; };
+struct y; struct y : Base<y> { using Base::operator=; };
+struct z; struct z : Base<z> { using Base::operator=; };
+
+
+template<class S, class T>
+S& operator<<(S &s, Base<T> const& b) {
+	return s << Pretty<T>() << ":" << b.value;
+}
 
 int main(int argc, const char *argv[]) {
 	using std::cout;
@@ -102,7 +117,11 @@ int main(int argc, const char *argv[]) {
 			"[U+V]_0 = " << make_pretty(access<0>(eval(UV{}))) << ";\n\t"
 			"[U+V]_1 = " << make_pretty(access<1>(eval(UV{}))) << ";\n\t"
 			"[(U+V)^(X+Y)]_1 = " << make_pretty(access<1>(eval(UV{}^XY{}))) << ";\n\t"
-			"[(U+V)^(X+Y)]_1_1 = " << make_pretty(access<1,1>(eval(UV{}^XY{}))) << ".\n"
+			"[(U+V)^(X+Y)]_1_1 = " << make_pretty(access<1,1>(eval(UV{}^XY{}))) << ";\n\t";
+	auto uv = eval(UV{});
+	access<0>(uv) = 1;
+	access<1>(uv) = 2;
+	oss << "[U+V](1,2) = (" << access<0>(uv) << ", " << access<1>(uv) << ").\n"
 		"Reversal:\n\t"
 			"rev(U+V) = " << make_pretty(reverse(UV{})) << ";\n\t"
 			"rev(U+V+W) = " << make_pretty(reverse(UVW{})) << ";\n\t"
@@ -110,8 +129,8 @@ int main(int argc, const char *argv[]) {
 	auto res = oss.str();
 
 	using S2 = array<string, 2>;
-	for(auto const& it : vector<S2>{{"Detail::", ""}, {"std::tuple", "Val"},
-			{"Tag", ""}, {"> >", ">>"}, {"<", "{"}, {">", "}"}}) {
+	for(auto const& it : vector<S2>{{"->", "-%"}, {"Detail::", ""}, {"std::tuple", "Val"},
+			{"Tag", ""}, {"> >", ">>"}, {"<", "{"}, {">", "}"}, {"-%", "->"}}) {
 		std::size_t pos;
 		while((pos = res.find(it[0])) != std::string::npos)
 			res.replace(pos, it[0].length(), it[1]);
