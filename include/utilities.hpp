@@ -27,7 +27,9 @@ template<class...> struct Tag;
 
 /** Abstract minimax (pair with first=min and second=max) */
 template<class T> std::pair<long, long> minimax(T && t);
+/** Abstract number of digits in decimal */
 template<class T> long numDigits(T const& t);
+// TODO: Consider numDigits with a template parameter
 
 
 
