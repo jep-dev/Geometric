@@ -98,7 +98,7 @@ auto access(Val<T...> const& t) -> decltype(std::get<I>(t)) { return std::get<I>
 /** (Const reference) access's inductive case; recurses to compose the tail with std::get */
 template<unsigned I, unsigned J, unsigned... K, class... T>
 auto access(Val<T...> const& t) -> decltype(access<J, K...>(std::get<I>(t))) {
-	return access<J, K...>(std::get<I>(t));
+	return access<J, K...>(access<I>(t));
 }
 /** (Reference) access's base case; delegates to std::get */
 template<unsigned I, class... T>
@@ -106,15 +106,17 @@ auto access(Val<T...> & t) -> decltype(std::get<I>(t)) { return std::get<I>(t); 
 /** (Reference) access's inductive case; recurses to compose the tail with std::get */
 template<unsigned I, unsigned J, unsigned... K, class... T>
 auto access(Val<T...> & t) -> decltype(access<J, K...>(std::get<I>(t))) {
-	return access<J, K...>(std::get<I>(t));
+	return access<J, K...>(access<I>(t));
 }
 /** (Rvalue) access's base case; delegates to std::get */
 template<unsigned I, class... T>
-auto access(Val<T...> && t) -> decltype(std::get<I>(t)) { return std::get<I>(t); }
+auto access(Val<T...> && t) -> decltype(std::get<I>(std::move(t))) {
+	return std::get<I>(std::move(t));
+}
 /** (Rvalue) access's inductive case; recurses to compose the tail with std::get */
 template<unsigned I, unsigned J, unsigned... K, class... T>
-auto access(Val<T...> && t) -> decltype(access<J, K...>(std::get<I>(t))) {
-	return access<J, K...>(std::get<I>(t));
+auto access(Val<T...> && t) -> decltype(access<J, K...>(access<I>(std::move(t)))) {
+	return access<J, K...>(std::get<I>(std::move(t)));
 }
 
 /** Reverse's inductive case; recurses after moving the head of the LHS to the RHS */
@@ -127,6 +129,8 @@ auto reverse(Tag<>, Tag<X...> x = {}) -> decltype(x) { return {}; }
 
 }
 
+
+template<class... T> struct Void { using value_type = void; };
 
 template<class T>
 std::pair<long, long> minimax(T && t) {
