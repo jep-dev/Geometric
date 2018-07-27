@@ -25,16 +25,16 @@ int main(int argc, const char *argv[]) {
 	using E = Tag<>;
 	using U = Tag<u>;
 	using V = Tag<v>;
-	using UV = Tag<u, v>;
 	using W = Tag<w>;
-	using VW = Tag<v, w>;
-	using UVW = Tag<u, v, w>;
+		using UV = Tag<u, v>;
+		using VW = Tag<v, w>;
+		using UVW = Tag<u, v, w>;
 	using X = Tag<x>;
 	using Y = Tag<y>;
-	using XY = Tag<x, y>;
 	using Z = Tag<z>;
-	using YZ = Tag<y, z>;
-	using XYZ = Tag<x, y, z>;
+		using XY = Tag<x, y>;
+		using YZ = Tag<y, z>;
+		using XYZ = Tag<x, y, z>;
 
 	static_assert(std::is_same<UV, decltype(U{}+V{})>::value
 			&& std::is_same<VW, decltype(V{}+W{})>::value
