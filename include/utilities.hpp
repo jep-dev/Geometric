@@ -27,10 +27,10 @@ template<class...> struct Tag;
 
 /** Abstract minimax (pair with first=min and second=max) */
 template<class T> std::pair<long, long> minimax(T && t);
+
 /** Abstract number of digits in decimal */
 template<class T> long numDigits(T const& t);
-// TODO: Consider numDigits with a template parameter
-
+// TODO: Consider numDigits with a (template?) parameter designating the radix
 
 
 template<class...> struct Tag {
@@ -52,20 +52,28 @@ Tag<LHS..., RHS...> operator+(Tag<LHS...>, Tag<RHS...>) { return {}; }
 template<class... LN, class... RN>
 Tag<Tag<LN,RN>...> operator*(Tag<LN...>, Tag<RN...>) { return {}; }
 
-template<class U>
-auto ext(U &&, Tag<>) -> Tag<> { return {}; }
+/** Empty exterior; may be necessary due to ambiguity between ext(U,Tag<>) and ext(Tag<>,X) */
+auto ext(Tag<>, Tag<>) -> Tag<> { return {}; }
+/** Exterior with empty LHS */
 template<class X>
 auto ext(Tag<>, X &&) -> Tag<> { return {}; }
+/** Exterior with empty RHS */
+template<class U>
+auto ext(U &&, Tag<>) -> Tag<> { return {}; }
+/** Exterior of simple types (sizeof...(U) = sizeof...(X) = 1) */
 template<class U, class X>
 auto ext(Tag<U>, Tag<X>) -> Tag<Tag<U,X>> { return {}; }
+/** Exterior of variadic LHS and simple RHS (sizeof...(U) > 1 = sizeof...(X)) */
 template<class U, class... V, class X>
 auto ext(Tag<U, V...>, Tag<X>) -> Tag<Tag<U, X>, Tag<V, X>...> { return {}; }
+/** Exterior of simple LHS and variadic RHS (sizeof...(U) = 1 < sizeof...(X)) */
 template<class U, class X, class... Y>
 auto ext(Tag<U>, Tag<X, Y...>) -> Tag<Tag<U, X>, Tag<U, Y>...> { return {}; }
+/** Exterior of variadic LHS and RHS (sizeof...(U) > 1, sizeof...(X) > 1) */
 template<class U, class... V, class X, class... Y>
 auto ext(Tag<U, V...>, Tag<X, Y...>) -> decltype(Tag<Tag<U, X>, Tag<U, Y>...>{}
 	+ ext(Tag<V...>{}, Tag<X,Y...>{})) { return {}; }
-
+/** Syntax sugar for ext (exterior); avoid where operator^ may be ambiguous (arithmetic, etc.) */
 template<class... U, class... X>
 auto operator^(Tag<U...> u, Tag<X...> x) -> decltype(ext(u, x)) { return ext(u, x); }
 
@@ -78,7 +86,7 @@ template<class... U>
 auto eval(Tag<U...>) -> Val<decltype(eval(std::declval<U>()))...> { return {eval(U{})...}; }
 
 template<class T>
-auto access(T && t) -> decltype(t) { return std::forward<T>(t); }// return t; }
+auto access(T && t) -> decltype(t) { return std::forward<T>(t); }
 
 template<unsigned I, class... T>
 auto access(Val<T...> const& t) -> decltype(std::get<I>(t)) { return std::get<I>(t); }
