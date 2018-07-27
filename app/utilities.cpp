@@ -58,11 +58,16 @@ int main(int argc, const char *argv[]) {
 			"(U+V) ^ (X+Y) = " << make_pretty((U{}+V{}) ^ (X{}+Y{})) << ".\n\t"
 			"(U+V+W) ^ (X+Y) = " << make_pretty((U{}+V{}+W{}) ^ (X{}+Y{})) << ".\n\t"
 			"(U+V) ^ (X+Y+Z) = " << make_pretty((U{}+V{}) ^ (X{}+Y{}+Z{})) << ".\n\t"
-			"(U+V+W) ^ (X+Y+Z) = " << make_pretty((U{}+V{}+W{}) ^ (X{}+Y{}+Z{})) << ".";
+			"(U+V+W) ^ (X+Y+Z) = " << make_pretty((U{}+V{}+W{}) ^ (X{}+Y{}+Z{})) << ".\n"
+		"Evaluations:\n\t"
+			"0 ~= " << make_pretty(eval(E{})) << ";\n\t"
+			"U ~= " << make_pretty(eval(U{})) << ";\n\t"
+			"U+V ~= " << make_pretty(eval(U{}+V{})) << ";\n\t"
+			"(U+V)^(X+Y) ~= " << make_pretty(eval((U{}+V{})^(X{}+Y{}))) << ".";
 	auto res = oss.str();
 
 	using S2 = array<string, 2>;
-	for(auto const& it : vector<S2>{{"Detail::", ""},
+	for(auto const& it : vector<S2>{{"Detail::", ""}, {"std::tuple", "Val"},
 			{"Tag", ""}, {"> >", ">>"}, {"<", "{"}, {">", "}"}}) {
 		std::size_t pos;
 		while((pos = res.find(it[0])) != std::string::npos)
