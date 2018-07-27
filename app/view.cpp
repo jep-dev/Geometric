@@ -98,7 +98,8 @@ int main(int argc, const char *argv[]) {
 		if(vert.status.length()) cout << ": " << vert.status;
 		cout << endl;
 		return 1;
-	} else if(!frag.compile() || !program.attach(frag)) {
+	}
+	if(!frag.compile() || !program.attach(frag)) {
 		cout << "Could not build " << fragPath;
 		if(frag.status.length()) cout << ": " << frag.status;
 		cout << endl;
