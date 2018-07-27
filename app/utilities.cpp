@@ -27,12 +27,25 @@ int main(int argc, const char *argv[]) {
 	using V = Tag<v>;
 	using UV = Tag<u, v>;
 	using W = Tag<w>;
+	using VW = Tag<v, w>;
 	using UVW = Tag<u, v, w>;
 	using X = Tag<x>;
 	using Y = Tag<y>;
 	using XY = Tag<x, y>;
 	using Z = Tag<z>;
+	using YZ = Tag<y, z>;
 	using XYZ = Tag<x, y, z>;
+
+	static_assert(std::is_same<UV, decltype(U{}+V{})>::value
+			&& std::is_same<VW, decltype(V{}+W{})>::value
+			&& std::is_same<UVW, decltype(U{}+V{}+W{})>::value
+			&& std::is_same<XY, decltype(X{}+Y{})>::value
+			&& std::is_same<YZ, decltype(Y{}+Z{})>::value
+			&& std::is_same<XYZ, decltype(X{}+Y{}+Z{})>::value,
+		"Operator + must be direct sum of types (treated as orthogonal)");
+	static_assert(std::is_same<decltype(UV{}+W{}), decltype(U{}+VW{})>::value
+			&& std::is_same<decltype(XY{}+Z{}), decltype(X{}+YZ{})>::value,
+		"Operator + must be associative");
 
 	std::ostringstream oss;
 	oss << "Basic types:\n\t"
