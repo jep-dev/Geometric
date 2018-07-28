@@ -6,6 +6,7 @@
 #include <functional>
 
 #include "pretty.tpp"
+#include "format.hpp"
 
 #include "quaternion.hpp"
 #include "quaternion.tpp"
@@ -43,4 +44,6 @@ int main(int argc, const char *argv[]) {
 
 	for(auto const& row : rows)
 		cout << row << endl;
+
+	cout << Streams::join("Line 1\nLine 2, longer", "Line 1, longer\nLine 2", ' ', " = ") << endl;
 }
