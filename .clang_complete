@@ -1,1 +1,1 @@
--std=c++14 -fdiagnostics-color=always -Iinclude/ -D_REENTRANT -I/usr/include/SDL2
+-std=c++14 -fdiagnostics-color=always -O3 -Iinclude/ -D_REENTRANT -I/usr/include/SDL2
