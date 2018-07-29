@@ -46,7 +46,6 @@ PAT_TD=$(1:%=$(DEST_DIR)$(DIR_DEP)%.Td)
 PAT_O=$(1:%=$(DEST_DIR)$(DIR_O)%.o)
 PAT_SO=$(1:%=$(DEST_DIR)$(DIR_SO)lib%.so)
 PAT_EXE=$(1:%=$(DEST_DIR)$(DIR_BIN)%)
-WPAT=$(wildcard $(call PAT_$1,$2))
 
 # Pattern inverses; both paths are taken so that the pipeline is flexible;
 # sources and targets can be added/removed/etc. beyond their automatic
@@ -54,6 +53,9 @@ WPAT=$(wildcard $(call PAT_$1,$2))
 UNPAT_APP=$(1:$(DIR_APP)%.cpp=%)
 UNPAT_CPP=$(1:$(DIR_SRC)%.cpp=%)
 UNPAT_HPP=$(1:$(DIR_HDR)%.hpp=%)
+UNPAT_TPP=$(1:$(DIR_HDR)%.hpp=%)
+UNPAT_D=$(1:$(DEST_DIR)$(DIR_DEP)%.d)
+UNPAT_TD=$(1:$(DEST_DIR)$(DIR_DEP)%.Td)
 UNPAT_EXE=$(1:$(DEST_DIR)$(DIR_BIN)%=%)
 UNPAT_SO=$(1:$(DEST_DIR)$(DIR_SO)lib%.so=%)
 UNPAT_O=$(1:$(DEST_DIR)$(DIR_O)%.o=%)
@@ -74,6 +76,7 @@ REPAT=$(call PAT_$2,$(call UNPAT_$1,$3))
 REPAT_EA=$(call DO_EA2,$(2:%=PAT_%),UNPAT_$1,$3)
 
 # Convenience compositions with wildcard
+WPAT=$(wildcard $(call PAT_$1,$2))
 WREPAT=$(wildcard $(call REPAT,$1,$2,$3))
 WDO_EA=$(wildcard $(call DO_EA,$1,$2))
 WDO_EA2=$(wildcard $(call DO_EA2,$1,$2,$3))
@@ -95,10 +98,10 @@ override HDRS_EXE:=$(wildcard $(SRCS_EXE:%.cpp=%.hpp %.tpp))
 #   obj/.o,.d,.Td files will collide until the next Makefile version.
 override SRCS_SO:=$(filter-out $(SRCS_EXE),$(SRCS_SO) $(call WPAT,CPP,*))
 
-$(eval NAMES_EXE:=$(call UNPAT_APP,$(SRCS_EXE)))
-$(eval NAMES_SO:=$(call UNPAT_CPP,$(SRCS_SO)))
-$(eval FILES_EXE:=$(call REPAT,APP,EXE,$(SRCS_EXE)))
-$(eval FILES_SO:=$(call REPAT,CPP,SO,$(SRCS_SO)))
+$(eval NAMES_EXE:=$(sort $(call UNPAT_APP,$(SRCS_EXE))))
+$(eval NAMES_SO:=$(sort $(call UNPAT_CPP,$(SRCS_SO))))
+$(eval FILES_EXE:=$(sort $(call REPAT,APP,EXE,$(SRCS_EXE))))
+$(eval FILES_SO:=$(sort $(call REPAT,CPP,SO,$(SRCS_SO))))
 
 TARGET?=$(firstword $(FILES_EXE))
 default: $(TARGET) $(COMPLETE)
@@ -150,7 +153,7 @@ clean-%:; @rm -i -f $(wildcard $(filter $*% %$* %$*%,\
 	$(call DO_EA,$(*:%=PAT_%),$(NAMES_EXE) $(NAMES_SO)))
 clean: $(addprefix clean-,EXE SO O D COMPLETE)
 
-show-%: override LDLIBS+=$(call LD_EXTRACT,$*)
+# show-%: override LDLIBS+=$(call LD_EXTRACT,$*)
 show-%:
 	@echo CPP_EXTRACT"($*)" = $(call CPP_EXTRACT,$*)
 	@echo SO_EXTRACT"($*)" = $(call SO_EXTRACT,$*)
@@ -160,16 +163,22 @@ show-%:
 
 $(foreach X,$(NAMES_EXE) $(NAMES_SO),$(eval $(call PAT_D,$X):))
 
-# Generate auto-dep injection - what could go wrong?
--include $(call PAT_D,$(NAMES_EXE) $(NAMES_SO))
 # E...: E: O(E)
 #$(call PAT_D,$(NAMES_EXE) $(NAMES_SO));
+
+#$(foreach X,$(NAMES_EXE),$(eval $X: show-$X))
+
 $(call PAT_EXE,$(NAMES_EXE)): \
 $(DEST_DIR)$(DIR_BIN)%: $(DEST_DIR)$(DIR_O)%.o \
 $(call CPP_EXTRACT,$(call UNPAT_EXE,$@)) \
 $(call O_EXTRACT,$(call UNPAT_EXE,$@)) \
 $(call SO_EXTRACT,$(call UNPAT_EXE,$@))
-	$(CXX) $(LDFLAGS) $(BR)-o $@ $< $(LDLIBS) $(BR)$(call LD_EXTRACT,$(call UNPAT_EXE,$@))
+	$(CXX) $(LDFLAGS) $(BR)-o $@ $< $(LDLIBS) $(call LD_EXTRACT,$(call UNPAT_EXE,$@))
+#	@echo "CPP_EXTRACT=$(call CPP_EXTRACT,$(call UNPAT_EXE,$@))"
+#	@echo "O_EXTRACT=$(call O_EXTRACT,$(call UNPAT_EXE,$@))"
+#	@echo "SO_EXTRACT=$(call SO_EXTRACT,$(call UNPAT_EXE,$@))"
+#@echo '$$*=$*; $$@=$@; $$^=$^'
+#@echo 'LD_EXTRACT=$(call LD_EXTRACT,$(call UNPAT_EXE,$@))'
 # E...: O(E): APP(E)
 $(foreach N,$(NAMES_EXE),$(eval $(call PAT_O,$N): $(call PAT_APP,$N) $(call PAT_D,$N); \
 	$(CXX) -MT $$@ -MMD -MP -MF $(call PAT_TD,$N) $(CXXFLAGS) -c $$<\
@@ -186,5 +195,8 @@ $(DEST_DIR)$(DIR_O)%.o: $(DIR_SRC)%.cpp $(DEST_DIR)$(DIR_DEP)%.d
 	$(CXX) -MT $@ -MMD -MP -MF $(call REPAT,O,TD,$@) \
 		$(CXXFLAGS) -fPIC -c $< \
 		-o $@ && mv $(call REPAT,O,TD,$@) $(call REPAT,O,D,$@) && touch $@
+
+# Generate auto-dep injection - what could go wrong?
+-include $(call PAT_D,$(NAMES_EXE) $(NAMES_SO))
 
 include Doxygen.mk
