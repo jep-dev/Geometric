@@ -155,25 +155,29 @@ show-%:
 	@echo CPP_EXTRACT"($*)" = $(call CPP_EXTRACT,$*)
 	@echo SO_EXTRACT"($*)" = $(call SO_EXTRACT,$*)
 	@echo LD_EXTRACT"($*)" = $(call LD_EXTRACT,$*)
-	@echo "  -->" $(call PAT_EXE,$*) : $(call SO_EXTRACT,$*)
+	@echo "  -->" $(call PAT_O,$*) : $(call SO_EXTRACT,$*)
 	@echo "  --> LDLIBS = " $(LDLIBS)
 
 $(foreach X,$(NAMES_EXE) $(NAMES_SO),$(eval $(call PAT_D,$X):))
 
+# Generate auto-dep injection - what could go wrong?
+-include $(call PAT_D,$(NAMES_EXE) $(NAMES_SO))
 # E...: E: O(E)
+#$(call PAT_D,$(NAMES_EXE) $(NAMES_SO));
 $(call PAT_EXE,$(NAMES_EXE)): \
-$(DEST_DIR)$(DIR_BIN)%: $(DEST_DIR)$(DIR_O)%.o $(call SO_EXTRACT,$(call UNPAT_EXE,$@)) \
-	$(call PAT_D,$(NAMES_EXE) $(NAMES_SO)); \
-		$(CXX) $(LDFLAGS) \
-		-o $@ $< $(LDLIBS) $(call LD_EXTRACT,$(call UNPAT_EXE,$@))
-# O...: O: APP(O) D(SO)...
-$(foreach N,$(NAMES_EXE),$(eval \
-	$(call PAT_O,$N): $(call PAT_APP,$N) $(call PAT_D,$N); \
+$(DEST_DIR)$(DIR_BIN)%: $(DEST_DIR)$(DIR_O)%.o \
+$(call CPP_EXTRACT,$(call UNPAT_EXE,$@)) \
+$(call O_EXTRACT,$(call UNPAT_EXE,$@)) \
+$(call SO_EXTRACT,$(call UNPAT_EXE,$@))
+	$(CXX) $(LDFLAGS) $(BR)-o $@ $< $(LDLIBS) $(BR)$(call LD_EXTRACT,$(call UNPAT_EXE,$@))
+# E...: O(E): APP(E)
+$(foreach N,$(NAMES_EXE),$(eval $(call PAT_O,$N): $(call PAT_APP,$N) $(call PAT_D,$N); \
 	$(CXX) -MT $$@ -MMD -MP -MF $(call PAT_TD,$N) $(CXXFLAGS) -c $$<\
-	-o $$@ && mv $(call PAT_TD,$N) $(call PAT_D,$N) && touch $$@))
+	$(BR)-o $$@ && mv $(call PAT_TD,$N) $(call PAT_D,$N) && touch $$@))
 # SO...: SO: O(SO)
 $(call PAT_SO,$(NAMES_SO)): \
-$(DEST_DIR)$(DIR_SO)lib%.so: $(DEST_DIR)$(DIR_O)%.o $(call SO_EXTRACT,$(call UNPAT_SO,$@))
+$(DEST_DIR)$(DIR_SO)lib%.so: $(DEST_DIR)$(DIR_O)%.o \
+$(call SO_EXTRACT,$(call UNPAT_SO,$@)) $(call O_EXTRACT,$(call UNPAT_SO,$@))
 	$(CXX) $(LDFLAGS) $< -shared \
 		-o $@ $(LDLIBS) $(shell echo $(call LD_EXTRACT,$(call UNPAT_SO,$@)))
 # O(SO...): O: CPP(O)
@@ -183,6 +187,4 @@ $(DEST_DIR)$(DIR_O)%.o: $(DIR_SRC)%.cpp $(DEST_DIR)$(DIR_DEP)%.d
 		$(CXXFLAGS) -fPIC -c $< \
 		-o $@ && mv $(call REPAT,O,TD,$@) $(call REPAT,O,D,$@) && touch $@
 
-# Generate auto-dep injection - what could go wrong?
--include $(call PAT_D,$(NAMES_EXE) $(NAMES_SO))
 include Doxygen.mk
