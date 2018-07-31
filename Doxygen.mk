@@ -54,7 +54,7 @@ doxy-tags: doxy-reset $(NAMES_DOC)
 #	@$(doxygen) $(FILE_DOC) >$(NULL)
 doc: doxy-reset
 	@echo $(foreach VAR,$(DOXY_VARS),"$(VAR)=$($(VAR))\n") \
-		"GENERATE_HTML=YES\n" "GENERATE_RTF=YES\n" "GENERATE_LATEX=YES\n" >>$(FILE_DOC)
+		"GENERATE_HTML=YES\n" >>$(FILE_DOC)
 	@$(doxygen) $(FILE_DOC) >$(NULL)
 
 clean-doc:; $(RM) $(FILE_DOC)
