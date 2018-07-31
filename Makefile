@@ -169,11 +169,14 @@ $(foreach X,$(NAMES_EXE) $(NAMES_SO),$(eval $(call PAT_D,$X):))
 
 #$(foreach X,$(NAMES_EXE),$(eval $X: show-$X))
 
+$(DIR_BIN)%: $(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
+$(DIR_SO)lib%.so: $(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
+
 $(call PAT_EXE,$(NAMES_EXE)): \
-$(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d \
-$(call CPP_EXTRACT,$*) $(call O_EXTRACT,$*) $(call SO_EXTRACT,$*)
-	$(CXX) $(LDFLAGS) $(BR)-o $@ $< $(LDLIBS) $($*_LDLIBS) \
-		$(sort $(call CONFIG_SO,$(REQ_$*))) $(call LD_EXTRACT,$(call UNPAT_EXE,$@))
+$(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d
+	$(CXX) $(LDFLAGS) \
+		-o $(shell echo $@ $< $(LDLIBS) $($*_LDLIBS) \
+		$(sort $(call CONFIG_SO,$(REQ_$*))) $(call LD_EXTRACT,$(call UNPAT_EXE,$@)))
 #	@echo "CPP_EXTRACT=$(call CPP_EXTRACT,$(call UNPAT_EXE,$@))"
 #	@echo "O_EXTRACT=$(call O_EXTRACT,$(call UNPAT_EXE,$@))"
 #	@echo "SO_EXTRACT=$(call SO_EXTRACT,$(call UNPAT_EXE,$@))"
@@ -183,20 +186,19 @@ $(call CPP_EXTRACT,$*) $(call O_EXTRACT,$*) $(call SO_EXTRACT,$*)
 $(foreach N,$(NAMES_EXE),$(eval $(call PAT_O,$N): $(call PAT_APP,$N) $(call PAT_D,$N); \
 	$(CXX) -MT $$@ -MMD -MP -MF $(call PAT_TD,$N) $(CXXFLAGS)\
 	$(sort $(call CONFIG_O,$(REQ_$N))) -c $$<\
-	$(BR)-o $$@ && mv $(call PAT_TD,$N) $(call PAT_D,$N) && touch $$@))
+	-o $$@ && mv $(call PAT_TD,$N) $(call PAT_D,$N) && touch $$@))
 # SO...: SO: O(SO)
 $(call PAT_SO,$(NAMES_SO)): \
-$(DIR_SO)lib%.so: $(DIR_O)%.o \
-$(call SO_EXTRACT,$(call UNPAT_SO,$@)) $(call O_EXTRACT,$(call UNPAT_SO,$@))
-	$(CXX) $(LDFLAGS) $< -shared \
-		-o $@ $(LDLIBS) $($*_LDLIBS) $(sort $(call CONFIG_SO,$(REQ_$*)))\
-		$(shell echo $(call LD_EXTRACT,$(call UNPAT_SO,$@)))
+$(DIR_SO)lib%.so: $(DIR_O)%.o
+	$(CXX) $(shell echo $(LDFLAGS) $< -shared) \
+		-o $(shell echo $@ $(LDLIBS) $($*_LDLIBS) $(sort $(call CONFIG_SO,$(REQ_$*)))\
+		$(call LD_EXTRACT,$(call UNPAT_SO,$@)))
 # O(SO...): O: CPP(O)
 $(call PAT_O,$(NAMES_SO)): \
 $(DIR_O)%.o: $(DIR_SRC)%.cpp $(DIR_DEP)%.d
-	$(CXX) -MT $@ -MMD -MP -MF $(call REPAT,O,TD,$@) \
-	$(CXXFLAGS) $(sort $(call CONFIG_O,$(REQ_$*))) -fPIC -c $<\
-		-o $@ && mv $(call REPAT,O,TD,$@) $(call REPAT,O,D,$@) && touch $@
+	$(CXX) $(shell echo -MT $@ -MMD -MP -MF $(call REPAT,O,TD,$@) \
+	$(CXXFLAGS) $(sort $(call CONFIG_O,$(REQ_$*))) -fPIC -c $<)\
+		-o $(shell echo $@ && mv $(call REPAT,O,TD,$@) $(call REPAT,O,D,$@) && touch $@)
 
 # Generate auto-dep injection - what could go wrong?
 -include $(call PAT_D,$(NAMES_EXE) $(NAMES_SO))
