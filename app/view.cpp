@@ -88,32 +88,6 @@ int main(int argc, const char *argv[]) {
 	string vertPath = share + "default.vert", fragPath = share + "default.frag";
 
 	Hnd hnd;
-
-/*
-	// Compile, attach, and link shader program
-	Program program;
-	Shader vert(vertPath.c_str(), GL_VERTEX_SHADER),
-		frag(fragPath.c_str(), GL_FRAGMENT_SHADER);
-	if(!vert.compile() || !program.attach(vert)) {
-		cout << "Could not build " << vertPath;
-		if(vert.status.length()) cout << ": " << vert.status;
-		cout << endl;
-		return 1;
-	}
-	if(!frag.compile() || !program.attach(frag)) {
-		cout << "Could not build " << fragPath;
-		if(frag.status.length()) cout << ": " << frag.status;
-		cout << endl;
-		return 1;
-	}
-	if(!program.link()) {
-		cout << "Could not link program";
-		if(program.status.length())
-			cout << ": " << program.status;
-		cout << endl;
-		return 1;
-	}
-	hnd.use(program);*/
 	auto used = hnd.init(vertPath.c_str(), fragPath.c_str());
 	if(!used.good()) {
 		cout << "Could not build shader program";
