@@ -3,6 +3,7 @@
 
 #include "frame.hpp"
 #include "model.hpp"
+#include "shader.hpp"
 
 template<class S>
 struct Presenter;
@@ -13,6 +14,19 @@ struct Presenter: Events::Handler<S> {
 	View::Frame frame;
 	Model model;
 
+	View::Shader vert = {gl::GL_VERTEX_SHADER}, frag = {gl::GL_FRAGMENT_SHADER};
+	View::Program program;
+
+	Events::Status init(const char *vpath, const char *fpath) {
+		if(!vert.source(vpath) || !vert.compile() || !program.attach(vert))
+			return vert.status;
+		if(!frag.source(fpath) || !frag.compile() || !program.attach(frag))
+			return frag.status;
+		if(!program.link())
+			return program.status;
+		use(program);
+		return {};
+	}
 	S& use(gl::GLuint program) {
 		gl::glUseProgram(program);
 		return static_cast<S&>(*this);

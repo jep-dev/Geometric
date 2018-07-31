@@ -89,6 +89,7 @@ int main(int argc, const char *argv[]) {
 
 	Hnd hnd;
 
+/*
 	// Compile, attach, and link shader program
 	Program program;
 	Shader vert(vertPath.c_str(), GL_VERTEX_SHADER),
@@ -112,12 +113,19 @@ int main(int argc, const char *argv[]) {
 		cout << endl;
 		return 1;
 	}
-	hnd.use(program);
+	hnd.use(program);*/
+	auto used = hnd.init(vertPath.c_str(), fragPath.c_str());
+	if(!used.good()) {
+		cout << "Could not build shader program";
+		if(used.length()) cout << ": " << used;
+		cout << endl;
+		return 1;
+	}
 
 	// Locate and initialize MVP matrix
-	auto mvp = program.locate("mvp");
+	auto mvp = hnd.program.locate("mvp");
 	if(mvp < 0)
-		return cout << program.status, 1;
+		return cout << hnd.program.status, 1;
 	hnd.project(mvp, top, right, near, far);
 
 	// Create and initialize vertex array and buffer
@@ -129,7 +137,7 @@ int main(int argc, const char *argv[]) {
 	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
-	glBindAttribLocation(program, 0, "pos");
+	glBindAttribLocation(hnd.program, 0, "pos");
 
 	// Poll/render loop
 	for(auto i = 0;; i++) {
