@@ -77,9 +77,19 @@ Frame& Frame::flip(void) {
 	SDL_GL_SwapWindow(win);
 	return *this;
 }
+/* TODO: distinguish between glDraw* functions:
+ * Single:
+ *  -glDrawArrays(mode, first, count)
+ *  -glDrawElements(mode, count, type, [indices])
+ * Multiple, varying gl_InstanceID
+ *  -glDrawArraysInstanced(mode, first, count, primcount)
+ *  -glDrawElementsInstanced(mode, count, type, [indices], primcount)
+ * ADL should be sufficient to cover these calls.
+ * TODO: add methods or separate types to cover other bind/gen/manipulation? */
 Frame& Frame::draw(GLuint vao, GLenum mode, GLint first, GLsizei count) {
 	glBindVertexArray(vao);
-	glDrawArrays(mode, first, count);
+	//glDrawArrays(mode, first, count);
+	glDrawElements(mode, count, GL_UNSIGNED_INT, nullptr);
 	return *this;
 }
 
