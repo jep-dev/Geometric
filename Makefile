@@ -11,28 +11,29 @@ $(1:%=  )
 endef
 BR:=$(call BREAK,\)#) <- Backslashes can confuse highlighters/validaters
 
-DIR_BIN:=bin/
+DIR_BIN:=$(DEST_DIR)bin/
 DIR_APP:=app/
 DIR_SRC:=src/
 DIR_HDR:=include/
-DIR_SO:=lib/
-DIR_O:=obj/
+DIR_SO:=$(DEST_DIR)lib/
+DIR_O:=$(DEST_DIR)obj/
 DIR_DEP:=$(DIR_O)
 
 MERGE=$(subst $(SPACE),$1,$(sort $2))
 SPLIT=$(subst $1,$(SPACE),$2)
-DIRS_OBJ:=$(call MERGE,:,$(DIR_SO) $(DIR_O))
+
 vpath %.cpp $(DIR_APP)
 vpath %.cpp $(DIR_SRC)
 vpath %.hpp $(DIR_HPP)
 vpath %.tpp $(DIR_HDR)
-vpath %.o $(DIR_O)
-vpath %.so $(DIR_SO)
+#vpath %.o $(DIR_O)
+#vpath %.so $(DIR_SO)
 
+DIRS_OBJ:=$(call MERGE,:,$(DIR_SO) $(DIR_O))
 override RPATH:=-Wl,-rpath,$(call MERGE,:,$(call SPLIT,:,$(RPATH) $(DIRS_OBJ)))
 override CXXFLAGS+=$(strip $(addprefix -I,$(sort $(DIR_HDR))))\
 	$(sort $(call CONFIG_O,$(REQ_ALL)))
-override LDLIBS+=$(sort $(call CONFIG_SO,$(REQ_ALL)))
+#override LDLIBS+=$(sort $(call CONFIG_SO,$(REQ_ALL)))
 SO_LDLIBS:=$(LDLIBS)
 EXE_LDLIBS:=$(LDLIBS)
 override LDFLAGS+=$(RPATH) $(strip $(addprefix -L,$(sort $(DIR_SO) $(DIR_O)))) # TODO
@@ -41,11 +42,11 @@ PAT_APP=$(1:%=$(DIR_APP)%.cpp)
 PAT_CPP=$(1:%=$(DIR_SRC)%.cpp)
 PAT_HPP=$(1:%=$(DIR_HDR)%.hpp)
 PAT_TPP=$(1:%=$(DIR_HDR)%.tpp)
-PAT_D=$(1:%=$(DEST_DIR)$(DIR_DEP)%.d)
-PAT_TD=$(1:%=$(DEST_DIR)$(DIR_DEP)%.Td)
-PAT_O=$(1:%=$(DEST_DIR)$(DIR_O)%.o)
-PAT_SO=$(1:%=$(DEST_DIR)$(DIR_SO)lib%.so)
-PAT_EXE=$(1:%=$(DEST_DIR)$(DIR_BIN)%)
+PAT_D=$(1:%=$(DIR_DEP)%.d)
+PAT_TD=$(1:%=$(DIR_DEP)%.Td)
+PAT_O=$(1:%=$(DIR_O)%.o)
+PAT_SO=$(1:%=$(DIR_SO)lib%.so)
+PAT_EXE=$(1:%=$(DIR_BIN)%)
 
 # Pattern inverses; both paths are taken so that the pipeline is flexible;
 # sources and targets can be added/removed/etc. beyond their automatic
@@ -54,11 +55,11 @@ UNPAT_APP=$(1:$(DIR_APP)%.cpp=%)
 UNPAT_CPP=$(1:$(DIR_SRC)%.cpp=%)
 UNPAT_HPP=$(1:$(DIR_HDR)%.hpp=%)
 UNPAT_TPP=$(1:$(DIR_HDR)%.hpp=%)
-UNPAT_D=$(1:$(DEST_DIR)$(DIR_DEP)%.d)
-UNPAT_TD=$(1:$(DEST_DIR)$(DIR_DEP)%.Td)
-UNPAT_EXE=$(1:$(DEST_DIR)$(DIR_BIN)%=%)
-UNPAT_SO=$(1:$(DEST_DIR)$(DIR_SO)lib%.so=%)
-UNPAT_O=$(1:$(DEST_DIR)$(DIR_O)%.o=%)
+UNPAT_D=$(1:$(DIR_DEP)%.d)
+UNPAT_TD=$(1:$(DIR_DEP)%.Td)
+UNPAT_EXE=$(1:$(DIR_BIN)%=%)
+UNPAT_SO=$(1:$(DIR_SO)lib%.so=%)
+UNPAT_O=$(1:$(DIR_O)%.o=%)
 
 # Row-major: { for(x:$1) for(y:$2) x(y) }
 DO_EA=$(foreach L,$1,$(call $L,$2))
@@ -169,11 +170,10 @@ $(foreach X,$(NAMES_EXE) $(NAMES_SO),$(eval $(call PAT_D,$X):))
 #$(foreach X,$(NAMES_EXE),$(eval $X: show-$X))
 
 $(call PAT_EXE,$(NAMES_EXE)): \
-$(DEST_DIR)$(DIR_BIN)%: $(DEST_DIR)$(DIR_O)%.o \
-$(call CPP_EXTRACT,$(call UNPAT_EXE,$@)) \
-$(call O_EXTRACT,$(call UNPAT_EXE,$@)) \
-$(call SO_EXTRACT,$(call UNPAT_EXE,$@))
-	$(CXX) $(LDFLAGS) $(BR)-o $@ $< $(LDLIBS) $(call LD_EXTRACT,$(call UNPAT_EXE,$@))
+$(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d \
+$(call CPP_EXTRACT,$*) $(call O_EXTRACT,$*) $(call SO_EXTRACT,$*)
+	$(CXX) $(LDFLAGS) $(BR)-o $@ $< $(LDLIBS) $($*_LDLIBS) \
+		$(sort $(call CONFIG_SO,$(REQ_$*))) $(call LD_EXTRACT,$(call UNPAT_EXE,$@))
 #	@echo "CPP_EXTRACT=$(call CPP_EXTRACT,$(call UNPAT_EXE,$@))"
 #	@echo "O_EXTRACT=$(call O_EXTRACT,$(call UNPAT_EXE,$@))"
 #	@echo "SO_EXTRACT=$(call SO_EXTRACT,$(call UNPAT_EXE,$@))"
@@ -181,19 +181,21 @@ $(call SO_EXTRACT,$(call UNPAT_EXE,$@))
 #@echo 'LD_EXTRACT=$(call LD_EXTRACT,$(call UNPAT_EXE,$@))'
 # E...: O(E): APP(E)
 $(foreach N,$(NAMES_EXE),$(eval $(call PAT_O,$N): $(call PAT_APP,$N) $(call PAT_D,$N); \
-	$(CXX) -MT $$@ -MMD -MP -MF $(call PAT_TD,$N) $(CXXFLAGS) -c $$<\
+	$(CXX) -MT $$@ -MMD -MP -MF $(call PAT_TD,$N) $(CXXFLAGS)\
+	$(sort $(call CONFIG_O,$(REQ_$N))) -c $$<\
 	$(BR)-o $$@ && mv $(call PAT_TD,$N) $(call PAT_D,$N) && touch $$@))
 # SO...: SO: O(SO)
 $(call PAT_SO,$(NAMES_SO)): \
-$(DEST_DIR)$(DIR_SO)lib%.so: $(DEST_DIR)$(DIR_O)%.o \
+$(DIR_SO)lib%.so: $(DIR_O)%.o \
 $(call SO_EXTRACT,$(call UNPAT_SO,$@)) $(call O_EXTRACT,$(call UNPAT_SO,$@))
 	$(CXX) $(LDFLAGS) $< -shared \
-		-o $@ $(LDLIBS) $(shell echo $(call LD_EXTRACT,$(call UNPAT_SO,$@)))
+		-o $@ $(LDLIBS) $($*_LDLIBS) $(sort $(call CONFIG_SO,$(REQ_$*)))\
+		$(shell echo $(call LD_EXTRACT,$(call UNPAT_SO,$@)))
 # O(SO...): O: CPP(O)
 $(call PAT_O,$(NAMES_SO)): \
-$(DEST_DIR)$(DIR_O)%.o: $(DIR_SRC)%.cpp $(DEST_DIR)$(DIR_DEP)%.d
+$(DIR_O)%.o: $(DIR_SRC)%.cpp $(DIR_DEP)%.d
 	$(CXX) -MT $@ -MMD -MP -MF $(call REPAT,O,TD,$@) \
-		$(CXXFLAGS) -fPIC -c $< \
+	$(CXXFLAGS) $(sort $(call CONFIG_O,$(REQ_$*))) -fPIC -c $<\
 		-o $@ && mv $(call REPAT,O,TD,$@) $(call REPAT,O,D,$@) && touch $@
 
 # Generate auto-dep injection - what could go wrong?
