@@ -128,7 +128,8 @@ int main(int argc, const char *argv[]) {
 			hnd.clear();
 		}
 		// Render
-		hnd.frame.clear().draw(vao, GL_TRIANGLES, 0, indicesSize).flip();
+		//hnd.frame.clear().draw(vao, GL_TRIANGLES, 0, indicesSize).flip();
+		hnd.frame.clear().draw(vao, GL_TRIANGLES, indicesSize, GL_UNSIGNED_INT, nullptr).flip();
 		SDL_Delay(100);
 		if((N >= 0) && (i >= N)) break;
 	}
