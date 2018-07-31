@@ -99,10 +99,12 @@ override HDRS_EXE:=$(wildcard $(SRCS_EXE:%.cpp=%.hpp %.tpp))
 #   obj/.o,.d,.Td files will collide until the next Makefile version.
 override SRCS_SO:=$(filter-out $(SRCS_EXE),$(SRCS_SO) $(call WPAT,CPP,*))
 
-$(eval NAMES_EXE:=$(sort $(call UNPAT_APP,$(SRCS_EXE))))
-$(eval NAMES_SO:=$(sort $(call UNPAT_CPP,$(SRCS_SO))))
-$(eval FILES_EXE:=$(sort $(call REPAT,APP,EXE,$(SRCS_EXE))))
-$(eval FILES_SO:=$(sort $(call REPAT,CPP,SO,$(SRCS_SO))))
+NAMES_EXE:=$(sort $(call UNPAT_APP,$(SRCS_EXE)))
+NAMES_SO:=$(sort $(call UNPAT_CPP,$(SRCS_SO)))
+DEPS_EXE:=$(call PAT_D,$(NAMES_EXE))
+DEPS_SO:=$(call PAT_D,$(NAMES_SO))
+FILES_EXE:=$(sort $(call REPAT,APP,EXE,$(SRCS_EXE)))
+FILES_SO:=$(sort $(call REPAT,CPP,SO,$(SRCS_SO)))
 
 TARGET?=$(firstword $(FILES_EXE))
 default: $(TARGET) $(COMPLETE)
@@ -162,20 +164,25 @@ show-%:
 	@echo "  -->" $(call PAT_O,$*) : $(call SO_EXTRACT,$*)
 	@echo "  --> LDLIBS = " $(LDLIBS)
 
-$(foreach X,$(NAMES_EXE) $(NAMES_SO),$(eval $(call PAT_D,$X):))
+#$(foreach X,$(NAMES_EXE) $(NAMES_SO),$(eval $(call PAT_D,$X):))
 
 # E...: E: O(E)
 #$(call PAT_D,$(NAMES_EXE) $(NAMES_SO));
 
 #$(foreach X,$(NAMES_EXE),$(eval $X: show-$X))
 
-$(DIR_BIN)%: $(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
-$(DIR_SO)lib%.so: $(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
+#$(DIR_BIN)%: $(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
+#$(DIR_SO)lib%.so: $(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
+
+$(call PAT_D,$(NAMES_EXE)): $(DIR_O)%.d: $(DIR_APP)%.cpp
+	$(CXX) $(CXXFLAGS) -MM -MT '$(DIR_O)$*.d' $< -MF $@
+$(call PAT_D,$(NAMES_SO)): $(DIR_O)%.d: $(DIR_SRC)%.cpp
+	$(CXX) $(CXXFLAGS) -MM -MT '$(DIR_O)$*.d' $< -MF $@
 
 $(call PAT_EXE,$(NAMES_EXE)): \
-$(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d
+$(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d $(FILES_SO) $(DEPS_$*)
 	$(CXX) $(LDFLAGS) \
-		-o $(shell echo $@ $< $(LDLIBS) $($*_LDLIBS) \
+		-o $(shell echo $@ $< $(LDLIBS) $(LDLIBS_$*) \
 		$(sort $(call CONFIG_SO,$(REQ_$*))) $(call LD_EXTRACT,$(call UNPAT_EXE,$@)))
 #	@echo "CPP_EXTRACT=$(call CPP_EXTRACT,$(call UNPAT_EXE,$@))"
 #	@echo "O_EXTRACT=$(call O_EXTRACT,$(call UNPAT_EXE,$@))"
@@ -183,7 +190,8 @@ $(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d
 #@echo '$$*=$*; $$@=$@; $$^=$^'
 #@echo 'LD_EXTRACT=$(call LD_EXTRACT,$(call UNPAT_EXE,$@))'
 # E...: O(E): APP(E)
-$(foreach N,$(NAMES_EXE),$(eval $(call PAT_O,$N): $(call PAT_APP,$N) $(call PAT_D,$N); \
+$(foreach N,$(NAMES_EXE),$(eval $(call PAT_O,$N): \
+	$(call PAT_APP,$N) $(call PAT_D,$N) $(DEPS_$N); \
 	$(CXX) $(CXXFLAGS)\
 	$(sort $(call CONFIG_O,$(REQ_$N))) -c \
 	-o $$@ $$<))
@@ -191,7 +199,7 @@ $(foreach N,$(NAMES_EXE),$(eval $(call PAT_O,$N): $(call PAT_APP,$N) $(call PAT_
 $(call PAT_SO,$(NAMES_SO)): \
 $(DIR_SO)lib%.so: $(DIR_O)%.o
 	$(CXX) $(shell echo $(LDFLAGS) $< -shared) \
-		-o $(shell echo $@ $(LDLIBS) $($*_LDLIBS) $(sort $(call CONFIG_SO,$(REQ_$*)))\
+		-o $(shell echo $@ $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*)))\
 		$(call LD_EXTRACT,$(call UNPAT_SO,$@)))
 # O(SO...): O: CPP(O)
 $(call PAT_O,$(NAMES_SO)): \
