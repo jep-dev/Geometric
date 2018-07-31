@@ -22,19 +22,19 @@ struct Status {
 	std::string message = "";
 	std::size_t length(void) const { return message.length(); }
 
-	static bool passed(uint32_t h) { return h & StatusPass; }
-	static bool quit(uint32_t h) { return h & StatusQuit; }
-	static bool errored(uint32_t h) { return h & StatusError; }
-	static bool warned(uint32_t h) { return (h & StatusWarn) == StatusWarn; }
-	static bool failed(uint32_t h) { return (h & StatusFail) == StatusFail; }
-	static bool bad(uint32_t h) { return quit(h) || errored(h); }
-	static bool good(uint32_t h) { return passed(h) && !bad(h); }
+	bool passed(void) const { return code & StatusPass; }
+	bool quit(void) const { return code & StatusQuit; }
+	bool errored(void) const { return code & StatusError; }
+	bool warned(void) const { return (code & StatusWarn) == StatusWarn; }
+	bool failed(void) const { return (code & StatusFail) == StatusFail; }
+	bool bad(void) const { return quit() || errored(); }
+	bool good(void) const { return passed() && !bad(); }
 	template<class S>
 	friend S& operator<<(S &lhs, Status const& rhs) {
 		return lhs << rhs.message, lhs;
 	}
 
-	operator bool(void) const { return good(code); }
+	operator bool(void) const { return good(); }
 };
 
 template<class C>
