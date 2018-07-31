@@ -158,11 +158,11 @@ clean: $(addprefix clean-,EXE SO O D COMPLETE)
 
 # show-%: override LDLIBS+=$(call LD_EXTRACT,$*)
 show-%:
-	@echo CPP_EXTRACT"($*)" = $(call CPP_EXTRACT,$*)
-	@echo SO_EXTRACT"($*)" = $(call SO_EXTRACT,$*)
-	@echo LD_EXTRACT"($*)" = $(call LD_EXTRACT,$*)
-	@echo "  -->" $(call PAT_O,$*) : $(call SO_EXTRACT,$*)
-	@echo "  --> LDLIBS = " $(LDLIBS)
+	@echo "CPP_EXTRACT($*) = $(call CPP_EXTRACT,$*)"
+	@echo "SO_EXTRACT($*) = $(call SO_EXTRACT,$*)"
+	@echo "LD_EXTRACT($*) = $(call LD_EXTRACT,$*)"
+	@echo "  --> $(call PAT_O,$*) : $(call SO_EXTRACT,$*)"
+	@echo "  --> LDLIBS = $(LDLIBS)"
 
 #$(foreach X,$(NAMES_EXE) $(NAMES_SO),$(eval $(call PAT_D,$X):))
 
@@ -180,16 +180,21 @@ $(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d $(FILES_SO) $(DEPS_$*)
 		-o $(shell echo $@ $< $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*))))
 
 # E...: O(E): APP(E)
-$(foreach N,$(NAMES_EXE),$(eval $(call PAT_O,$N): \
-	$(call PAT_APP,$N) $(call PAT_D,$N) $(DEPS_$N); \
-	$(CXX) $(CXXFLAGS)\
-	$(sort $(call CONFIG_O,$(REQ_$N))) -c \
-	-o $$@ $$<))
+$(call PAT_O,$(NAMES_EXE)): $(DIR_O)%.o: $(DIR_APP)%.cpp $(DEPS_$*)
+	$(CXX) $(CXXFLAGS) $(sort $(call CONFIG_O,$(REQ_$*))) -c -o $@ $<
+	@echo "Would have added $(call LD_EXTRACT,$*) to $*"
+#$(foreach N,$(NAMES_EXE),$(eval $(call PAT_O,$N): \
+#$(call PAT_APP,$N) $(call PAT_D,$N) $(DEPS_$N); \
+#$(CXX) $(CXXFLAGS)\
+#$(sort $(call CONFIG_O,$(REQ_$N))) -c \
+#-o $$@ $$<))
+
 # SO...: SO: O(SO)
 $(call PAT_SO,$(NAMES_SO)): \
 $(DIR_SO)lib%.so: $(DIR_O)%.o
 	$(CXX) $(shell echo $(LDFLAGS) $< -shared) \
 		-o $(shell echo $@ $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*))))
+		@ echo "Would have added $(call LD_EXTRACT,$*) to $*"
 # O(SO...): O: CPP(O)
 $(call PAT_O,$(NAMES_SO)): \
 $(DIR_O)%.o: $(DIR_SRC)%.cpp $(DIR_DEP)%.d
