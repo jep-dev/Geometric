@@ -184,9 +184,9 @@ $(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d
 #@echo 'LD_EXTRACT=$(call LD_EXTRACT,$(call UNPAT_EXE,$@))'
 # E...: O(E): APP(E)
 $(foreach N,$(NAMES_EXE),$(eval $(call PAT_O,$N): $(call PAT_APP,$N) $(call PAT_D,$N); \
-	$(CXX) -MT $$@ -MMD -MP -MF $(call PAT_TD,$N) $(CXXFLAGS)\
-	$(sort $(call CONFIG_O,$(REQ_$N))) -c $$<\
-	-o $$@ && mv $(call PAT_TD,$N) $(call PAT_D,$N) && touch $$@))
+	$(CXX) $(CXXFLAGS)\
+	$(sort $(call CONFIG_O,$(REQ_$N))) -c \
+	-o $$@ $$<))
 # SO...: SO: O(SO)
 $(call PAT_SO,$(NAMES_SO)): \
 $(DIR_SO)lib%.so: $(DIR_O)%.o
@@ -196,9 +196,8 @@ $(DIR_SO)lib%.so: $(DIR_O)%.o
 # O(SO...): O: CPP(O)
 $(call PAT_O,$(NAMES_SO)): \
 $(DIR_O)%.o: $(DIR_SRC)%.cpp $(DIR_DEP)%.d
-	$(CXX) $(shell echo -MT $@ -MMD -MP -MF $(call REPAT,O,TD,$@) \
-	$(CXXFLAGS) $(sort $(call CONFIG_O,$(REQ_$*))) -fPIC -c $<)\
-		-o $(shell echo $@ && mv $(call REPAT,O,TD,$@) $(call REPAT,O,D,$@) && touch $@)
+	$(CXX) $(CXXFLAGS) $(sort $(call CONFIG_O,$(REQ_$*))) -fPIC -c \
+		-o $@ $(call PAT_SRC,$*) $<
 
 # Generate auto-dep injection - what could go wrong?
 -include $(call PAT_D,$(NAMES_EXE) $(NAMES_SO))
