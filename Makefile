@@ -26,8 +26,6 @@ vpath %.cpp $(DIR_APP)
 vpath %.cpp $(DIR_SRC)
 vpath %.hpp $(DIR_HPP)
 vpath %.tpp $(DIR_HDR)
-#vpath %.o $(DIR_O)
-#vpath %.so $(DIR_SO)
 
 DIRS_OBJ:=$(call MERGE,:,$(DIR_SO) $(DIR_O))
 override RPATH:=-Wl,-rpath,$(call MERGE,:,$(call SPLIT,:,$(RPATH) $(DIRS_OBJ)))
@@ -164,12 +162,6 @@ show-%:
 	@echo "  --> $(call PAT_O,$*) : $(call SO_EXTRACT,$*)"
 	@echo "  --> LDLIBS = $(LDLIBS)"
 
-#$(foreach X,$(NAMES_EXE) $(NAMES_SO),$(eval $(call PAT_D,$X):))
-
-# E...: E: O(E)
-#$(call PAT_D,$(NAMES_EXE) $(NAMES_SO));
-
-
 BUILD_DEP=$(CXX) $(CXXFLAGS) -MM -MT '$(DIR_O)$*.d' $< -MF $@
 $(call PAT_D,$(NAMES_EXE)): $(DIR_O)%.d: $(DIR_APP)%.cpp; $(BUILD_DEP)
 $(call PAT_D,$(NAMES_SO)): $(DIR_O)%.d: $(DIR_SRC)%.cpp; $(BUILD_DEP)
@@ -177,27 +169,24 @@ $(call PAT_D,$(NAMES_SO)): $(DIR_O)%.d: $(DIR_SRC)%.cpp; $(BUILD_DEP)
 $(call PAT_EXE,$(NAMES_EXE)): \
 $(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d $(FILES_SO) $(DEPS_$*)
 	$(CXX) $(LDFLAGS) \
-		-o $(shell echo $@ $< $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*))))
+		-o $(shell echo $@ $< $(LDLIBS) $(LDLIBS_$*) \
+		$(sort $(call CONFIG_SO,$(REQ_$*))))
 
 # E...: O(E): APP(E)
-$(call PAT_O,$(NAMES_EXE)): $(DIR_O)%.o: $(DIR_APP)%.cpp $(DEPS_$*)
+#$(call PAT_O,$(NAMES_EXE)): $(DIR_O)%.o: $(DIR_APP)%.cpp $(DEPS_$*)
+$(call PAT_O,$(NAMES_EXE)): $(DIR_O)%.o: \
+	$(DIR_APP)%.cpp $(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
 	$(CXX) $(CXXFLAGS) $(sort $(call CONFIG_O,$(REQ_$*))) -c -o $@ $<
-	@echo "Would have added $(call LD_EXTRACT,$*) to $*"
-#$(foreach N,$(NAMES_EXE),$(eval $(call PAT_O,$N): \
-#$(call PAT_APP,$N) $(call PAT_D,$N) $(DEPS_$N); \
-#$(CXX) $(CXXFLAGS)\
-#$(sort $(call CONFIG_O,$(REQ_$N))) -c \
-#-o $$@ $$<))
 
 # SO...: SO: O(SO)
 $(call PAT_SO,$(NAMES_SO)): \
 $(DIR_SO)lib%.so: $(DIR_O)%.o
 	$(CXX) $(shell echo $(LDFLAGS) $< -shared) \
 		-o $(shell echo $@ $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*))))
-		@ echo "Would have added $(call LD_EXTRACT,$*) to $*"
 # O(SO...): O: CPP(O)
 $(call PAT_O,$(NAMES_SO)): \
-$(DIR_O)%.o: $(DIR_SRC)%.cpp $(DIR_DEP)%.d
+$(DIR_O)%.o: $(DIR_SRC)%.cpp $(DIR_DEP)%.d \
+	$(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
 	$(CXX) $(CXXFLAGS) $(sort $(call CONFIG_O,$(REQ_$*))) -fPIC -c \
 		-o $@ $(call PAT_SRC,$*) $<
 
