@@ -2,14 +2,17 @@
 # Most configuration here honors existing settings.
 include Makefile.conf
 
-DEST_DIR:=
 EMPTY:=
 SPACE:=$(EMPTY) $(EMPTY)
+COMMA:=,
 define BREAK
 $1
 $(1:%=  )  
 endef
 BR:=$(call BREAK,\)#) <- Backslashes can confuse highlighters/validaters
+
+DEST_DIR:=
+NULL?=/dev/null
 
 DIR_BIN?=$(DEST_DIR)bin/
 DIR_APP?=app/
@@ -19,16 +22,15 @@ DIR_SO?=$(DEST_DIR)lib/
 DIR_O?=$(DEST_DIR)obj/
 DIR_DEP?=$(DIR_O)
 
-MERGE=$(subst $(SPACE),$1,$(sort $2))
-SPLIT=$(subst $1,$(SPACE),$2)
-
 vpath %.cpp $(DIR_APP)
 vpath %.cpp $(DIR_SRC)
 vpath %.hpp $(DIR_HPP)
 vpath %.tpp $(DIR_HDR)
 
-DIRS_OBJ:=$(call MERGE,:,$(DIR_SO) $(DIR_O))
-override RPATH:=-Wl,-rpath,$(call MERGE,:,$(call SPLIT,:,$(RPATH) $(DIRS_OBJ)))
+MERGE=$(subst $(SPACE),$1,$2)
+SORT_MERGE=$(call MERGE,$1,$(sort $2))
+SPLIT=$(subst $1,$(SPACE),$2)
+override RPATH:=-Wl,-rpath,$(call SORT_MERGE,:,$(call SPLIT,:,$(RPATH) $(DIR_O) $(DIR_SO)))
 override CXXFLAGS+=$(strip $(addprefix -I,$(sort $(DIR_HDR))))\
 	$(sort $(call CONFIG_O,$(REQ_ALL)))
 #override LDLIBS+=$(sort $(call CONFIG_SO,$(REQ_ALL)))
@@ -59,36 +61,7 @@ UNPAT_EXE=$(1:$(DIR_BIN)%=%)
 UNPAT_SO=$(1:$(DIR_SO)lib%.so=%)
 UNPAT_O=$(1:$(DIR_O)%.o=%)
 
-# Row-major: { for(x:$1) for(y:$2) x(y) }
-DO_EA=$(foreach L,$1,$(call $L,$2))
-# Composed row-major: { ... for(z:$3) x(y(z)) }
-DO_EA2=$(call DO_EA,$1,$(call DO_EA,$2,$3))
-
-# Col-major: { for(y:$2) for(x:$1) x(y) }
-XDO_EA=$(foreach X,$2,$(call DO_EA,$1,$X))
-# Composed col-major: { for(z:$3) ... x(y(z)) }
-XDO_EA2=$(foreach X,$(call XDO_EA,$2,$3),$(call DO_EA,$1,$X))
-
-# Maps one file path to another through patterns
-REPAT=$(call PAT_$2,$(call UNPAT_$1,$3))
-# Maps one file path to several
-REPAT_EA=$(call DO_EA2,$(2:%=PAT_%),UNPAT_$1,$3)
-
-# Convenience compositions with wildcard
-WPAT=$(wildcard $(call PAT_$1,$2))
-WREPAT=$(wildcard $(call REPAT,$1,$2,$3))
-WDO_EA=$(wildcard $(call DO_EA,$1,$2))
-WDO_EA2=$(wildcard $(call DO_EA2,$1,$2,$3))
-WREPAT_EA=$(wildcard $(call REPAT_EA,$1,$2,$3))
-
-# Splits one patterned file into a file pair
-#   Note - this still allows identities like PAT_EXE/UNPAT_EXE
-CROSS=$(foreach X,$4,$(call REPAT,$1,$2,$X):$(call REPAT,$1,$3,$X))
-# Identical to 'pkg-config $1 $2' except for '$2'=='';
-#   '--silence-errors' and redirection just swap false- / false+.
-PKG_CONFIG=$(foreach N,$2,$(shell pkg-config $1 $N))
-CONFIG_O=$(call PKG_CONFIG,--cflags,$1)
-CONFIG_SO=$(call PKG_CONFIG,--libs,$1)
+include Utilities.mk
 
 # Preserve alternate application sources from configuration
 override SRCS_EXE+=$(call WPAT,APP,*)
@@ -107,44 +80,12 @@ FILES_SO:=$(sort $(call REPAT,CPP,SO,$(SRCS_SO)))
 TARGET?=$(firstword $(FILES_EXE))
 default: $(TARGET) $(COMPLETE)
 
-# Examples - uncomment and make 'vars-TESTS'
-#E:=$(NAMES_EXE)
-#EA:=$(FILES_EXE)
-#EB:=$(SRCS_EXE)
-#L:=$(NAMES_SO)
-#LA:=$(FILES_SO)
-#LB:=$(SRCS_SO)
-#$(eval TEST1:=$(call DO_EA,PAT_HPP PAT_CPP,$L))
-#$(eval TEST2:=$(call WDO_EA,PAT_HPP PAT_CPP PAT_APP,$L))
-#$(eval TEST3:=$(call XDO_EA,PAT_HPP PAT_CPP,$L))
-#$(eval TEST4:=$(call DO_EA2,dir notdir,PAT_APP PAT_HPP,$L))
-#$(eval TEST5:=$(call XDO_EA2,dir notdir,PAT_APP PAT_HPP,$L))
-#$(eval TEST6:=$(join $E,$(join $(EA:%=:%),$(EB))))
-#$(eval TEST7:=$(call CROSS,SO,CPP,HPP,$(LA)))
-#$(eval TEST8:=$(call REPAT_EA,SO,HPP TPP,$(LA)))
-#$(eval TEST9:=$(call WREPAT_EA,SO,HPP TPP,$(LA)))
-#$(eval TESTS:=$(foreach N,1 3 6 7 8 9,TEST$N))
-
-
-NULL?=/dev/null
-SOURCE=$(shell echo $(shell cat $(wildcard $(call PAT_D,$1)) $(NULL)))
-EXTRACT=$(filter-out $(call PAT_HPP,$1) $(call PAT_CPP,$1),$(call SOURCE,$1))
-CPP_EXTRACT=$(call WREPAT,HPP,CPP,$(call EXTRACT,$1))
-D_EXTRACT=$(call REPAT,CPP,D,$(call CPP_EXTRACT,$1))
-O_EXTRACT=$(call REPAT,CPP,O,$(call CPP_EXTRACT,$1))
-SO_EXTRACT=$(call REPAT,CPP,SO,$(call CPP_EXTRACT,$1))
-LD_EXTRACT=$(addprefix -l,$(call XDO_EA,UNPAT_CPP,$(call CPP_EXTRACT,$1)))
-
 $(COMPLETE): $(FILES_SO) $(FILES_EXE); @echo $(CXXFLAGS) > $@
-.PRECIOUS: %.d $(COMPLETE)
-
-#temp.txt: override CXXFLAGS+=$(shell date)
-#temp.txt:; @echo $(CXXFLAGS) >>$@
 
 val-%:; @echo $($*)
 var-%:; @echo '"$$($*)"="$($*)"'
+state-%:; @echo '$$(value $*)=$(value $*)'
 vars-%:; @$(foreach V,$($*),echo '$V={$($V)}';)
-.PHONY: val-% var-% vars-% clean-% clean
 
 # Now clean-main removes bin/main, and clean-bin and clean-EXE are the same
 #   - but this is too greedy to run without a --dry-run pass, which outweighs
@@ -154,36 +95,23 @@ clean-%:; @rm -i -f $(wildcard $(filter $*% %$* %$*%,\
 	$(call DO_EA,$(*:%=PAT_%),$(NAMES_EXE) $(NAMES_SO)))
 clean: $(addprefix clean-,EXE SO O D COMPLETE)
 
-# show-%: override LDLIBS+=$(call LD_EXTRACT,$*)
-show-%:
-	@echo "CPP_EXTRACT($*) = $(call CPP_EXTRACT,$*)"
-	@echo "SO_EXTRACT($*) = $(call SO_EXTRACT,$*)"
-	@echo "LD_EXTRACT($*) = $(call LD_EXTRACT,$*)"
-	@echo "  --> $(call PAT_O,$*) : $(call SO_EXTRACT,$*)"
-	@echo "  --> LDLIBS = $(LDLIBS)"
-
-BUILD_DEP=$(CXX) $(CXXFLAGS) -MM -MT '$(DIR_O)$*.d' $< -MF $@
+BUILD_DEP=$(CXX) $(CXXFLAGS) -MM -MT '$(DIR_DEP)$*.d' $< -MF $@
 $(call PAT_D,$(NAMES_EXE)): $(DIR_O)%.d: $(DIR_APP)%.cpp; $(BUILD_DEP)
 $(call PAT_D,$(NAMES_SO)): $(DIR_O)%.d: $(DIR_SRC)%.cpp; $(BUILD_DEP)
 
-$(call PAT_EXE,$(NAMES_EXE)): \
-$(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d $(FILES_SO) $(DEPS_$*)
-	$(CXX) $(LDFLAGS) \
-		-o $(shell echo $@ $< $(LDLIBS) $(LDLIBS_$*) \
-		$(sort $(call CONFIG_SO,$(REQ_$*))))
+$(call PAT_EXE,$(NAMES_EXE)): $(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d $(FILES_SO) $(DEPS_$*)
+	$(CXX) $(LDFLAGS)\
+		-o $@ $< $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*)))
 
-# E...: O(E): APP(E)
-#$(call PAT_O,$(NAMES_EXE)): $(DIR_O)%.o: $(DIR_APP)%.cpp $(DEPS_$*)
 $(call PAT_O,$(NAMES_EXE)): $(DIR_O)%.o: \
 	$(DIR_APP)%.cpp $(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
-	$(CXX) $(CXXFLAGS) $(sort $(call CONFIG_O,$(REQ_$*))) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) $(sort $(call CONFIG_O,$(REQ_$*))) -c\
+		-o $@ $<
 
-# SO...: SO: O(SO)
-$(call PAT_SO,$(NAMES_SO)): \
-$(DIR_SO)lib%.so: $(DIR_O)%.o
-	$(CXX) $(shell echo $(LDFLAGS) $< -shared) \
-		-o $(shell echo $@ $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*))))
-# O(SO...): O: CPP(O)
+$(call PAT_SO,$(NAMES_SO)): $(DIR_SO)lib%.so: $(DIR_O)%.o
+	$(CXX) $(LDFLAGS) $< -shared\
+		-o $@ $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*)))
+
 $(call PAT_O,$(NAMES_SO)): \
 $(DIR_O)%.o: $(DIR_SRC)%.cpp $(DIR_DEP)%.d \
 	$(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
@@ -191,6 +119,8 @@ $(DIR_O)%.o: $(DIR_SRC)%.cpp $(DIR_DEP)%.d \
 		-o $@ $(call PAT_SRC,$*) $<
 
 # Generate auto-dep injection - what could go wrong?
--include $(call PAT_D,$(NAMES_EXE) $(NAMES_SO))
+#-include $(call PAT_D,$(NAMES_EXE) $(NAMES_SO))
+include $(wildcard $(DEPS_EXE) $(DEPS_SO)) Doxygen.mk
 
-include Doxygen.mk
+.PHONY: val-% var-% vars-% state-% clean-% clean
+.PRECIOUS: $(DIR_DEP)%.d $(COMPLETE)
