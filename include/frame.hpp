@@ -22,30 +22,9 @@ public:
 		return s << f.status, s;
 	}
 	Frame& clear(void);
-	/** Directly draws an array of vertices */
-	Frame& draw(GLuint vao, GLenum mode, GLint first, GLsizei count) {
-		glBindVertexArray(vao);
-		glDrawArrays(mode, first, count);
-		return *this;
-	}
-	/** Directly draws an array of vertices multiple times, varying gl_InstanceID */
-	Frame& draw(GLuint vao, GLenum mode, GLint first, GLsizei count, GLsizei prims) {
-		glBindVertexArray(vao);
-		glDrawArraysInstanced(mode, first, count, prims);
-		return *this;
-	}
-	/** Draws an array of vertices by indices */
-	Frame& draw(GLuint vao, GLenum mode, GLsizei count, GLenum type, const void *indices) {
-		glBindVertexArray(vao);
-		glDrawElements(mode, count, type, indices);
-		return *this;
-	}
-	/** Draws an array of vertices by indices multiple times, varying gl_InstanceID */
-	Frame& draw(GLuint vao, GLenum mode, GLsizei count,
-			GLenum type, const void *indices, GLsizei prims) {
-		glBindVertexArray(vao);
-		glDrawElementsInstanced(mode, count, type, indices, prims);
-		return *this;
+	template<class... T>
+	Frame& draw(T &&... t) {
+		return View::draw(std::forward<T>(t)...), *this;
 	}
 	Frame& flip(void);
 	operator SDL_GLContext(void) const { return ctx; }
