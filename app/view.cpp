@@ -75,9 +75,12 @@ int main(int argc, const char *argv[]) {
 	// Initialize projection matrix values and vertices
 	float near = 1, far = 2, mid = (near + far)/2, right = 1, top = 1;
 	GLfloat points[][3] = {
-		{-right, mid, -top}, {right, mid, -top}, {right, mid, top},
-		{-right, mid, -top}, {right, mid, top}, {-right, mid, top}
+		/*{-right, mid, -top}, {right, mid, -top}, {right, mid, top},
+		{-right, mid, -top}, {right, mid, top}, {-right, mid, top}*/
+		{-right, mid, -top}, {right, mid, -top}, {right, mid, top}, {-right, mid, top}
 	};
+	GLuint indices[] = {0, 1, 2, 2, 3, 0};
+	auto indicesSize = sizeof(indices)/sizeof(indices[0]);
 
 	// Locate shaders from execution path
 	string self = argv[0], delim = "/", share = "share" + delim;
@@ -103,12 +106,14 @@ int main(int argc, const char *argv[]) {
 	hnd.project(mvp, top, right, near, far);
 
 	// Create and initialize vertex array and buffer
-	GLuint vao, vbo;
+	GLuint vao, vbo[2];
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glGenBuffers(2, vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
 	glBindAttribLocation(hnd.program, 0, "pos");
@@ -123,7 +128,7 @@ int main(int argc, const char *argv[]) {
 			hnd.clear();
 		}
 		// Render
-		hnd.frame.clear().draw(vao, GL_TRIANGLES, 0, 6).flip();
+		hnd.frame.clear().draw(vao, GL_TRIANGLES, 0, indicesSize).flip();
 		SDL_Delay(100);
 		if((N >= 0) && (i >= N)) break;
 	}
@@ -134,6 +139,6 @@ int main(int argc, const char *argv[]) {
 
 	// Clean up what isn't done through RAII already
 	glDeleteVertexArrays(1, &vao);
-	glDeleteBuffers(1, &vbo);
+	glDeleteBuffers(2, vbo);
 	SDL_Quit();
 }
