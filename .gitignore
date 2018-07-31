@@ -41,4 +41,6 @@ bin/*
 # Generated documentation
 doc/html/*
 doc/man/*
+doc/rtf/*
+doc/tags/*
 doc/latex/*
