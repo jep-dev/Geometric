@@ -3,6 +3,7 @@
 
 #include "presenter.hpp"
 #include "shader.hpp"
+#include "resource.hpp"
 
 struct Hnd;
 struct Hnd: Presenter<Hnd> {
@@ -106,10 +107,10 @@ int main(int argc, const char *argv[]) {
 	hnd.project(mvp, top, right, near, far);
 
 	// Create and initialize vertex array and buffer
-	GLuint vao, vbo[2];
+	GLuint vao;
+	Buffer<2> vbo;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-	glGenBuffers(2, vbo);
 	bufferData(GL_ARRAY_BUFFER, vbo[0], points, GL_STATIC_DRAW);
 	bufferData(GL_ELEMENT_ARRAY_BUFFER, vbo[1], indices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -137,6 +138,5 @@ int main(int argc, const char *argv[]) {
 
 	// Clean up what isn't done through RAII already
 	glDeleteVertexArrays(1, &vao);
-	glDeleteBuffers(2, vbo);
 	SDL_Quit();
 }
