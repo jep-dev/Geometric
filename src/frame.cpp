@@ -32,7 +32,7 @@ Frame::Frame(void) {
 				break;
 			}
 			constexpr const char *matches[] = {" doesn't match ", " matches "},
-				*plural[] = {"single", "double"},
+				*plural[] = {"Single", "Double"},
 				*onoff[] = {"off", "on"};
 			auto print_profile = [](ostream &lhs, int rhs)
 			-> ostream& {
@@ -49,18 +49,25 @@ Frame::Frame(void) {
 			auto print_format = [] (ostream &lhs, int a, int r, int g, int b) -> ostream& {
 				return lhs << "ARGB " << a << r << g << b;
 			};
-			print_version(oss << "Found OpenGL ", ctx.major.get(),
-				ctx.minor.get(), ctx.mask.get());
-			if(!(ctx.major && ctx.minor && ctx.mask)) print_version(oss << "; expected ",
-				ctx.major.set(), ctx.minor.set(), ctx.mask.set());
-			oss << ";\n  Buffering: found " << plural[ctx.buffered.get()];
-			if(!ctx.buffered) oss << "; expected " << onoff[ctx.buffered.set()];
-			print_format(oss << ";\n  Format: found ", ctx.alpha.get(), ctx.red.get(),
-				ctx.green.get(), ctx.blue.get());
-			if(!(ctx.alpha && ctx.red && ctx.green && ctx.blue))
-				print_format(oss << "; expected ", ctx.alpha.set(), ctx.red.set(),
-					ctx.green.set(), ctx.blue.set());
-			oss << ".";
+			print_version(oss << "  Found OpenGL ",
+					ctx.major.get(), ctx.minor.get(), ctx.mask.get());
+			if(ctx.major && ctx.minor && ctx.mask) oss << " (matches);\n";
+			else print_version(oss << " (expected ",
+					ctx.major.set(), ctx.minor.set(), ctx.mask.set()) << ");\n";
+			/*if(!(ctx.major && ctx.minor && ctx.mask)) print_version(oss << "; expected ",
+				ctx.major.set(), ctx.minor.set(), ctx.mask.set());*/
+			oss << "  Found " << plural[ctx.buffered.get()] << " buffering";
+			if(ctx.buffered) oss << " (matches);\n";
+			else oss << " (expected " << plural[ctx.buffered.set()] << ");\n";
+
+			//if(!ctx.buffered) oss << " expected " << onoff[ctx.buffered.set()] << ";\n";
+
+			print_format(oss << "  Format: found ",
+					ctx.alpha.get(), ctx.red.get(), ctx.green.get(), ctx.blue.get());
+			if(ctx.alpha && ctx.red && ctx.green && ctx.blue)
+				oss << " (matches).\n";
+			else print_format(oss << " (expected ", ctx.alpha.set(), ctx.red.set(),
+					ctx.green.set(), ctx.blue.set()) << ").";
 			glbinding::Binding::initialize(false);
 		}
 	} while(0);
