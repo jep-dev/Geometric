@@ -13,13 +13,7 @@ Frame::Frame(void) {
 	using std::ostream;
 	ostringstream oss;
 
-	int init = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
-
 	do {
-		if(init) {
-			oss << "Unable to initialize.\n";
-			break;
-		}
 		ctx.set();
 		win = SDL_CreateWindow("Title", center, center, 720, 540, flags);
 		if(!win) {
@@ -54,13 +48,9 @@ Frame::Frame(void) {
 			if(ctx.major && ctx.minor && ctx.mask) oss << " (matches);\n";
 			else print_version(oss << " (expected ",
 					ctx.major.set(), ctx.minor.set(), ctx.mask.set()) << ");\n";
-			/*if(!(ctx.major && ctx.minor && ctx.mask)) print_version(oss << "; expected ",
-				ctx.major.set(), ctx.minor.set(), ctx.mask.set());*/
 			oss << "  Found " << plural[ctx.buffered.get()] << " buffering";
 			if(ctx.buffered) oss << " (matches);\n";
 			else oss << " (expected " << plural[ctx.buffered.set()] << ");\n";
-
-			//if(!ctx.buffered) oss << " expected " << onoff[ctx.buffered.set()] << ";\n";
 
 			print_format(oss << "  Format: found ",
 					ctx.alpha.get(), ctx.red.get(), ctx.green.get(), ctx.blue.get());
@@ -68,6 +58,7 @@ Frame::Frame(void) {
 				oss << " (matches).\n";
 			else print_format(oss << " (expected ", ctx.alpha.set(), ctx.red.set(),
 					ctx.green.set(), ctx.blue.set()) << ").";
+			// TODO initialize GLBinding from Presenter?
 			glbinding::Binding::initialize(false);
 		}
 	} while(0);
