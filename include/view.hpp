@@ -9,6 +9,12 @@
 namespace View {
 using namespace gl;
 
+template<class T, unsigned N>
+void bufferData(GLenum target, GLuint vbo, const T (& data) [N], GLenum usage) {
+	glBindBuffer(target, vbo);
+	glBufferData(target, sizeof(data), data, usage);
+}
+
 /** Directly draws an array of vertices */
 void draw(GLuint vao, GLenum mode, GLint first, GLsizei count) {
 	glBindVertexArray(vao);
