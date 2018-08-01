@@ -148,5 +148,9 @@ template<class T>
 long numDigits(T const& t) {
 	return ceil(log10(abs(long(t))+1));
 }
+template<class T>
+long numDigits(T const& t, unsigned radix) {
+	return ceil(log(abs(long(t))+1)/log(radix));
+}
 
 #endif
