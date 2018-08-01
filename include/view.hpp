@@ -9,6 +9,7 @@
 namespace View {
 using namespace gl;
 
+/** Binds and buffers a vertex buffer object. */
 template<class T, unsigned N>
 void bufferData(GLenum target, GLuint vbo, const T (& data) [N], GLenum usage) {
 	glBindBuffer(target, vbo);
