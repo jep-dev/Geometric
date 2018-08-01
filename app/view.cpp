@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 
+#include "initializer.hpp"
 #include "presenter.hpp"
 #include "shader.hpp"
 #include "resource.hpp"
@@ -91,6 +92,19 @@ int main(int argc, const char *argv[]) {
 	share = self.substr(0, pos+1) + ".." + delim + "share" + delim;
 	string vertPath = share + "default.vert", fragPath = share + "default.frag";
 
+	Initializer initializer([](void) { SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER); },
+		[](void) -> bool {
+			auto inits = SDL_INIT_VIDEO | SDL_INIT_TIMER;
+			return (SDL_WasInit(0) & inits) == inits;
+		}, SDL_Quit);
+	if(!initializer) {
+		cout << "Could not initialize SDL";
+		string err = SDL_GetError();
+		if(err.length()) cout << ":\n  " << err;
+		cout << endl;
+		return 1;
+	}
+
 	Hnd hnd;
 	auto used = hnd.init(vertPath.c_str(), fragPath.c_str());
 	if(!used.good()) {
@@ -138,5 +152,5 @@ int main(int argc, const char *argv[]) {
 
 	// Clean up what isn't done through RAII already
 	glDeleteVertexArrays(1, &vao);
-	SDL_Quit();
+	//SDL_Quit();
 }
