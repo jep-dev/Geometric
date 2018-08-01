@@ -94,7 +94,7 @@ int main(int argc, const char *argv[]) {
 	auto used = hnd.init(vertPath.c_str(), fragPath.c_str());
 	if(!used.good()) {
 		cout << "Could not build shader program";
-		if(used.length()) cout << ": " << used;
+		if(used.length()) cout << ":\n  " << used;
 		cout << endl;
 		return 1;
 	}
@@ -110,10 +110,8 @@ int main(int argc, const char *argv[]) {
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 	glGenBuffers(2, vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[1]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	bufferData(GL_ARRAY_BUFFER, vbo[0], points, GL_STATIC_DRAW);
+	bufferData(GL_ELEMENT_ARRAY_BUFFER, vbo[1], indices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
 	glBindAttribLocation(hnd.program, 0, "pos");
@@ -128,7 +126,6 @@ int main(int argc, const char *argv[]) {
 			hnd.clear();
 		}
 		// Render
-		//hnd.frame.clear().draw(vao, GL_TRIANGLES, 0, indicesSize).flip();
 		hnd.frame.clear().draw(vao, GL_TRIANGLES, indicesSize, GL_UNSIGNED_INT, nullptr).flip();
 		SDL_Delay(100);
 		if((N >= 0) && (i >= N)) break;
