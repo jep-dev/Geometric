@@ -4,8 +4,7 @@
 #include "view.hpp"
 
 namespace View {
-//template<unsigned N, void (*GEN)(GLsizei, const GLuint*), void (*DEL)(GLsizei, const GLuint*)>
-template<unsigned N, decltype(glGenBuffers) *GEN, decltype(glDeleteBuffers) *DEL>
+template<unsigned N, void (*GEN)(GLsizei, GLuint*), void (*DEL)(GLsizei, const GLuint*)>
 struct Resource {
 	GLuint data[N];
 	GLuint const& operator[](unsigned i) const { return data[i]; }
