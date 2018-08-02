@@ -24,26 +24,21 @@ int main(int argc, const char *argv[]) {
 	using namespace chrono;
 	using namespace Timing;
 
-	int M, N;
-	stringstream ss;
+	int M = 2048, N = 2, temp;
+
 	if(argc > 1) {
-		ss << argv[1];
-		ss >> M;
-		if(ss.fail())
-			M = 2048;
+		istringstream ss;
+		ss.str(argv[1]);
+		ss >> temp;
+		if(!ss.fail()) M = temp;
 		ss.clear();
 		if(argc > 2) {
-			ss << argv[2];
-			ss >> N;
-			if(ss.fail())
-				N = 2;
-			ss.clear();
-		} else N = 2;
-	} else M = 2048, N = 2;
+			ss.str(argv[2]);
+			ss >> temp;
+			if(!ss.fail()) N = temp;
+		}
+	}
 
-
-
-	// using T = float;
 	using T = double;
 	int n_digits = max(numDigits(M), numDigits(N));
 
