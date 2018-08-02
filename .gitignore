@@ -42,5 +42,5 @@ bin/*
 doc/html/*
 doc/man/*
 doc/rtf/*
-doc/tags/*
 doc/latex/*
+doc/*.tag
