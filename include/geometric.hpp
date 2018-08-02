@@ -113,6 +113,9 @@ auto reverse(Tag<U, V...>, X x = {})
 template<class... X>
 auto reverse(Tag<>, Tag<X...> x = {}) -> decltype(x) { return {}; }
 
+template<class X, class... Y>
+auto rotate(Tag<X, Y...> = {}) -> Tag<Y..., X> { return {}; }
+
 }
 
 #endif
