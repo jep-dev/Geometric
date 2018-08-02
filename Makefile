@@ -104,7 +104,7 @@ $(call PAT_EXE,$(NAMES_EXE)): $(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d $(FILES_SO) $
 		-o $@ $< $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*)))
 
 $(call PAT_O,$(NAMES_EXE)): $(DIR_O)%.o: \
-	$(DIR_APP)%.cpp $(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
+	$(DIR_APP)%.cpp $(DIR_O)%.d $(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
 	$(CXX) $(CXXFLAGS) $(sort $(call CONFIG_O,$(REQ_$*))) -c\
 		-o $@ $<
 
