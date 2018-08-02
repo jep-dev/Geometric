@@ -1,14 +1,11 @@
 #ifndef UTILITY_HPP
 #define UTILITY_HPP
 
-///@cond
 #include <algorithm>
 #include <limits>
 #include <math.h>
-#include <string>
 #include <tuple>
 #include <utility>
-///@endcond
 
 namespace Detail {
 
@@ -31,8 +28,6 @@ template<class T> long numDigits(T const& t);
 // TODO: Consider numDigits with a (template?) parameter designating the radix
 
 }
-
-#include "geometric.hpp"
 
 template<class... T> struct Void { using value_type = void; };
 

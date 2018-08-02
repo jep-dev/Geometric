@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "utility.hpp"
+#include "geometric.hpp"
 #include "pretty.tpp"
 
 template<class CRTP>

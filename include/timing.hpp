@@ -2,10 +2,12 @@
 #define TIMING_HPP
 
 #include <chrono>
-#include <thread>
 #include <functional>
+#include <thread>
+#include <vector>
 
 #include "utility.hpp"
+#include "geometric.hpp"
 
 namespace Timing {
 

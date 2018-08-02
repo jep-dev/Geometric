@@ -1,7 +1,5 @@
 #include <iostream>
 #include <iomanip>
-#include <string>
-#include <vector>
 
 #ifdef DUAL2
 #include "dual2.hpp"
