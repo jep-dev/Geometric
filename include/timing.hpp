@@ -3,8 +3,9 @@
 
 #include <chrono>
 #include <thread>
-#include "utilities.hpp"
 #include <functional>
+
+#include "utility.hpp"
 
 namespace Timing {
 

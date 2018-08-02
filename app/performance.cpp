@@ -1,9 +1,6 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
-
-#include <limits>
-#include <utility>
 #include <vector>
 
 #ifdef DUAL2
@@ -16,7 +13,7 @@
 #include "quaternion.tpp"
 
 #include "timing.hpp"
-#include "utilities.hpp"
+#include "utility.hpp"
 
 
 int main(int argc, const char *argv[]) {

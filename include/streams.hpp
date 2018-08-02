@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "utilities.hpp"
+#include "utility.hpp"
 
 namespace Streams {
 using std::string;

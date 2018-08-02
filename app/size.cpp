@@ -4,8 +4,8 @@
 #include <tuple>
 #include <vector>
 
-#include "utilities.hpp"
 #include "pretty.tpp"
+#include "utility.hpp"
 
 struct False : std::false_type { };
 struct True : std::true_type { };

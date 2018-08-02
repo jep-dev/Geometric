@@ -11,7 +11,7 @@
 #include "quaternion.hpp"
 #include "quaternion.tpp"
 
-#include "utilities.hpp"
+#include "utility.hpp"
 
 int main(int argc, const char *argv[]) {
 	using namespace std;

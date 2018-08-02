@@ -3,7 +3,7 @@
 #include <sstream>
 #include <vector>
 
-#include "utilities.hpp"
+#include "utility.hpp"
 #include "pretty.tpp"
 
 template<class CRTP>

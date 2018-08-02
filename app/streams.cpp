@@ -4,7 +4,7 @@
 #include <sstream>
 
 #include "reader.hpp"
-#include "utilities.hpp"
+#include "utility.hpp"
 
 int main(int argc, const char *argv[]) {
 	using std::string;
