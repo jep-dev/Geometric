@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <thread>
+#include "utilities.hpp"
 
 namespace Timing {
 
@@ -66,15 +67,15 @@ public:
 		string labelLeft = "Loop ", labelRight = ", ";
 		unsigned precision = 4,
 			loop = 1, loops = d.iterations.size(),
-			loopDigits = ceil(log10(loops+1)), nDigits, singleDigits, totalDigits,
+			loopDigits = numDigits(loops), nDigits, singleDigits, totalDigits,
 			labelWidth = labelLeft.length() + loopDigits + labelRight.length(),
 			singleWidth, totalWidth;
 		{
-			nDigits = ceil(log10(d.maxes.first + 1));
+			nDigits = numDigits(d.maxes.first);
 			auto const& sec = d.maxes.second;
 			unsigned single = sec.first, total = sec.second;
-			singleDigits = ceil(log10(single+1));
-			totalDigits = ceil(log10(total+1));
+			singleDigits = numDigits(single);
+			totalDigits = numDigits(total);
 		}
 		singleWidth = precision + 1 + singleDigits;
 		totalWidth = precision + 1 + totalDigits;
