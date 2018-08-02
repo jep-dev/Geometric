@@ -1,3 +1,6 @@
+TO_UPPER=$(shell echo '$1' | tr a-z A-Z)
+TO_LOWER=$(shell echo '$1' | tr A-Z a-z)
+
 # Row-major: { for(x:$1) for(y:$2) x(y) }
 DO_EA=$(foreach L,$1,$(call $L,$2))
 # Composed row-major: { ... for(z:$3) x(y(z)) }
