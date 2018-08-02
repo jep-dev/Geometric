@@ -1,7 +1,7 @@
 #ifndef QUATERNION_TPP
 #define QUATERNION_TPP
 
-#include <sstream>
+#include <iosfwd>
 
 template<class L, class S>
 L& operator<<(L &lhs, Quaternion<S> const& rhs) {

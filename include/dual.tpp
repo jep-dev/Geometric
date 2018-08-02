@@ -3,7 +3,7 @@
 
 #include "quaternion.hpp"
 #include "quaternion.tpp"
-#include <sstream>
+#include <iosfwd>
 
 template<class L, class S>
 L& operator<<(L &lhs, DualQuaternion<S> const& rhs) {
