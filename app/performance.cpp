@@ -29,7 +29,7 @@ int main(int argc, const char *argv[]) {
 	int M = 256, N = 2;
 	int n_digits = max(numDigits(M), numDigits(N));
 
-	Stopwatch<> stopwatch;
+	auto stopwatch = make_stopwatch(high_resolution_clock());
 	auto flags = cout.flags();
 	cout << "Quaternion<T>:\n" << delta(Quaternion<T>{1}, M, M*N, M*N*N, M*N*N*N) << endl;
 	cout << "  Elapsed (total): " << stopwatch.update().count() << " seconds" << endl;
