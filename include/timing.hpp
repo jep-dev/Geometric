@@ -12,27 +12,34 @@ using namespace std::chrono;
 using std::ratio;
 using clock = high_resolution_clock;
 
+/** Gets the time elapsed between two measurements */
 template<class T = double>
 T elapsed(T t0, T t1) {
 	using namespace std::chrono;
 	return duration_cast<duration<T>>(t1-t0).count();
 }
+/** Gets the time according to the high resolution clock */
 template<class T = double, class... R>
 T now(Detail::Tag<T, R...> = {}) {
 	using namespace std::chrono;
 	auto cur = high_resolution_clock::now();
-	return duration_cast<duration<T, R...>>(cur);
+	return duration_cast<duration<T, R...>>(cur).count();
 }
+/** Gets the time in seconds */
 template<class T = double>
 T now_seconds(void) { return now<T, ratio<1>>(); }
+/** Gets the time in milliseconds */
 template<class T = double>
 T now_milliseconds(void) { return now<T, ratio<1, 1000>>(); }
+/** Gets the time in microseconds */
 template<class T = double>
 T now_microseconds(void) { return now<T, ratio<1, 1000000>>(); }
 
+/** Pair of time points; easily converted to a duration without losing reference point */
 template<class CLOCK = high_resolution_clock, class DUR = typename CLOCK::duration>
 using Diff = std::pair<time_point<CLOCK, DUR>, time_point<CLOCK, DUR>>;
 
+/** Pair of time points with methods supporting elapsed calculation, update, etc. */
 template<class CLOCK = high_resolution_clock, class DUR = typename CLOCK::duration>
 struct Stopwatch: Diff<CLOCK, DUR> {
 	template<class S = std::chrono::seconds>
@@ -50,12 +57,16 @@ struct Stopwatch: Diff<CLOCK, DUR> {
 			time_point<CLOCK, DUR> && p1 = CLOCK::now()):
 		Diff<CLOCK, DUR>(p0, p1) { }
 };
+/** Utility returning a Stopwatch (clock specialization) */
 template<class CLOCK, class DUR = typename CLOCK::duration>
 Stopwatch<CLOCK, DUR> make_stopwatch(CLOCK) { return {}; }
+
+/** Utility returning a Stopwatch (time point specialization) */
 template<class CLOCK, class DUR = typename CLOCK::duration>
 Stopwatch<CLOCK, DUR> make_stopwatch(time_point<CLOCK, DUR> && p0,
 		time_point<CLOCK, DUR> && p1 = CLOCK::now()) { return {}; }
 
+/** Measures the time elapsed during a given action/operation */
 template<class T>
 struct Delta {
 	typedef std::pair<double, double> Measure;
@@ -68,7 +79,7 @@ struct Delta {
 		auto t0 = clock::now();
 		d.action(N, x);
 		auto t1 = clock::now();
-		return duration_cast<duration<double>>(t1-t0).count() * d.uScale;
+		return Timing::elapsed(t0, t1);
 	}
 protected:
 	Iterations iterations;
