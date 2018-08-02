@@ -6,6 +6,7 @@
 #include <math.h>
 #include <tuple>
 #include <utility>
+#include <type_traits>
 
 namespace Detail {
 
