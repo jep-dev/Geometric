@@ -27,7 +27,7 @@ int main(int argc, const char *argv[]) {
 	// using T = float;
 	using T = double;
 	unsigned M = 10000, N = M * 100;
-	int n_digits = max(ceil(log10(M+1)), ceil(log10(N+1)));
+	int n_digits = max(numDigits(M), numDigits(N));
 
 	auto flags = cout.flags();
 	cout << "Quaternion<T>:\n" << delta(Quaternion<T>{1}, 100, 1000, 10000) << endl;
