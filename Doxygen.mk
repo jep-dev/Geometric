@@ -5,7 +5,6 @@ doxymake=$(doxygen) -g
 # Input parameters
 DIR_DOC?=doc/
 DIR_TAG?=$(DIR_DOC)tags/
-FILE_DOC?=$(DIR_DOC)Doxyfile
 
 HTML_EXTRA_STYLESHEET?=doc/style.css
 BUILTIN_STL_SUPPORT?=YES
@@ -28,11 +27,13 @@ WARNINGS=NO
 TAG_DIRNAMES?=html latex rtf man
 TAG_FILENAMES:=$(TAG_DIRNAMES:%=$(DIR_DOC)%.tag)
 TAG_FILEMAPS:=$(join $(TAG_FILENAMES),$(addprefix =,$(TAG_FILENAMES:.tag=)))
+DOXY_FILENAMES?=$(addprefix $(DIR_DOC)Doxyfile_,$(TAG_DIRNAMES))
+DOXY_FILENAMES:=$(DOXY_FILENAMES) $(DOXY_FILENAMES:%=%.bak)
 
 DOXY_LOCATE=$(foreach D,HDR SRC APP,$(foreach X,.hpp .tpp .cpp,$(wildcard $(DIR_$D)*$X)))
 
 $(DIR_DOC)%.tag: $(DOXY_LOCATE)
-	@$(doxymake) $(DIR_DOC)Doxyfile_$* >$(NULL)
+	$(doxymake) $(DIR_DOC)Doxyfile_$* >$(NULL)
 	$(eval DOXY_VARS:=HTML_EXTRA_STYLESHEET BUILTIN_STL_SUPPORT COLS_IN_ALPHA_INDEX \
 		DOT_TRANSPARENT EXCLUDE_PATTERNS EXTRACT_ALL EXTRACT_PRIVATE EXTRACT_PACKAGE INPUT \
 		OUTPUT_DIRECTORY QT_AUTOBRIEF MULTILINE_CPP_IS_BRIEF RECURSIVE SHOW_INCLUDE_FILES \
@@ -43,10 +44,10 @@ $(DIR_DOC)%.tag: $(DOXY_LOCATE)
 		$(addprefix GENERATE_,$(foreach N,$(TAG_DIRNAMES),\
 		$(addsuffix ="NO\n",$(call TO_UPPER,$(filter-out $*,$N))))) \
 		>>$(DIR_DOC)Doxyfile_$* && $(doxygen) $(DIR_DOC)Doxyfile_$* >$(NULL)
-	@$(doxygen) $(DIR_DOC)Doxyfile_$* >$(NULL)
+	$(doxygen) $(DIR_DOC)Doxyfile_$* >$(NULL)
 
 $(TAG_DIRNAMES): %: $(DIR_DOC)%.tag
 doc: $(TAG_FILENAMES)
 
-clean-doc:; $(RM) $(FILE_DOC) $(TAG_FILENAMES)
+clean-doc:; $(RM) $(DOXY_FILENAMES) $(TAG_FILENAMES)
 .PHONY: doc doxy-reset-% clean-doc $(TAG_DIRNAMES)
