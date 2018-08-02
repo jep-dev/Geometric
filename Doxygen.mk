@@ -31,23 +31,22 @@ TAG_FILEMAPS:=$(join $(TAG_FILENAMES),$(addprefix =,$(TAG_FILENAMES:.tag=)))
 
 DOXY_LOCATE=$(foreach D,HDR SRC APP,$(foreach X,.hpp .tpp .cpp,$(wildcard $(DIR_$D)*$X)))
 
-doxy-reset:
-	@$(doxymake) $(FILE_DOC) >$(NULL)
+$(DIR_DOC)%.tag: $(DOXY_LOCATE)
+	@$(doxymake) $(DIR_DOC)Doxyfile_$* >$(NULL)
 	$(eval DOXY_VARS:=HTML_EXTRA_STYLESHEET BUILTIN_STL_SUPPORT COLS_IN_ALPHA_INDEX \
 		DOT_TRANSPARENT EXCLUDE_PATTERNS EXTRACT_ALL EXTRACT_PRIVATE EXTRACT_PACKAGE INPUT \
 		OUTPUT_DIRECTORY QT_AUTOBRIEF MULTILINE_CPP_IS_BRIEF RECURSIVE SHOW_INCLUDE_FILES \
 		STRIP_FROM_PATH WARNINGS)
-
-$(DIR_DOC)%.tag: doxy-reset $(DOXY_LOCATE)
-	echo $(foreach VAR,$(DOXY_VARS),"$(VAR)=$($(VAR))\n") \
-		GENERATE_TAGFILE="$@\n" \
+	@echo $(foreach VAR,$(DOXY_VARS),"$(VAR)=$($(VAR))\n") \
+		GENERATE_TAGFILE="$(DIR_DOC)$*.tag\n" \
 		GENERATE_$(call TO_UPPER,$*)="YES\n" \
 		$(addprefix GENERATE_,$(foreach N,$(TAG_DIRNAMES),\
 		$(addsuffix ="NO\n",$(call TO_UPPER,$(filter-out $*,$N))))) \
-		>>$(FILE_DOC) && $(doxygen) $(FILE_DOC) >$(NULL)
+		>>$(DIR_DOC)Doxyfile_$* && $(doxygen) $(DIR_DOC)Doxyfile_$* >$(NULL)
+	@$(doxygen) $(DIR_DOC)Doxyfile_$* >$(NULL)
 
 $(TAG_DIRNAMES): %: $(DIR_DOC)%.tag
 doc: $(TAG_FILENAMES)
 
 clean-doc:; $(RM) $(FILE_DOC) $(TAG_FILENAMES)
-.PHONY: doc doxy-reset clean-doc $(TAG_DIRNAMES)
+.PHONY: doc doxy-reset-% clean-doc $(TAG_DIRNAMES)
