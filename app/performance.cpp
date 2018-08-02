@@ -24,9 +24,27 @@ int main(int argc, const char *argv[]) {
 	using namespace chrono;
 	using namespace Timing;
 
+	int M, N;
+	stringstream ss;
+	if(argc > 1) {
+		ss << argv[1];
+		ss >> M;
+		if(ss.fail())
+			M = 2048;
+		ss.clear();
+		if(argc > 2) {
+			ss << argv[2];
+			ss >> N;
+			if(ss.fail())
+				N = 2;
+			ss.clear();
+		} else N = 2;
+	} else M = 2048, N = 2;
+
+
+
 	// using T = float;
 	using T = double;
-	int M = 4096, N = 2;
 	int n_digits = max(numDigits(M), numDigits(N));
 
 	auto stopwatch = make_stopwatch(high_resolution_clock());
