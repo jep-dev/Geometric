@@ -1,23 +1,15 @@
 #ifndef FORMAT_HPP
 #define FORMAT_HPP
 
-#include <string>
+/*#include <string>
 #include <vector>
-#include <iosfwd>
+#include <iosfwd>*/
 
-#include "utilities.hpp"
+#include "streams.hpp"
 
 namespace Streams {
-namespace Detail {
-	using std::string;
-	using std::array;
-	using std::vector;
-	using std::ostringstream;
-	using std::istringstream;
-}
 
-std::vector<std::string> split(std::string str) {
-	using namespace Detail;
+vector<string> split(string str) {
 	vector<string> out;
 	istringstream iss(str);
 	string cur;
@@ -27,8 +19,7 @@ std::vector<std::string> split(std::string str) {
 	return std::move(out);
 }
 
-std::vector<std::string> & align(std::vector<std::string> & lines, int dir, char fill = ' ') {
-	using namespace Detail;
+vector<string> & align(vector<string> & lines, int dir, char fill = ' ') {
 	auto lens = minimax(lines);
 	for(auto & line : lines) {
 		auto len = lens.second - line.length();
@@ -49,9 +40,8 @@ std::vector<std::string> & align(std::vector<std::string> & lines, int dir, char
 	return lines;
 }
 
-std::vector<std::string> paste(std::string const& lhs, std::string const& rhs,
+vector<string> paste(string const& lhs, string const& rhs,
 		char fill = ' ', const char *border = " ") {
-	using namespace Detail;
 	auto lvec = split(lhs), rvec = split(rhs);
 	auto llen = lvec.size(), rlen = rvec.size();
 	for(long N = rlen - llen, i = 0; i < N; i++)
@@ -65,8 +55,7 @@ std::vector<std::string> paste(std::string const& lhs, std::string const& rhs,
 	}
 	return std::move(lvec);
 }
-template<class... T> std::string join(T &&... t) {
-	using namespace Detail;
+template<class... T> string join(T &&... t) {
 	auto vec = paste(std::forward<T>(t)...);
 	ostringstream oss;
 	for(auto const& line : vec) {
