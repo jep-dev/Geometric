@@ -46,8 +46,15 @@ struct Stopwatch: Diff<CLOCK, DUR> {
 	Stopwatch& advance(void) { return this -> first = this -> second, *this; }
 	Stopwatch& update(void) { return this -> second = CLOCK::now(), *this; }
 	Stopwatch& reset(void) { return this -> first = this -> second = CLOCK::now(); }
-	Stopwatch(void): Diff<CLOCK, DUR>(CLOCK::now(), CLOCK::now()) { }
+	Stopwatch(time_point<CLOCK, DUR> && p0 = CLOCK::now(),
+			time_point<CLOCK, DUR> && p1 = CLOCK::now()):
+		Diff<CLOCK, DUR>(p0, p1) { }
 };
+template<class CLOCK, class DUR = typename CLOCK::duration>
+Stopwatch<CLOCK, DUR> make_stopwatch(CLOCK) { return {}; }
+template<class CLOCK, class DUR = typename CLOCK::duration>
+Stopwatch<CLOCK, DUR> make_stopwatch(time_point<CLOCK, DUR> && p0,
+		time_point<CLOCK, DUR> && p1 = CLOCK::now()) { return {}; }
 
 template<class T>
 struct Delta {
