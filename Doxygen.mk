@@ -17,7 +17,6 @@ EXTRACT_PRIVATE?=YES
 EXTRACT_PACKAGE?=YES
 INPUT=$(DIR_HDR) $(DIR_SRC) $(DIR_APP)
 INPUTS=$(foreach I,$(INPUT),$(wildcard $I*))
-NAMES_DOC=$(patsubst %,doxy-tag-%,$(sort $(notdir $(basename $(INPUTS)))))
 OUTPUT_DIRECTORY=$(DIR_DOC)
 QT_AUTOBRIEF?=YES
 MULTILINE_CPP_IS_BRIEF=YES
@@ -26,36 +25,29 @@ SHOW_INCLUDE_FILES?=YES
 STRIP_FROM_PATH?=./
 WARNINGS=NO
 
-DOXY_LOCATE=$(wildcard $(DIR_HDR)$1.hpp $(DIR_HDR)$1.tpp $(DIR_SRC)$1.cpp $(DIR_APP)$1.cpp)
+TAG_DIRNAMES?=html latex rtf man
+TAG_FILENAMES:=$(TAG_DIRNAMES:%=$(DIR_DOC)%.tag)
+TAG_FILEMAPS:=$(join $(TAG_FILENAMES),$(addprefix =,$(TAG_FILENAMES:.tag=)))
+
+DOXY_LOCATE=$(foreach D,HDR SRC APP,$(foreach X,.hpp .tpp .cpp,$(wildcard $(DIR_$D)*$X)))
 
 doxy-reset:
 	@$(doxymake) $(FILE_DOC) >$(NULL)
 	$(eval DOXY_VARS:=HTML_EXTRA_STYLESHEET BUILTIN_STL_SUPPORT COLS_IN_ALPHA_INDEX \
 		DOT_TRANSPARENT EXCLUDE_PATTERNS EXTRACT_ALL EXTRACT_PRIVATE EXTRACT_PACKAGE INPUT \
 		OUTPUT_DIRECTORY QT_AUTOBRIEF MULTILINE_CPP_IS_BRIEF RECURSIVE SHOW_INCLUDE_FILES \
-		STRIP_FROM_PATH WARNINGS \
-		$(foreach G,HTML LATEX RTF MAN,$(eval GENERATE_$G=NO)GENERATE_$G))
+		STRIP_FROM_PATH WARNINGS)
 
-doxy-tag-% $(DIR_TAG)%.tag: doxy-reset $(call DOXY_LOCATE,$*)
-	@$(doxymake) $(FILE_DOC) >$(NULL)
-	@echo $(foreach VAR,$(DOXY_VARS),"$(VAR)=$($(VAR))\n") "GENERATE_TAGFILE=$(DIR_TAG)$*.tag" \
-		>>$(FILE_DOC)
-	@$(doxygen) $(FILE_DOC) >$(NULL)
+$(DIR_DOC)%.tag: doxy-reset $(DOXY_LOCATE)
+	echo $(foreach VAR,$(DOXY_VARS),"$(VAR)=$($(VAR))\n") \
+		GENERATE_TAGFILE="$@\n" \
+		GENERATE_$(call TO_UPPER,$*)="YES\n" \
+		$(addprefix GENERATE_,$(foreach N,$(TAG_DIRNAMES),\
+		$(addsuffix ="NO\n",$(call TO_UPPER,$(filter-out $*,$N))))) \
+		>>$(FILE_DOC) && $(doxygen) $(FILE_DOC) >$(NULL)
 
-$(FILE_DOC): Doxygen.mk $(wildcard $(DOXY_DISCOVER))
-	@$(doxymake) $(FILE_DOC) >$(NULL)
+$(TAG_DIRNAMES): %: $(DIR_DOC)%.tag
+doc: $(TAG_FILENAMES)
 
-doxy-tags: doxy-reset $(NAMES_DOC)
-
-#doc: doxy-tags doxy-reset
-#	@echo $(foreach VAR,$(DOXY_VARS),"$(VAR)=$($(VAR))\n") \
-#		"GENERATE_HTML=YES\n" "GENERATE_LATEX=YES\n" "GENERATE_TAGFILE=\n" \
-#		"TAGFILES=$(patsubst %,%=$(DIR_DOC)html/,$(wildcard $(DIR_TAG)*))" >>$(FILE_DOC)
-#	@$(doxygen) $(FILE_DOC) >$(NULL)
-doc: doxy-reset
-	@echo $(foreach VAR,$(DOXY_VARS),"$(VAR)=$($(VAR))\n") \
-		"GENERATE_HTML=YES\n" >>$(FILE_DOC)
-	@$(doxygen) $(FILE_DOC) >$(NULL)
-
-clean-doc:; $(RM) $(FILE_DOC)
-.PHONY: doc doxy-reset doxy-tag doxy-tags doxy-tag-% clean-doc
+clean-doc:; $(RM) $(FILE_DOC) $(TAG_FILENAMES)
+.PHONY: doc doxy-reset clean-doc $(TAG_DIRNAMES)
