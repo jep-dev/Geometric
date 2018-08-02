@@ -4,11 +4,50 @@
 #include <chrono>
 #include <thread>
 #include "utilities.hpp"
+#include <functional>
 
 namespace Timing {
 
 using namespace std::chrono;
+using std::ratio;
 using clock = high_resolution_clock;
+
+template<class T = double>
+T elapsed(T t0, T t1) {
+	using namespace std::chrono;
+	return duration_cast<duration<T>>(t1-t0).count();
+}
+template<class T = double, class... R>
+T now(Detail::Tag<T, R...> = {}) {
+	using namespace std::chrono;
+	auto cur = high_resolution_clock::now();
+	return duration_cast<duration<T, R...>>(cur);
+}
+template<class T = double>
+T now_seconds(void) { return now<T, ratio<1>>(); }
+template<class T = double>
+T now_milliseconds(void) { return now<T, ratio<1, 1000>>(); }
+template<class T = double>
+T now_microseconds(void) { return now<T, ratio<1, 1000000>>(); }
+
+template<class CLOCK = high_resolution_clock, class DUR = typename CLOCK::duration>
+using Diff = std::pair<time_point<CLOCK, DUR>, time_point<CLOCK, DUR>>;
+
+template<class CLOCK = high_resolution_clock, class DUR = typename CLOCK::duration>
+struct Stopwatch: Diff<CLOCK, DUR> {
+	template<class S = std::chrono::seconds>
+	S elapsed(Detail::Tag<S> = {}) const {
+		return duration_cast<S>(this -> second - this -> first);
+	}
+	template<class S = double, class... T>
+	S count(void) const {
+		return elapsed<duration<S>>().count();
+	}
+	Stopwatch& advance(void) { return this -> first = this -> second, *this; }
+	Stopwatch& update(void) { return this -> second = CLOCK::now(), *this; }
+	Stopwatch& reset(void) { return this -> first = this -> second = CLOCK::now(); }
+	Stopwatch(void): Diff<CLOCK, DUR>(CLOCK::now(), CLOCK::now()) { }
+};
 
 template<class T>
 struct Delta {
@@ -64,7 +103,7 @@ public:
 	friend S& operator<<(S &s, Delta const& d) {
 		using namespace std;
 		auto f = s.flags();
-		string labelLeft = "Loop ", labelRight = ", ";
+		string labelLeft = "  Loop ", labelRight = ", ";
 		unsigned precision = 4,
 			loop = 1, loops = d.iterations.size(),
 			loopDigits = numDigits(loops), nDigits, singleDigits, totalDigits,
@@ -80,7 +119,7 @@ public:
 		singleWidth = precision + 1 + singleDigits;
 		totalWidth = precision + 1 + totalDigits;
 		// Iterate in reverse to restore original argument order
-		for(auto it = d.iterations.crbegin(); it < d.iterations.crend(); it++, loop++) {
+		for(auto it = d.iterations.crbegin(); it < d.iterations.crend(); loop++) {
 			auto const& sec = it -> second;
 			s << labelLeft << setw(loopDigits) << loop << labelRight
 				<< setw(nDigits) << it -> first << " ops: ";
@@ -90,10 +129,13 @@ public:
 				s << setw(singleWidth) << setfill(fill)
 					<< sec.first << ' ' << d.szScale << "/op ("
 					<< setw(totalWidth) << setfill(fill)
-					<< sec.second << ' ' << d.szScale << " total)" << endl;
+					<< sec.second << ' ' << d.szScale << " total)";
 			}
 			s.setf(f);
+			it++;
+			if(it != d.iterations.crend()) cout << "\n";
 		}
+		s << flush;
 		return s;
 	}
 };
