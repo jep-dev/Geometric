@@ -26,7 +26,7 @@ int main(int argc, const char *argv[]) {
 
 	// using T = float;
 	using T = double;
-	int M = 256, N = 2;
+	int M = 4096, N = 2;
 	int n_digits = max(numDigits(M), numDigits(N));
 
 	auto stopwatch = make_stopwatch(high_resolution_clock());
