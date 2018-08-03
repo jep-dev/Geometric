@@ -93,7 +93,10 @@ int main(int argc, const char *argv[]) {
 			"0*0 = " << make_pretty(E{}*E{}) << ";\n\t"
 			"U*X = " << make_pretty(U{}*X{}) << ";\n\t"
 			"(U+V) * (X+Y) = " << make_pretty(UV{}) << " * " << make_pretty(XY{})
-				<< " = " << make_pretty(UV{}*XY{}) << "\n";
+				<< " = " << make_pretty(UV{}*XY{}) << ";\n\t";
+	static_assert(std::is_same<decltype(U{}*X{}+V{}*Y{}), decltype(UV{}*XY{})>::value,
+		"Operator* must be distributive over operator+");
+	oss << "U*X+V*Y = (U+V)*(X+Y) = " << make_pretty(U{}*X{}+V{}*Y{}) << ".\n";
 
 	static_assert(std::is_same<decltype(E{}^E{}), E>::value
 			&& std::is_same<decltype(E{}^X{}), E>::value
