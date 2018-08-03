@@ -33,7 +33,6 @@ SPLIT=$(subst $1,$(SPACE),$2)
 override RPATH:=-Wl,-rpath,$(call SORT_MERGE,:,$(call SPLIT,:,$(RPATH) $(DIR_O) $(DIR_SO)))
 override CXXFLAGS+=$(strip $(addprefix -I,$(sort $(DIR_HDR))))\
 	$(sort $(call CONFIG_O,$(REQ_ALL)))
-#override LDLIBS+=$(sort $(call CONFIG_SO,$(REQ_ALL)))
 SO_LDLIBS:=$(LDLIBS)
 EXE_LDLIBS:=$(LDLIBS)
 override LDFLAGS+=$(RPATH) $(strip $(addprefix -L,$(sort $(DIR_SO) $(DIR_O)))) # TODO
