@@ -152,5 +152,4 @@ int main(int argc, const char *argv[]) {
 
 	// Clean up what isn't done through RAII already
 	glDeleteVertexArrays(1, &vao);
-	//SDL_Quit();
 }
