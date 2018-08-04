@@ -2,7 +2,6 @@
 #define TIMING_HPP
 
 #include <chrono>
-#include <functional>
 #include <thread>
 #include <vector>
 
