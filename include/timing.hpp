@@ -6,6 +6,7 @@
 #include <thread>
 #include <vector>
 
+#include "math.hpp"
 #include "utility.hpp"
 #include "geometric.hpp"
 

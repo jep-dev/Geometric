@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <sstream>
 
+#include "math.hpp"
 #include "reader.hpp"
 #include "utility.hpp"
 

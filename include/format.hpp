@@ -1,10 +1,7 @@
 #ifndef FORMAT_HPP
 #define FORMAT_HPP
 
-/*#include <string>
-#include <vector>
-#include <iosfwd>*/
-
+#include "math.hpp"
 #include "streams.hpp"
 
 namespace Streams {
