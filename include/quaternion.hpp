@@ -100,16 +100,13 @@ Quaternion<std::common_type_t<W,X,Y,Z>> rotation(W theta, X x, Y y, Z z) {
 }
 
 template<class L, class R, class T>
-Quaternion<std::common_type_t<L,R,T>> lerp(Quaternion<L> const& lhs,
+Quaternion<std::remove_reference_t<std::common_type_t<L,R,T>>> lerp(Quaternion<L> const& lhs,
 		Quaternion<R> const& rhs, T t) {
 	return lhs * (1-t) + rhs * t;
 }
-/*template<class L, class R, class T>
-Quaternion<std::common_type_t<L,R,T>> nlerp(Quaternion<L> const& lhs,
-		Quaternion<R> const& rhs, T && t) {*/
 template<class L, class R, class T>
 auto nlerp(L && l, R && r, T && t) -> decltype(lerp(l, r, t)) {
-	return nlerp(std::forward<L>(l), std::forward<R>(r), std::forward<T>(t)).normalize();
+	return lerp(std::forward<L>(l), std::forward<R>(r), std::forward<T>(t)).normalize();
 }
 
 #endif
