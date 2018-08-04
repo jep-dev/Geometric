@@ -6,12 +6,13 @@
 #include <limits>
 
 /** Abstract comparison to zero (mainly intended for floating point types) */
-template<class T>
-bool near_zero(T const& t, T least = std::numeric_limits<T>::epsilon());
+template<class L, class R = L>
+bool near_zero(L, R = std::numeric_limits<std::remove_reference_t<L>>::epsilon());
 
 /** Abstract comparison (mainly intended for floating point types) */
-template<class T>
-bool near(T const& t, T const& cmp, T least = std::numeric_limits<T>::epsilon());
+template<class L, class R = L, class T = R>
+bool near(L, R, T = std::numeric_limits<
+		std::remove_reference_t<std::common_type_t<L,R>>>::epsilon());
 
 /** Abstract minimax (pair with first=min and second=max) */
 template<class T> std::pair<long, long> minimax(T && t);
@@ -21,14 +22,10 @@ template<class T> long numDigits(T const& t);
 
 
 
-template<class T>
-bool near_zero(T const& t, T least) {
-	return t <= least;
-}
-template<class T>
-bool near(T const& t, T const& cmp, T least) {
-	return near_zero(t - cmp, least);
-}
+template<class L, class R>
+bool near_zero(L lhs, R rhs) { return lhs <= rhs; }
+template<class L, class R, class T>
+bool near(L lhs, R rhs, T least) { return near_zero(lhs - rhs, least); }
 
 template<class T>
 std::pair<long, long> minimax(T && t) {
