@@ -33,33 +33,4 @@ template<class... T> struct Void { using value_type = void; };
 
 }
 
-/** Abstract minimax (pair with first=min and second=max) */
-template<class T> std::pair<long, long> minimax(T && t);
-
-/** Abstract number of digits in decimal */
-template<class T> long numDigits(T const& t);
-// TODO: Consider numDigits with a (template?) parameter designating the radix
-
-
-template<class T>
-std::pair<long, long> minimax(T && t) {
-	long m0 = std::numeric_limits<long>::max(), m1 = 0;
-	for(auto &it : t) {
-		long len = it.length();
-		m0 = std::min(len, m0);
-		m1 = std::max(len, m1);
-	}
-	if(m0 > m1) m0 = m1;
-	return {m0, m1};
-}
-
-template<class T>
-long numDigits(T const& t) {
-	return ceil(log10(abs(long(t))+1));
-}
-template<class T>
-long numDigits(T const& t, unsigned radix) {
-	return ceil(log(abs(long(t))+1)/log(radix));
-}
-
 #endif
