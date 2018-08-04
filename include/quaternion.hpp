@@ -75,14 +75,21 @@ template<class S> struct Quaternion {
 	-> Quaternion<std::common_type_t<U,S>> {
 		return {u * q.w, u * q.x, u * q.y, u * q.z};
 	}
-	/** (Left) scalar multiplication. */
-	/* // TODO reinstate but with lower precedence than product with quaternion
+
 	template<class U>
-	friend auto operator*(U const& u, Quaternion const& q)
-	-> Quaternion<decltype(q.w*u), decltype(q.x*u)> {
-		static_assert(!std::is_same<U,Quaternion>::value, "Quaternion product should be used");
-		return {u*q.w, u*q.x, u*q.y, u*q.z};
-	}*/
+	auto operator/(U const& u)
+			-> Quaternion<std::common_type_t<S,U>> const {
+		return {w / u, x / u, y / u, z / u};
+	}
+	template<class U>
+	friend auto operator/(U const& u, Quaternion const& q)
+			-> Quaternion<std::common_type_t<U,S>> {
+		return u * *q / q.length();
+	}
+	template<class L>
+	friend auto operator/(Quaternion<L> const& lhs, Quaternion<S> const& rhs) {
+		return lhs * *(rhs.normalize());
+	}
 
 };
 
