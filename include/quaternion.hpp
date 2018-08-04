@@ -72,6 +72,12 @@ template<class S> struct Quaternion {
 		static_assert(!std::is_same<U,Quaternion>::value, "Quaternion product should be used");
 		return {u*q.w, u*q.x, u*q.y, u*q.z};
 	}*/
+
+	template<class T>
+	Quaternion<T> rotation(T theta, T x, T y, T z) {
+		auto c = cos(theta/2), s = sin(theta/2);
+		return {c, s*x, s*y, s*z};
+	}
 };
 
 #endif
