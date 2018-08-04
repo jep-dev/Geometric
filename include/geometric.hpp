@@ -53,6 +53,21 @@ template<class U, class... V, class X, class... Y>
 auto operator^(Tag<U, V...>, Tag<X, Y...>) -> decltype(Tag<Tag<U, X>, Tag<U, Y>...>{}
 	+ (Tag<V...>{} ^ Tag<X,Y...>{})) { return {}; }
 
+auto operator%(Tag<>, Tag<>) -> Tag<> { return {}; }
+template<class X>
+auto operator%(Tag<>, X &&) -> Tag<> { return {}; }
+template<class U>
+auto operator%(U &&, Tag<>) -> Tag<> { return {}; }
+template<class U, class X>
+auto operator%(Tag<U>, Tag<X>) -> Tag<Tag<U,X>> { return {}; }
+template<class U, class... V, class X>
+auto operator%(Tag<U, V...>, Tag<X>) -> Tag<Tag<U, X>, Tag<V, X>...> { return {}; }
+template<class U, class X, class... Y>
+auto operator%(Tag<U>, Tag<X, Y...>) -> Tag<Tag<U, X>, Tag<U, Y>...> { return {}; }
+template<class U, class... V, class X, class... Y>
+auto operator%(Tag<U, V...>, Tag<X, Y...>) -> decltype(Tag<Tag<U, X>, Tag<V, X>...>{}
+		+ (Tag<U, V...>{} % Tag<Y...>{})) { return {}; }
+
 /** Eval's default case; identity with perfect forwarding */
 template<class U>
 auto eval(U && u = {}) { return std::forward<U>(u); }
