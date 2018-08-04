@@ -65,10 +65,10 @@ template<class S> struct Quaternion {
 	}
 	Quaternion normalize(void) const {
 		auto len = length();
-		return *this * (1/len);
-		/*if(near_zero(len)) return {0}; // TODO
+		//return *this * (1/len);
+		if(near_zero(len)) return {0}; // TODO
 		if(near(len, 1)) return *this;
-		return *this * (1/len);*/
+		return *this * (1/len);
 	}
 	template<class U>
 	friend auto operator*(U && u, Quaternion const& q)
