@@ -147,12 +147,16 @@ int main(int argc, const char *argv[]) {
 	oss << "Rotation:\n\t"
 			"rot(U+V+W) = " << make_pretty(rotate(UVW{})) << ";\n\t"
 			"rot^2(U+V+W) = " << make_pretty(rotate(rotate(UVW{}))) << ";\n\t"
-			"rot^3(U+V+W) = " << make_pretty(rotate(rotate(rotate(UVW{})))) << ".";
+			"rot^3(U+V+W) = " << make_pretty(rotate(rotate(rotate(UVW{})))) << ".\n"
+		"Sequences:\n\t"
+			"seq(1,2) = " << make_pretty(Seq<1,2>{}) << ".";
+
 	auto res = oss.str();
 
 	using S2 = array<string, 2>;
-	for(auto const& it : vector<S2>{{"->", "-%"}, {"Detail::", ""}, {"std::tuple", "Val"},
-			{"Tag", ""}, {"> >", ">>"}, {"<", "{"}, {">", "}"}, {"-%", "->"}}) {
+	for(auto const& it : vector<S2>{{"->", "-%"}, {"Detail::", ""}, {"Tag", ""},
+			{"std::tuple", "Val"}, {"std::integral_constant<unsigned int, ", "Const<"},
+			{"> >", ">>"}, {"<", "{"}, {">", "}"}, {"-%", "->"}}) {
 		std::size_t pos;
 		while((pos = res.find(it[0])) != std::string::npos)
 			res.replace(pos, it[0].length(), it[1]);
