@@ -26,40 +26,32 @@ template<class... LN, class... RN>
 Tag<Tag<LN,RN>...> operator*(Tag<LN...>, Tag<RN...>) { return {}; }
 
 /** Empty exterior; may be necessary due to ambiguity between ext(U,Tag<>) and ext(Tag<>,X) */
-auto ext(Tag<>, Tag<>) -> Tag<> { return {}; }
+auto operator^(Tag<>, Tag<>) -> Tag<> { return {}; }
 
 /** Exterior with empty LHS */
 template<class X>
-auto ext(Tag<>, X &&) -> Tag<> { return {}; }
+auto operator^(Tag<>, X &&) -> Tag<> { return {}; }
 
 /** Exterior with empty RHS */
 template<class U>
-auto ext(U &&, Tag<>) -> Tag<> { return {}; }
+auto operator^(U &&, Tag<>) -> Tag<> { return {}; }
 
 /** Exterior of simple types (sizeof...(U) = sizeof...(X) = 1) */
 template<class U, class X>
-auto ext(Tag<U>, Tag<X>) -> Tag<Tag<U,X>> { return {}; }
+auto operator^(Tag<U>, Tag<X>) -> Tag<Tag<U,X>> { return {}; }
 
 /** Exterior of variadic LHS and simple RHS (sizeof...(U) > 1 = sizeof...(X)) */
 template<class U, class... V, class X>
-auto ext(Tag<U, V...>, Tag<X>) -> Tag<Tag<U, X>, Tag<V, X>...> { return {}; }
+auto operator^(Tag<U, V...>, Tag<X>) -> Tag<Tag<U, X>, Tag<V, X>...> { return {}; }
 
 /** Exterior of simple LHS and variadic RHS (sizeof...(U) = 1 < sizeof...(X)) */
 template<class U, class X, class... Y>
-auto ext(Tag<U>, Tag<X, Y...>) -> Tag<Tag<U, X>, Tag<U, Y>...> { return {}; }
+auto operator^(Tag<U>, Tag<X, Y...>) -> Tag<Tag<U, X>, Tag<U, Y>...> { return {}; }
 
 /** Exterior of variadic LHS and RHS (sizeof...(U) > 1, sizeof...(X) > 1) */
 template<class U, class... V, class X, class... Y>
-auto ext(Tag<U, V...>, Tag<X, Y...>) -> decltype(Tag<Tag<U, X>, Tag<U, Y>...>{}
-	+ ext(Tag<V...>{}, Tag<X,Y...>{})) { return {}; }
-
-/** Syntax sugar for ext (exterior); avoid where operator^ may be ambiguous (arithmetic, etc.) */
-template<class... U, class... X>
-auto operator^(Tag<U...> u, Tag<X...> x) -> decltype(ext(u, x)) { return ext(u, x); }
-
-/** Equivalent to std::tuple; imbues Tag<...> and any Tags it contains with corresponding values */
-template<class... U>
-using Val = std::tuple<U...>;
+auto operator^(Tag<U, V...>, Tag<X, Y...>) -> decltype(Tag<Tag<U, X>, Tag<U, Y>...>{}
+	+ (Tag<V...>{} ^ Tag<X,Y...>{})) { return {}; }
 
 /** Eval's default case; identity with perfect forwarding */
 template<class U>
