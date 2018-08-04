@@ -3,6 +3,8 @@
 
 #include <sstream>
 
+#include "quaternion.hpp"
+
 template<class L, class S>
 L& operator<<(L &lhs, Quaternion<S> const& rhs) {
 	// Simple version - include zeros (useful for column comparisons)
