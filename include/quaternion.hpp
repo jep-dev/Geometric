@@ -37,7 +37,7 @@ template<class S> struct Quaternion {
 	}
 	/** Euclidean norm. */
 	S length(void) const {
-		return sqrt(square());
+		return sqrt(lengthSquared());
 	}
 	/** Complex conjugate. */
 	Quaternion operator*(void) const { return {w, -x, -y, -z}; }
@@ -62,6 +62,18 @@ template<class S> struct Quaternion {
 			w*r.w - x*r.x - y*r.y - z*r.z,  w*r.x + x*r.w + y*r.z - z*r.y,
 			w*r.y + y*r.w - x*r.z + z*r.x,  w*r.z + z*r.w + x*r.y - y*r.x
 		};
+	}
+	Quaternion normalize(void) const {
+		auto len = length();
+		return *this * (1/len);
+		/*if(near_zero(len)) return {0}; // TODO
+		if(near(len, 1)) return *this;
+		return *this * (1/len);*/
+	}
+	template<class U>
+	friend auto operator*(U && u, Quaternion const& q)
+	-> Quaternion<std::common_type_t<U,S>> {
+		return {u * q.w, u * q.x, u * q.y, u * q.z};
 	}
 	/** (Left) scalar multiplication. */
 	/* // TODO reinstate but with lower precedence than product with quaternion
