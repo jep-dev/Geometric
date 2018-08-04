@@ -27,7 +27,7 @@ using Val = std::tuple<U...>;
 
 /** A variadic unsigned sequence, useful for indexing Tag/Val. */
 template<unsigned... I>
-using Seq = Tag<std::integral_constant<unsigned, I>...>;
+struct Seq{}; //= Tag<std::integral_constant<unsigned, I>...>;
 
 template<class... T> struct Void { using value_type = void; };
 
