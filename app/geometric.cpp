@@ -116,7 +116,15 @@ int main(int argc, const char *argv[]) {
 			"[0] = " << make_pretty(eval(E{})) << ";\n\t"
 			"[U] = " << make_pretty(eval(U{})) << ";\n\t"
 			"[U+V] = " << make_pretty(eval(UV{})) << ";\n\t"
-			"[(U+V)^(X+Y)] = " << make_pretty(eval(UV{}^XY{})) << ".\n";
+			"[(U+V)^(X+Y)] = " << make_pretty(eval(UV{}^XY{})) << ".\n"
+		"Outer product, transposed:\n\t"
+			"0 % X = " << make_pretty(E{} % X{}) << ";\n\t"
+			"U % 0 = " << make_pretty(U{} % E{}) << ";\n\t"
+			"U % X = " << make_pretty(U{} % X{}) << ";\n\t"
+			"(U+V) % X = " << make_pretty((UV{}) % X{}) << ";\n\t"
+			"U % (X+Y) = " << make_pretty(U{} % XY{}) << ";\n\t"
+			"(U+V) % (X+Y) = " << make_pretty(UV{} % XY{}) << ";\n\t"
+			"(U+V+W) % (X+Y+Z) = " << make_pretty(UVW{} % XYZ{}) << ".\n";
 	auto uv = eval(UV{});
 	static_assert(std::is_same<decltype(access<0>(uv)), u&>::value
 			&& std::is_same<decltype(access<1>(uv)), v&>::value,
