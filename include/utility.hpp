@@ -2,8 +2,6 @@
 #define UTILITY_HPP
 
 #include <algorithm>
-#include <limits>
-#include <math.h>
 #include <tuple>
 #include <utility>
 #include <type_traits>
