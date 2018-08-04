@@ -131,13 +131,14 @@ int main(int argc, const char *argv[]) {
 	glEnableVertexAttribArray(0);
 	glBindAttribLocation(hnd.program, 0, "pos");
 
+	cout << "\e[s";
 	// Poll/render loop
 	for(auto i = 0;; i++) {
 		if(!hnd.poll())
 			break;
 		// Task
 		if(hnd.size()) {
-			cout << hnd << endl;
+			cout << "\e[u\e[K" << hnd << flush;
 			hnd.clear();
 		}
 		// Render
