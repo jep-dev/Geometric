@@ -1,11 +1,10 @@
 #ifndef QUATERNION_HPP
 #define QUATERNION_HPP
 
-#include <math.h>
-#include <type_traits>
+#include "math.hpp"
 
 template<class S> struct Quaternion {
-	using Real_type = S;
+	using type = S;
 	S w, x, y, z;
 	/** Access the members by index or by unit. */
 	const S& operator[](unsigned i) const {
@@ -73,11 +72,12 @@ template<class S> struct Quaternion {
 		return {u*q.w, u*q.x, u*q.y, u*q.z};
 	}*/
 
-	template<class T>
-	Quaternion<T> rotation(T theta, T x, T y, T z) {
-		auto c = cos(theta/2), s = sin(theta/2);
-		return {c, s*x, s*y, s*z};
-	}
 };
+
+template<class W, class X, class Y, class Z>
+Quaternion<std::common_type_t<W,X,Y,Z>> rotation(W theta, X x, Y y, Z z) {
+	auto c = cos(theta/2), s = sin(theta/2);
+	return {c, s*x, s*y, s*z};
+}
 
 #endif
