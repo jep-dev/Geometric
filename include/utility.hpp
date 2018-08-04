@@ -21,6 +21,18 @@ template<class... T> using Void_t = typename Void<T...>::value_type;
 /** A variadic tag, essentially a type sequence. */
 template<class...> struct Tag;
 
+/** Equivalent to std::tuple; see eval for conversion from Tag */
+template<class... U>
+using Val = std::tuple<U...>;
+
+/** A variadic unsigned sequence, useful for indexing Tag/Val. */
+template<unsigned... I>
+using Seq = Tag<std::integral_constant<unsigned, I>...>;
+
+template<class... T> struct Void { using value_type = void; };
+
+}
+
 /** Abstract minimax (pair with first=min and second=max) */
 template<class T> std::pair<long, long> minimax(T && t);
 
@@ -28,9 +40,6 @@ template<class T> std::pair<long, long> minimax(T && t);
 template<class T> long numDigits(T const& t);
 // TODO: Consider numDigits with a (template?) parameter designating the radix
 
-}
-
-template<class... T> struct Void { using value_type = void; };
 
 template<class T>
 std::pair<long, long> minimax(T && t) {
