@@ -5,6 +5,8 @@
 #include <algorithm>
 ///@endcond
 
+#include "math.hpp"
+
 /** A dual quaternion with a flat structure. */
 template<class S> struct DualQuaternion {
 	using type = S;

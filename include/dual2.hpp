@@ -1,8 +1,6 @@
 #ifndef DUAL2_HPP
 #define DUAL2_HPP
 
-#include <math.h>
-#include "quaternion.hpp"
 #include "quaternion.tpp"
 
 template<class S> struct DualQuaternion {
