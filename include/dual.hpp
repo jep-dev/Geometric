@@ -1,5 +1,7 @@
 #ifndef DUAL_HPP
-#define DUAL_HPP
+// Note: __FILE__ expands to the caller's file, not this file; TODO
+#define DUAL_HPP "dual.hpp"
+#define DUAL_IMPL DUAL_HPP
 
 ///@cond
 #include <algorithm>
