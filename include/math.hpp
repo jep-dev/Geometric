@@ -66,11 +66,13 @@ std::pair<long, long> minimax(T && t) {
 
 template<class T>
 long numDigits(T const& t) {
-	return ceil(log10(abs(long(t))+1));
+	long out = ceil(log10(abs(long(t))+1));
+	return out ? out : 1;
 }
 template<class T>
 long numDigits(T const& t, unsigned radix) {
-	return ceil(log(abs(long(t))+1)/log(radix));
+	long out = ceil(log(abs(long(t))+1)/log(radix));
+	return out ? out : 1;
 }
 
 #endif
