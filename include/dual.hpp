@@ -6,6 +6,7 @@
 ///@endcond
 
 #include "math.hpp"
+#include "quaternion.tpp"
 
 /** A dual quaternion with a flat structure. */
 template<class S> struct DualQuaternion {
@@ -56,6 +57,14 @@ template<class S> struct DualQuaternion {
 			s*d.z + t*d.y - u*d.x + v*d.w + w*d.v + x*d.u - y*d.t + z*d.s
 		};
 	}
+	template<class C>
+	auto operator+(DualQuaternion<C> const& r) -> DualQuaternion<std::common_type_t<S,C>> const {
+		return {s + r.s, t + r.t, u + r.u, v + r.v, w + r.w, x + r.x, y + r.y, z + r.z};
+	}
+	template<class C>
+	auto operator-(DualQuaternion<C> const& r) -> DualQuaternion<std::common_type_t<S,C>> const {
+		return {s - r.s, t - r.t, u - r.u, v - r.v, w - r.w, x - r.x, y - r.y, z - r.z};
+	}
 	/** (Right) scalar product. */
 	template<class C> DualQuaternion operator*(C const& c) const
 		{ return {s*c, t*c, u*c, v*c, w*c, x*c, y*c, z*c}; }
@@ -74,5 +83,14 @@ template<class S> struct DualQuaternion {
 /** Stream insertion operator; left generic to support ostringstream, etc. exactly. */
 template<class L, class S>
 L& operator<<(L&, DualQuaternion<S> const&);
+
+template<class L, class R, class T>
+auto sclerp(DualQuaternion<L> const& lhs, DualQuaternion<R> const& rhs, T && t)
+		-> DualQuaternion<std::common_type_t<L,R,T>> {
+	Quaternion<L> lu = {lhs.s, lhs.t, lhs.u, lhs.v}, lv = {lhs.w, lhs.x, lhs.y, lhs.z};
+	Quaternion<R> ru = {rhs.s, rhs.t, rhs.u, rhs.v}, rv = {rhs.w, rhs.x, rhs.y, rhs.z};
+	auto ou = slerp(lu, ru, t), ov = lerp(lv, rv, t);
+	return {ou.w, ou.x, ou.y, ou.z, ov.w, ov.x, ov.y, ov.z};
+}
 
 #endif
