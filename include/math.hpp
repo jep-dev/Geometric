@@ -1,9 +1,11 @@
 #ifndef MATH_HPP
 #define MATH_HPP
 
+#include <algorithm>
 #include <math.h>
 #include <type_traits>
 #include <limits>
+#include <utility>
 
 /** Abstract comparison to zero (mainly intended for floating point types) */
 template<class L, class R = L>
