@@ -8,8 +8,8 @@ int main(int argc, const char *argv[]) {
 	typedef float T;
 	static constexpr const char *epsilon = "\u03B5";
 	cout << "Proximity:\n";
-	T nl = .5;
-	T lvals[] = {0, .5, 1, 1.5, 2}, rvals[] = {1, 2};
+	T nl = .1;
+	T lvals[] = {0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4}, rvals[] = {1, 2};
 	auto N = 3;
 	cout << right << setw(N) << "" << "  ";
 	for(T const& rhs : lvals)
@@ -20,6 +20,9 @@ int main(int argc, const char *argv[]) {
 		for(T const& rhs : lvals) {
 			cout << setw(N) << near(lhs, rhs, nl) << " ";
 		}
+		/*cout << "  |  ";
+		for(T const& rhs : lvals) {
+		}*/
 		cout << endl;
 	}
 	return 0;
