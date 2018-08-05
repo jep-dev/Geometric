@@ -4,12 +4,17 @@
 #include "dual.hpp"
 #endif
 
+#ifndef DUAL_IMPL
+#define DUAL_IMPL "unknown"
+#endif
+
 #include "dual.tpp"
 #include <iostream>
 #include <iomanip>
 
 int main(int argc, const char *argv[]) {
 	using namespace std;
+	cout << "Using " << DUAL_IMPL << " to implement dual quaternions!\n" << endl;
 
 	typedef float T;
 	DualQuaternion<T> LHS[] = {{1}, {0,1}, {0,0,1}, {0,0,0,1},
@@ -20,18 +25,20 @@ int main(int argc, const char *argv[]) {
 		}
 		endl(cout);
 	}
+	cout << "\nSclerp:\n";
 	{
-		auto lhs = LHS[1], rhs = LHS[2] + 10 * LHS[6];
-		cout << "For u = " << lhs << ", v = " << rhs << "...\n";
-		for(T i = 0, di = .1, dj = di/5;
+		auto u = LHS[1], v = LHS[2] + 10 * LHS[6];
+		//cout << "  For u = " << u << ", v = " << v << "...\n";
+
+		// TODO proper ranging, this is sloppy
+		for(T i = 0, di = .1, dj = di/10;
 				i < 1 + di - std::numeric_limits<T>::epsilon(); i += di) {
-			auto s = sclerp(lhs, rhs, i);
-			/*for(auto j = 0; j < 8; j++) {
-				if(near_zero(s[j], dj)) s[j] = 0;
-				else if(near(s[j], 1, dj)) s[j] = 1;
-				else if(near(s[j], -1, dj)) s[j] = -1;
-			}*/
-			cout << "  s = sclerp(u, v, " << i << ") = " << s << ";\n";
+			auto s = sclerp(u, v, i);
+			// TODO this too
+			for(auto j = 0; j < 8; j++)
+				if(s[j]*s[j] < dj*dj) s[j] = 0;
+			cout << "  sclerp(" << u << ", " << v << ", " << i << ") = "
+					<< s << ";\n";
 		}
 	}
 }
