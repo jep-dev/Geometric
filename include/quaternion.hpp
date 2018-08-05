@@ -100,13 +100,32 @@ Quaternion<std::common_type_t<W,X,Y,Z>> rotation(W theta, X x, Y y, Z z) {
 }
 
 template<class L, class R, class T>
-Quaternion<std::remove_reference_t<std::common_type_t<L,R,T>>> lerp(Quaternion<L> const& lhs,
+Quaternion<std::common_type_t<L,R,T>> lerp(Quaternion<L> const& lhs,
 		Quaternion<R> const& rhs, T t) {
 	return lhs * (1-t) + rhs * t;
 }
 template<class L, class R, class T>
 auto nlerp(L && l, R && r, T && t) -> decltype(lerp(l, r, t)) {
-	return lerp(std::forward<L>(l), std::forward<R>(r), std::forward<T>(t)).normalize();
+	//return lerp(std::forward<L>(l), std::forward<R>(r), std::forward<T>(t)).normalize();
+	return lerp(l.normalize(), r.normalize(), std::forward<T>(t));
+}
+
+template<class L, class R>
+auto dot(Quaternion<L> const& l, Quaternion<R> const& r) {
+	return l.w*r.w + l.x*r.x + l.y*r.y + l.z*r.z;
+}
+
+template<class L, class R, class T>
+auto slerp(Quaternion<L> const& lhs, Quaternion<R> const& rhs, T && t, bool normalize = false) {
+	auto l = lhs.normalize();
+	auto r = rhs.normalize();
+	auto d = dot(l, r);
+	if(d < 0) d = -d, r = -r;
+	if(d > .99) return normalize ? lerp(l, r, t) : lerp(lhs, rhs, t);
+	auto t0 = acos(d), tt = t0 * t,
+		st0 = sin(t0), stt = sin(tt),
+		a = cos(tt) - d * stt / st0, b = stt / st0;
+	return normalize ? a * l + b * r : a * lhs + b * rhs;
 }
 
 #endif
