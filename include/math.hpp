@@ -23,7 +23,8 @@ template<class T> long numDigits(T const& t);
 
 
 template<class L, class R>
-bool near_zero(L lhs, R rhs) { return lhs <= rhs; }
+bool near_zero(L lhs, R rhs) { return abs(lhs) <= rhs; }
+
 template<class L, class R, class T>
 bool near(L lhs, R rhs, T least) { return near_zero(lhs - rhs, least); }
 
