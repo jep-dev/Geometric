@@ -145,26 +145,6 @@ template<class U, class... V>
 auto collapse(Tag<U, V...>) -> Tag<decltype(collapse(std::declval<U>())),
 		decltype(collapse(std::declval<V>()))...> { return {}; }
 
-/*template<class... U>
-auto collapse(Tag<U...>) -> decltype(collapse(std::declval<U>()...)) { return {}; }
-
-template<class... U, class V, class... W>
-auto collapse(Tag<U...>, V && v, W &&... w)
-//-> decltype(Tag<decltype(collapse(Tag<U...>{}))>{}
--> decltype(collapse(Tag<U...>{}) + collapse(std::forward<V>(v))
-	+ collapse(std::forward<W>(w)...)) { return {}; }*/
-
-/*template<class... T>
-auto collapse(T &&... t) -> Tag<> { return {}; }
-
-template<class S, class... T>
-auto collapse(S && s, T &&... t)
--> Tag<std::remove_reference_t<std::common_type_t<S, T>>...> { return {}; }
-
-template<class... S, class... T>
-auto collapse(Tag<S...>, T &&... t) -> decltype(collapse(std::declval<S>()...)
-	+ collapse(std::forward<T>(t)...)) { return {}; }*/
-
 
 }
 
