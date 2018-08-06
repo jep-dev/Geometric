@@ -70,10 +70,21 @@ auto operator%(Tag<U, V...>, Tag<X, Y...>) -> decltype(Tag<Tag<U, X>, Tag<V, X>.
 
 /** Eval's default case; identity with perfect forwarding */
 template<class U>
-auto eval(U && u = {}) { return std::forward<U>(u); }
+auto eval(U && u = {}) -> U { return std::forward<U>(u); }
 /** Maps a value-free Tag to a tag-free Val (tuple) */
 template<class... U>
 auto eval(Tag<U...>) -> Val<decltype(eval(std::declval<U>()))...> { return {eval(U{})...}; }
+
+/** Deval's default case; identity with perfect forwarding */
+template<class U>
+auto deval(U && u) -> Tag<U> { return Tag<U>{}; }
+/** Maps a value-free Tag to a tag-free Val to a value-free Tag (tuple) */
+template<class... U>
+auto deval(Val<U...> const&)
+	-> Tag<decltype(deval(std::declval<U>()))...> { return {}; }
+	//{ return {deval(U{})...}; }
+
+
 
 /** Access's default case; identity with perfect forwarding */
 template<class T>
@@ -122,6 +133,38 @@ auto reverse(Tag<>, Tag<X...> x = {}) -> decltype(x) { return {}; }
 
 template<class X, class... Y>
 auto rotate(Tag<X, Y...> = {}) -> Tag<Y..., X> { return {}; }
+
+
+auto collapse(void) -> Tag<> { return {}; }
+
+auto collapse(Tag<>) -> Tag<> { return {}; }
+template<class... U>
+auto collapse(Tag<U...>)
+-> Tag<std::common_type_t<U...>> { return {}; }
+template<class U, class... V>
+auto collapse(Tag<U, V...>) -> Tag<decltype(collapse(std::declval<U>())),
+		decltype(collapse(std::declval<V>()))...> { return {}; }
+
+/*template<class... U>
+auto collapse(Tag<U...>) -> decltype(collapse(std::declval<U>()...)) { return {}; }
+
+template<class... U, class V, class... W>
+auto collapse(Tag<U...>, V && v, W &&... w)
+//-> decltype(Tag<decltype(collapse(Tag<U...>{}))>{}
+-> decltype(collapse(Tag<U...>{}) + collapse(std::forward<V>(v))
+	+ collapse(std::forward<W>(w)...)) { return {}; }*/
+
+/*template<class... T>
+auto collapse(T &&... t) -> Tag<> { return {}; }
+
+template<class S, class... T>
+auto collapse(S && s, T &&... t)
+-> Tag<std::remove_reference_t<std::common_type_t<S, T>>...> { return {}; }
+
+template<class... S, class... T>
+auto collapse(Tag<S...>, T &&... t) -> decltype(collapse(std::declval<S>()...)
+	+ collapse(std::forward<T>(t)...)) { return {}; }*/
+
 
 }
 
