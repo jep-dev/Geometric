@@ -55,7 +55,7 @@ int main(int argc, const char *argv[]) {
 	using F = Tag<float>;
 	using D = Tag<double>;
 
-	string para = "\n  ";
+	string indent = "  ", para = "\n" + indent;
 
 	std::ostringstream oss;
 	oss << "Basic types: " << para
@@ -106,7 +106,7 @@ int main(int argc, const char *argv[]) {
 			&& std::is_same<decltype(E{}^X{}), E>::value
 			&& std::is_same<decltype(U{}^E{}), E>::value,
 		"The empty tag must be the multiplicative zero");
-	oss << "Outer product (operator^):" << para
+	oss << "Outer product (operator^, operator%):" << para
 			<< "0 ^ X = " << make_pretty(E{}^X{}) << ";" << para
 			<< "U ^ 0 = " << make_pretty(U{}^E{}) << ";" << para
 			<< "U ^ X = " << make_pretty(U{}^X{}) << ";" << para
@@ -116,19 +116,19 @@ int main(int argc, const char *argv[]) {
 			<< "(U+V+W) ^ (X+Y) = " << make_pretty(UVW{} ^ XY{}) << "." << para
 			<< "(U+V) ^ (X+Y+Z) = " << make_pretty(UV{} ^ XYZ{}) << "." << para
 			<< "(U+V+W) ^ (X+Y+Z) = " << make_pretty(UVW{} ^ XYZ{}) << ".\n"
-		"Evaluation:" << para
-			<< "[0] = " << make_pretty(eval(E{})) << ";" << para
-			<< "[U] = " << make_pretty(eval(U{})) << ";" << para
-			<< "[U+V] = " << make_pretty(eval(UV{})) << ";" << para
-			<< "[(U+V)^(X+Y)] = " << make_pretty(eval(UV{}^XY{})) << ".\n"
-		"Outer product, transposed:" << para
+		"Transposed outer product:" << para
 			<< "0 % X = " << make_pretty(E{} % X{}) << ";" << para
 			<< "U % 0 = " << make_pretty(U{} % E{}) << ";" << para
 			<< "U % X = " << make_pretty(U{} % X{}) << ";" << para
 			<< "(U+V) % X = " << make_pretty((UV{}) % X{}) << ";" << para
 			<< "U % (X+Y) = " << make_pretty(U{} % XY{}) << ";" << para
 			<< "(U+V) % (X+Y) = " << make_pretty(UV{} % XY{}) << ";" << para
-			<< "(U+V+W) % (X+Y+Z) = " << make_pretty(UVW{} % XYZ{}) << ".\n";
+			<< "(U+V+W) % (X+Y+Z) = " << make_pretty(UVW{} % XYZ{}) << ".\n"
+		"Evaluation:" << para
+			<< "[0] = " << make_pretty(eval(E{})) << ";" << para
+			<< "[U] = " << make_pretty(eval(U{})) << ";" << para
+			<< "[U+V] = " << make_pretty(eval(UV{})) << ";" << para
+			<< "[(U+V)^(X+Y)] = " << make_pretty(eval(UV{}^XY{})) << ".\n";
 	auto uv = eval(UV{});
 	static_assert(std::is_same<decltype(access<0>(uv)), u&>::value
 			&& std::is_same<decltype(access<1>(uv)), v&>::value,
@@ -153,14 +153,23 @@ int main(int argc, const char *argv[]) {
 			<< "rev(U+V+W) = " << make_pretty(reverse(UVW{})) << ";" << para
 			<< "rev((U+V)^(X+Y)) = " << make_pretty(reverse(UV{}^XY{})) << ".\n";
 	oss << "Collapse:" << para
-			<< "collapse(0) = " << make_pretty(collapse(E{})) << ";" << para
-			<< "collapse(F) = " << make_pretty(collapse(F{})) << ";" << para
-			<< "collapse(F+D) = " << make_pretty(collapse(F{}+D{})) << ";" << para
-			<< "collapse((F+D)^(D+F)) = " << make_pretty(collapse((F{}+D{})^(D{}+F{}))) << ";" << para
-			<< "collapse({(F+D)^(D+F)}) = " << make_pretty(collapse(
-					Tag<decltype((F{}+D{})^(D{}+F{}))>{})) << ".\n";
-	oss << "Deval:" << para
-			<< "deval(" << make_pretty(eval(E{})) << ") = " << make_pretty(deval(eval(E{}))) << ".\n";
+			<< "collapse(" << make_pretty(E{}) << ") = "
+				<< make_pretty(collapse(E{})) << ";" << para
+			<< "collapse(" << make_pretty(F{}) << ") = "
+				<< make_pretty(collapse(F{})) << ";" << para
+			<< "collapse(" << make_pretty(F{}+D{}) << ") = "
+				<< make_pretty(collapse(F{}+D{})) << ";" << para
+			<< "collapse(" << make_pretty((F{}+D{})^(D{}+F{})) << ") = "
+				<< make_pretty(collapse((F{}+D{})^(D{}+F{}))) << ";" << para
+			<< "collapse(" << make_pretty(Tag<decltype((F{}+D{})^(D{}+F{}))>{}) << ") = "
+				<< make_pretty(collapse(Tag<decltype((F{}+D{})^(D{}+F{}))>{})) << ".\n";
+	/*oss << "Deval:" << para
+			<< "deval(" << make_pretty(eval(F{})) << ") = "
+				<< make_pretty(deval(eval(F{}))) << ";" << para
+			<< "deval(" << make_pretty(F{}) << ") = "
+				<< make_pretty(deval(F{})) << ";" << para
+			<< "deval(" << make_pretty(eval(U{})) << ") = "
+				<< make_pretty(deval(eval(U{}))) << ".\n";*/
 	static_assert(std::is_same<decltype(reverse(UV{})), decltype(rotate(UV{}))>::value,
 		"Rotate must move the head type to the end of the tail");
 	static_assert(std::is_same<UV, decltype(rotate(rotate(UV{})))>::value,
