@@ -15,6 +15,7 @@ DEST_DIR:=
 NULL?=/dev/null
 
 DIR_BIN?=$(DEST_DIR)bin/
+DIR_DBG?=dbg/
 DIR_APP?=app/
 DIR_SRC?=src/
 DIR_HDR?=include/
@@ -121,5 +122,8 @@ $(DIR_O)%.o: $(DIR_SRC)%.cpp $(DIR_DEP)%.d \
 #-include $(call PAT_D,$(NAMES_EXE) $(NAMES_SO))
 include $(wildcard $(DEPS_EXE) $(DEPS_SO)) Doxygen.mk
 
-.PHONY: val-% var-% vars-% state-% clean-% clean
+debug: override CXXFLAGS+=-Og -ggdb -g3 -fno-omit-frame-pointer
+debug: clean default
+
+.PHONY: val-% var-% vars-% state-% debug clean-% clean
 .PRECIOUS: $(DIR_DEP)%.d $(COMPLETE)
