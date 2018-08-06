@@ -75,16 +75,18 @@ auto eval(U && u = {}) -> U { return std::forward<U>(u); }
 template<class... U>
 auto eval(Tag<U...>) -> Val<decltype(eval(std::declval<U>()))...> { return {eval(U{})...}; }
 
-/** Deval's default case; identity with perfect forwarding */
-template<class U>
+/*template<class U>
 auto deval(U && u) -> Tag<U> { return Tag<U>{}; }
-/** Maps a value-free Tag to a tag-free Val to a value-free Tag (tuple) */
+//auto deval(U && u) -> U { return std::forward<U>(u); }
 template<class... U>
 auto deval(Val<U...> const&)
 	-> Tag<decltype(deval(std::declval<U>()))...> { return {}; }
+template<class... U, class... V>
+auto deval(Val<Val<U...>, V...> const&)
+	-> decltype(deval(std::declval<Val<U...>>()) + deval(std::declval<Val<V...>>()))
+	{ return {}; }
 	//{ return {deval(U{})...}; }
-
-
+*/
 
 /** Access's default case; identity with perfect forwarding */
 template<class T>
