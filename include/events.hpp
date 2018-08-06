@@ -12,29 +12,38 @@ namespace Events {
 namespace Detail {
 	template<class S> S&& (*Fwd)(S &&) = &std::forward<S>;
 }
-enum EStatus {
+enum EStatus : unsigned {
 	StatusPass = 1, StatusQuit = StatusPass << 1, StatusError = StatusQuit << 1,
 		StatusWarn = StatusPass | StatusError, StatusFail = StatusQuit | StatusError
 };
+
+bool mask_status(unsigned s, EStatus e) { return (s & e) == e; }
+bool passed(unsigned s) { return mask_status(s, StatusPass); }
+bool quit(unsigned s) { return mask_status(s, StatusQuit); }
+bool errored(unsigned s) { return mask_status(s, StatusError); }
+bool warned(unsigned s) { return mask_status(s, StatusWarn); }
+bool failed(unsigned s) { return mask_status(s, StatusFail); }
+bool bad(unsigned s) { return mask_status(s, StatusQuit) || mask_status(s, StatusError); }
+bool good(unsigned s) { return mask_status(s, StatusPass) && !bad(s); }
+
 struct Status {
 	uint32_t code = StatusPass;
 	uint64_t timestamp = SDL_GetPerformanceCounter();
 	std::string message = "";
 	std::size_t length(void) const { return message.length(); }
 
-	bool passed(void) const { return code & StatusPass; }
-	bool quit(void) const { return code & StatusQuit; }
-	bool errored(void) const { return code & StatusError; }
-	bool warned(void) const { return (code & StatusWarn) == StatusWarn; }
-	bool failed(void) const { return (code & StatusFail) == StatusFail; }
-	bool bad(void) const { return quit() || errored(); }
-	bool good(void) const { return passed() && !bad(); }
-	template<class S>
-	friend S& operator<<(S &lhs, Status const& rhs) {
-		return lhs << rhs.message, lhs;
-	}
-
+	bool passed(void) const { return Events::passed(code); }
+	bool quit(void) const { return Events::quit(code); }
+	bool errored(void) const { return Events::errored(code); }
+	bool warned(void) const { return Events::warned(code); }
+	bool failed(void) const { return Events::failed(code); }
+	bool bad(void) const { return Events::bad(code); }
+	bool good(void) const { return Events::good(code); }
 	operator bool(void) const { return good(); }
+
+	template<class S>
+	friend auto operator<<(S &lhs, Status const& rhs)
+		-> S& { return lhs << rhs.message, lhs; }
 };
 
 template<class C>
