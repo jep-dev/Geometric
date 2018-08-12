@@ -49,7 +49,7 @@ struct Status {
 template<class C>
 struct Handler {
 	template<class... T>
-	Status operator()(SDL_QuitEvent const&, T &&...) { return {StatusQuit}; }
+	Status operator()(SDL_QuitEvent const& q, T &&...) { return {StatusQuit, q.timestamp}; }
 
 	template<class... T>
 	Status operator()(SDL_Event const& ev, T &&... t) {
