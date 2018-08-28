@@ -17,8 +17,16 @@ struct HasSize : False { typedef False type; };
 template<class S, class = void>
 struct HasTellp : False { typedef False type; };
 template<class S, class = void>
+struct HasSeekp : False { typedef False type; };
+template<class S, class = void>
 struct HasTellg : False { typedef False type; };
+template<class S, class = void>
+struct HasSeekg : False { typedef False type; };
 
+template<class S, class = void, class = void>
+struct HasTellpSeekp : False { typedef False type; };
+template<class S, class = void, class = void>
+struct HasTellgSeekg : False { typedef False type; };
 
 template<class S>
 struct HasLength<S, Detail::Void_t<decltype(&S::length)>>
@@ -31,46 +39,47 @@ struct HasTellg<S, Detail::Void_t<decltype(&S::tellg)>>
 	: True { typedef decltype(&S::tellg) type; };
 template<class S>
 struct HasTellp<S, Detail::Void_t<decltype(&S::tellp)>>
-	: True { typedef True type; };
+	: True { typedef decltype(&S::tellp) type; };
+
+template<class S>
+struct HasTellpSeekp<S, Detail::Void_t<decltype(&S::tellp)>,
+		Detail::Void_t<decltype(&S::seekp)>> : True {};
+template<class S>
+struct HasTellgSeekg<S, Detail::Void_t<decltype(&S::tellg)>,
+		Detail::Void_t<decltype(&S::seekg)>> : True {};
+
 
 template<class S, class T> using HasLength_t = typename HasLength<S, T>::type;
 template<class S, class T> using HasSize_t = typename HasSize<S, T>::type;
 template<class S, class T> using HasTellg_t  = typename HasTellg<S, T>::type;
 template<class S, class T> using HasTellp_t = typename HasTellp<S, T>::type;
 
-/** Use the length method but return the line number for testing. */
-template<class T> std::enable_if_t<HasLength<T>::value, std::size_t>
-	size(T && t) { return t.length(), __LINE__; }
-/** Use the size method but return the line number for testing. */
-template<class T> std::enable_if_t<HasSize<T>::value && !HasLength<T>::value, std::size_t>
-	size(T && t) { return t.size(), __LINE__; }
-/** Use the tellp method but return the line number for testing. */
-template<class T> std::enable_if_t<HasTellp<T>::value, std::size_t>
-size(T && t) { return t.tellp(), __LINE__; }
-	/*
-	auto pos = t.tellp(), out = pos;
-	t.seekp(0, std::ios::end);
-	out = t.tellp();
-	t.seekp(pos);
-	return out;
-	*/
-/** Use the tellg method but return the line number for testing. */
-template<class T> std::enable_if_t<HasTellg<T>::value, std::size_t>
-size(T && t) { return t.tellg(), __LINE__; }
-	/*
-	auto pos = t.tellg(), out = pos;
-	t.seekg(0, std::ios::end);
-	out = t.tellg();
-	t.seekg(pos);
-	return out;
-	*/
+/** Proof of concept for HasLength */
+template<class T> std::enable_if_t<HasLength<T>::value, const char*>
+	size(T && t) { return t.length(), ".length()"; }
+/** Proof of concept for HasSize; excludes types with length to remove ambiguity */
+template<class T> std::enable_if_t<HasSize<T>::value && !HasLength<T>::value, const char*>
+	size(T && t) { return t.size(), ".size()"; }
+
+/* Removed due to ambiguity with HasTellpSeekp/HasTellgSeekg
+	// Proof of concept for HasTellp
+	template<class T> std::enable_if_t<HasTellp<T>::value, const char*>
+		size(T && t) { return t.tellp(), ".tellp()"; }
+	// Proof of concept for HasTellg
+	template<class T> std::enable_if_t<HasTellg<T>::value, const char*>
+		size(T && t) { return t.tellg(), ".tellg()"; }
+*/
+template<class T> std::enable_if_t<HasTellpSeekp<T>::value, const char*>
+	size(T && t) { return t.tellp(), t.seekp(0, std::ios::end), ".tellp()/.seekp()"; }
+template<class T> std::enable_if_t<HasTellgSeekg<T>::value, const char*>
+	size(T && t) { return t.tellg(), t.seekg(0, std::ios::end), ".tellg()/.seekg()"; }
 
 /** Fallback in case none are implemented; comment out to require one of the others */
 template<class T> std::enable_if_t<!HasTellp<T>::value && !HasTellg<T>::value
-		&& !HasLength<T>::value && !HasSize<T>::value, std::size_t>
-size(T& t) { return __LINE__; }
+		&& !HasLength<T>::value && !HasSize<T>::value, const char*>
+	size(T& t) { return "n/a (1)"; }
 template<class T>
-std::size_t size(T const& t) { return __LINE__; }
+const char* size(T const& t) { return "n/a (2)"; }
 
 struct A { constexpr std::size_t length(void) const { return __LINE__; } };
 struct B {
@@ -103,8 +112,8 @@ int main(int argc, const char *argv[]) {
 	cout << "In file " << __FILE__ << "...\n";
 
 	ostringstream out;
-	auto prn = [&out] (unsigned line, unsigned size, std::string prettied) {
-		out << " ...Line " << line << " -> line " << size << " (as " << prettied << ")\n";
+	auto prn = [&out] (unsigned line, const char *result, std::string prettied) {
+		out << prettied << " from line " << line << " -> " << result << "\n";
 	};
 	prn(__LINE__, size(A()), Pretty<A>());                         // calls length
 	prn(__LINE__, size(B()), Pretty<B>());                         // calls tellp
