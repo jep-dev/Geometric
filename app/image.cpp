@@ -4,8 +4,6 @@
 #include "image.hpp"
 
 int main(int argc, const char *argv[]) {
-	//using namespace std;
-	//Image image = {128, 128};
 	if(argc > 2) {
 		std::fstream fs;
 		fs.open(argv[1], std::fstream::out);
