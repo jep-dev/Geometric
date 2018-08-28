@@ -105,7 +105,8 @@ int main(int argc, const char *argv[]) {
 	if(pos == string::npos)
 		delim = "\\", pos = self.find_last_of(delim);
 	share = self.substr(0, pos+1) + ".." + delim + "share" + delim;
-	string vertPath = share + "default.vert", fragPath = share + "default.frag";
+	string vertPath = share + "default.vert", fragPath = share + "default.frag",
+			dualPath = share + "dual.glsl";
 
 	Initializer initializer([](void) { SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER); },
 		[](void) -> bool {
@@ -121,7 +122,8 @@ int main(int argc, const char *argv[]) {
 	}
 
 	Hnd hnd;
-	auto used = hnd.init(vertPath.c_str(), fragPath.c_str());
+	auto used = hnd.init(gl::GL_VERTEX_SHADER, dualPath, vertPath, gl::GL_FRAGMENT_SHADER, fragPath);
+	// auto used = hnd.init(vertPath.c_str(), fragPath.c_str());
 	if(!used.good()) {
 		cout << "Could not build shader program";
 		if(used.length()) cout << ":\n  " << used;
