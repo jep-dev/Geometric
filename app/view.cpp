@@ -18,7 +18,22 @@ struct Hnd: Presenter<Hnd> {
 		}
 		return { Events::StatusPass, k.timestamp };
 	}
+	Events::Status operator()(SDL_ControllerAxisEvent const& c) {
+		typedef decltype(c.value) value_type;
+		value_type const& value = c.value,
+			value_max = std::numeric_limits<value_type>::max();
+		auto fvalue = float(value) / value_max;
+		*this << "";
+		oss << "Caught controller " << c.axis << " -> " << int(100*fvalue) << "%";
+		return { Events::StatusPass, c.timestamp };
+	}
+	Events::Status operator()(SDL_ControllerButtonEvent const& b) {
+		*this << "";
+		oss << "Caught controller " << b.button << ", state " << b.state;
+		return { Events::StatusPass, b.timestamp };
+	}
 	Events::Status operator()(SDL_WindowEvent const& w) {
+		*this << "";
 		switch(w.event) {
 			case SDL_WINDOWEVENT_CLOSE:
 				*this << "Caught window close event";
