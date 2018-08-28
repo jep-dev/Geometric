@@ -4,7 +4,8 @@
 
 namespace View {
 
-/*Texture::Texture(const char *fname, unsigned int flags): fname(fname) {
+#ifdef USE_SOIL
+Texture::Texture(const char *fname, unsigned int flags): fname(fname) {
 	value = 0;
 	glGenTextures(1, &value);
 	glBindTexture(GL_TEXTURE_2D, value);
@@ -30,7 +31,10 @@ namespace View {
 	// sourced = true;
 	line = __LINE__;
 	status.message = SOIL_last_result();
-}*/
+}
+
+#elif defined USE_DEVIL
+
 Texture::Texture(const char *fname, unsigned int flags):
 		fname(fname), flags(flags) {
 	glCreateTextures(GL_TEXTURE_2D, 1, &value);
@@ -63,6 +67,26 @@ Texture::Texture(const char *fname, unsigned int flags):
 	}
 	status.message += iluErrorString(ilGetError());
 }
+
+#else
+
+Texture::Texture(const char *fname, unsigned int flags):
+		fname(fname), flags(flags) {
+	glCreateTextures(GL_TEXTURE_2D, 1, &value);
+	glBindTexture(GL_TEXTURE_2D, value);
+	if(!glIsTexture(value)) {
+		created = sourced = false;
+		auto err = glGetError();
+		std::ostringstream oss;
+		oss << err;
+		status.message = oss.str();
+		return;
+	}
+	created = true;
+}
+
+#endif
+
 Texture::~Texture(void) {
 	if(glIsTexture(value))
 		glDeleteTextures(1, &value);
