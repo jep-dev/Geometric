@@ -1,6 +1,9 @@
 #ifndef PRESENTER_HPP
 #define PRESENTER_HPP
 
+#include <map>
+#include <string>
+
 #include "frame.hpp"
 #include "model.hpp"
 #include "shader.hpp"
@@ -14,19 +17,40 @@ struct Presenter: Events::Handler<S> {
 	View::Frame frame;
 	Model model;
 
-	View::Shader vert = {gl::GL_VERTEX_SHADER}, frag = {gl::GL_FRAGMENT_SHADER};
+	std::map<std::string, View::Shader> shaders;
+	// std::map<std::string, bool> sourced, compiled, attached;
+	// View::Shader vert = {gl::GL_VERTEX_SHADER}, frag = {gl::GL_FRAGMENT_SHADER};
 	View::Program program;
 
-	Events::Status init(const char *vpath, const char *fpath) {
-		if(!vert.source(vpath) || !vert.compile() || !program.attach(vert))
-			return vert.status;
-		if(!frag.source(fpath) || !frag.compile() || !program.attach(frag))
-			return frag.status;
-		if(!program.link())
-			return program.status;
+	/** Initializer given both a type and a path; source/compile/attach and recurse on success */
+	template<class... T>
+	Events::Status init(const gl::GLenum type, std::string const& fpath, T &&... t) {
+		auto emplaced = shaders.emplace(fpath, type);
+		auto & cur = emplaced.first -> second;
+		// Neither 'source' nor 'compile' uses force=true, so prior success is honored
+		if(!cur.source(fpath.c_str()) || !cur.compile()) return cur.status;
+		if(!program.attach(cur)) return program.status;
+		return init(type, std::forward<T>(t)...);
+	}
+
+	// Initializer given a path without a type; provide a type and recurse
+	/*template<class... T>
+	Events::Status init(std::string const& fpath, T &&... t) {
+		return init(gl::GL_VERTEX_SHADER, fpath, std::forward<T>(t)...);
+	}*/
+
+	/** Initializer in transition from one shader type to another; discard type1 and recurse */
+	template<class... T>
+	Events::Status init(const gl::GLenum type1, const gl::GLenum type2, T &&... t) {
+		return init(type2, std::forward<T>(t)...);
+	}
+	/** Default initializer - links and uses the program as-is */
+	Events::Status init(const gl::GLenum type = gl::GL_VERTEX_SHADER) {
+		if(!program.link()) return program.status;
 		use(program);
 		return {};
 	}
+
 	S& use(gl::GLuint program) {
 		gl::glUseProgram(program);
 		return static_cast<S&>(*this);
