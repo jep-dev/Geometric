@@ -22,6 +22,8 @@ vec4 qmul(vec4 l, vec4 r) {
 vec4 qdivn(vec4 n, vec4 d) { return qmul(n, qconj(d)); }
 // Quaternion division (unrestricted denominator)
 vec4 qdiv(vec4 n, vec4 d) { return qdivn(n, d) / qlen2(d); }
+// Quaternion 'sandwich' product
+vec4 qsandwich(vec4 u, vec4 v) { return qmul(qmul(u, v), qconj(u)); }
 
 // Dual quaternion conjugate (combined dual conjugate and quaternion conjugate)
 Dual dconj(Dual d) { return Dual(qconj(d.u), -qconj(d.v)); }
@@ -31,3 +33,5 @@ Dual dmul(Dual l, Dual r) { return Dual(qmul(l.u, r.u), qmul(l.v, r.u) + qmul(l.
 Dual ddivn(Dual l, vec4 r) { return Dual(qdivn(l.u, r), qdivn(l.v, r)); }
 // Dual division by quaternion (unrestricted denominator)
 Dual ddiv(Dual l, vec4 r) { return Dual(qdiv(l.u, r), qdiv(l.v, r)); }
+// Dual 'sandwich' product
+Dual dsandwich(Dual u, Dual v) { return dmul(dmul(u, v), dconj(u)); }
