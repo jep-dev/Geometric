@@ -11,9 +11,24 @@ struct Hnd: Presenter<Hnd> {
 	std::ostringstream oss;
 	using Handler::operator();
 	Events::Status operator()(SDL_KeyboardEvent const& k) {
+		auto proj = gl::glGetUniformLocation(program, "projection"),
+				u = gl::glGetUniformLocation(program, "u"),
+				v = gl::glGetUniformLocation(program, "v");
 		switch(k.keysym.sym) {
 			case SDLK_ESCAPE: case SDLK_q:
 				return { Events::StatusQuit, k.timestamp };
+			case SDLK_1: {
+				gl::glUniform4f(u, 1, 0, 1, 0);
+				gl::glUniform4f(v, 1, 1, 0, 0);
+			} break;
+			case SDLK_2: {
+				gl::glUniform4f(u, 1, 0, 1, 0);
+				gl::glUniform4f(v, 1, 0, 1, 0);
+			} break;
+			case SDLK_3: {
+				gl::glUniform4f(u, 1, 0, 1, 0);
+				gl::glUniform4f(v, 1, 0, 0, 1);
+			} break;
 			default: break;
 		}
 		return { Events::StatusPass, k.timestamp };
@@ -120,8 +135,11 @@ int main(int argc, const char *argv[]) {
 	}
 
 	Hnd hnd;
-	auto used = hnd.init(gl::GL_VERTEX_SHADER, share + "dual.glsl", share + "default.vert",
-			gl::GL_FRAGMENT_SHADER, share + "default.frag");
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	auto used = hnd.init(gl::GL_VERTEX_SHADER, share + "dual.glsl", share + "vert.glsl",
+			gl::GL_FRAGMENT_SHADER, share + "frag.glsl");
 	// auto used = hnd.init(vertPath.c_str(), fragPath.c_str());
 	if(!used.good()) {
 		cout << "Could not build shader program";
@@ -131,10 +149,10 @@ int main(int argc, const char *argv[]) {
 	}
 
 	// Locate and initialize MVP matrix
-	auto mvp = hnd.program.locate("mvp");
-	if(mvp < 0)
+	auto projection = hnd.program.locate("projection");
+	if(projection < 0)
 		return cout << hnd.program.status, 1;
-	hnd.project(mvp, top, right, near, far);
+	hnd.project(projection, top, right, near, far);
 
 	// Create and initialize vertex array and buffer
 	GLuint vao;
