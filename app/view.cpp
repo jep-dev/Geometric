@@ -11,35 +11,28 @@ struct Hnd: Presenter<Hnd> {
 	std::ostringstream oss;
 	using Handler::operator();
 	Events::Status operator()(SDL_KeyboardEvent const& k) {
+		using namespace gl;
 		auto mu = program.locate("model.u"), mv = program.locate("model.v"),
 				u = program.locate("u"), v = program.locate("v");
 		switch(k.keysym.sym) {
 			case SDLK_ESCAPE: case SDLK_q:
 				return { Events::StatusQuit, k.timestamp };
-			case SDLK_1: {
-				gl::glUniform4f(mu, 1, 0, 0, 0);
-				gl::glUniform4f(mv, 0, 0, 0, 0);
-				gl::glUniform4f(u, 1, 0, 0, 0);
-				gl::glUniform4f(v, 0, 0, 0, 0);
-			} break;
-			case SDLK_2: {
-				gl::glUniform4f(mu, 1, 0, 0, 0);
-				gl::glUniform4f(mv, 0, 1, 0, 0);
-				gl::glUniform4f(u, 1, 0, 0, 0);
-				gl::glUniform4f(v, 0, 1, 0, 0);
-			} break;
-			case SDLK_3: {
-				gl::glUniform4f(mu, 1, 0, 0, 0);
-				gl::glUniform4f(mv, 0, 0, 1, 0);
-				gl::glUniform4f(u, 1, 0, 0, 0);
-				gl::glUniform4f(v, 0, 0, 1, 0);
-			} break;
-			case SDLK_4: {
-				gl::glUniform4f(mu, 0, 1, 0, 0);
-				gl::glUniform4f(mv, 0, 0, 0, 0);
-				gl::glUniform4f(u, 0, 1, 0, 0);
-				gl::glUniform4f(v, 0, 0, 0, 0);
-			} break;
+			case SDLK_1:
+				glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, 0.0, 0);
+				glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, 0.0, 0);
+				break;
+			case SDLK_2:
+				glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, 0.1, 0);
+				glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, 0.1, 0);
+				break;
+			case SDLK_3:
+				glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, 0.2, 0);
+				glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, 0.2, 0);
+				break;
+			case SDLK_4:
+				glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, 0.3, 0);
+				glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, 0.3, 0);
+				break;
 			default: break;
 		}
 		return { Events::StatusPass, k.timestamp };
@@ -149,9 +142,10 @@ int main(int argc, const char *argv[]) {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	auto used = hnd.init(gl::GL_VERTEX_SHADER, share + "dual.glsl", share + "vert.glsl",
+	/*auto used = hnd.init(gl::GL_VERTEX_SHADER, share + "dual.glsl", share + "vert.glsl",
+			gl::GL_FRAGMENT_SHADER, share + "frag.glsl");*/
+	auto used = hnd.init(gl::GL_VERTEX_SHADER, share + "vert.glsl",
 			gl::GL_FRAGMENT_SHADER, share + "frag.glsl");
-	// auto used = hnd.init(vertPath.c_str(), fragPath.c_str());
 	if(!used.good()) {
 		cout << "Could not build shader program";
 		if(used.length()) cout << ":\n  " << used;
@@ -165,9 +159,11 @@ int main(int argc, const char *argv[]) {
 		return cout << hnd.program.status, 1;
 	hnd.project(projection, top, right, near, far);
 
-	/*auto u = hnd.program.locate("u"), v = hnd.program.locate("v");
-	glUniform4f(u, 1, 0, 0, 0);
-	glUniform4f(v, 1, 0, 0, 0);*/
+	auto mu = hnd.program.locate("model.u"), mv = hnd.program.locate("model.v"),
+			u = hnd.program.locate("u"), v = hnd.program.locate("v");
+	cout << "model = {" << mu << ", " << mv << "}; u = " << u << "; v = " << v << endl;
+	/*glUniform4f(mu, 1, 0, 0, 0);
+	glUniform4f(mv, 0, 0, 0, 0);*/
 
 	// Create and initialize vertex array and buffer
 	GLuint vao;
@@ -178,11 +174,12 @@ int main(int argc, const char *argv[]) {
 	bufferData(GL_ELEMENT_ARRAY_BUFFER, vbo[1], indices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
-	glBindAttribLocation(hnd.program, 0, "pos");
+	glBindAttribLocation(hnd.program, 0, "pos_in");
 
 	cout << "\e[s";
+	float theta = 0;
 	// Poll/render loop
-	for(auto i = 0;; i++) {
+	for(auto i = 0;; i++, theta += M_PI/8) {
 		if(!hnd.poll())
 			break;
 		// Task
@@ -190,6 +187,9 @@ int main(int argc, const char *argv[]) {
 			cout << "\e[u\e[K" << hnd << flush;
 			hnd.clear();
 		}
+		/*float ctheta = cos(theta), stheta = sin(theta);
+		glUniform4f(mu, ctheta, 0, stheta, 0);
+		glUniform4f(mv, 0, 0, 0.2, 0);*/
 		// Render
 		hnd.frame.clear().draw(vao, GL_TRIANGLES, indicesSize, GL_UNSIGNED_INT, nullptr).flip();
 		SDL_Delay(100);
