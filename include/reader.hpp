@@ -33,6 +33,9 @@ bool readLines(const char *fname, std::string &dest) {
 		ifs.close();
 	return dest = buf, true;
 }
+bool readLines(std::string const& fname, std::string &dest) {
+	return readLines(fname.c_str(), dest);
+}
 
 struct Reader {
 	typedef std::vector<std::string> type;
