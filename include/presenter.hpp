@@ -17,15 +17,20 @@ struct Presenter: Events::Handler<S> {
 	View::Frame frame;
 	Model model;
 
-	std::map<std::string, View::Shader> shaders;
-	// std::map<std::string, bool> sourced, compiled, attached;
-	// View::Shader vert = {gl::GL_VERTEX_SHADER}, frag = {gl::GL_FRAGMENT_SHADER};
+	View::ShaderTable shaders;
 	View::Program program;
+
+	/*template<class U>
+	Events::Status attach_shader(U const& key) {
+		auto it = shaders.find(key);
+		if(it == shaders.end()) return false;
+		return program.attach(*it);
+	}*/
 
 	/** Initializer given both a type and a path; source/compile/attach and recurse on success */
 	template<class... T>
 	Events::Status init(const gl::GLenum type, std::string const& fpath, T &&... t) {
-		auto emplaced = shaders.emplace(fpath, type);
+		auto emplaced = shaders.objects.emplace(fpath, type);
 		auto & cur = emplaced.first -> second;
 		// Neither 'source' nor 'compile' uses force=true, so prior success is honored
 		if(!cur.source(fpath.c_str()) || !cur.compile()) return cur.status;
