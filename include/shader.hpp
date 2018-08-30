@@ -90,14 +90,20 @@ struct ShaderTable {
 		return true;
 	}
 	template<class U>
-	Events::Status add_shader(const gl::GLenum type, U const& key) {
+	Shader& add_shader(const gl::GLenum type, U const& key) {
 		auto emplaced = objects.emplace(key, type);
-		return emplaced.first -> status;
+		return emplaced.first;
+		//return emplaced.first -> status;
 	}
 	template<class U>
 	Events::Status compile_shader(U const& key) {
 		auto it = objects.find(key);
-		if(it == objects.end()) return false;
+		if(it == objects.end()) return { Events::StatusError };
+		auto it2 = sources.find(key);
+		if(it2 == sources.end()) return { Events::StatusError };
+		if(!is_sourced(*it))
+			if(!(it -> set_source(*it2)))
+				return false;
 		return it -> compile();
 	}
 	template<class U>
