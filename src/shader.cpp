@@ -12,14 +12,18 @@ namespace Detail {
 		return len;
 	}
 
+	bool set_source(GLuint shader, std::string const& content) {
+		auto buf = content.c_str();
+		auto gbuf = &content[0];
+		glShaderSource(shader, 1, &gbuf, nullptr);
+		return is_sourced(shader);
+	}
 	bool source(GLuint shader, const char *filename) {
 		bool status;
 		std::string lines;
 		if(!Streams::readLines(filename, lines)) return false;
-		auto buf = lines.c_str();
-		auto gbuf = &lines[0];
-		glShaderSource(shader, 1, &gbuf, nullptr);
-		return is_sourced(shader);
+		set_source(shader, lines);
+		return true;
 	}
 
 	bool is_compiled(GLuint shader) {
@@ -55,6 +59,10 @@ Shader::operator GLuint(void) const { return value; }
 bool Shader::source(const char *fname, bool force) {
 	compiled = false;
 	return sourced = Detail::source(value, fname);
+}
+bool Shader::set_source(std::string const& content) {
+	compiled = false;
+	return sourced = Detail::set_source(value, content);
 }
 
 bool Shader::compile(bool force) {
