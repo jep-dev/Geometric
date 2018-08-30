@@ -3,18 +3,18 @@
 
 uniform mat4 projection;
 
-vec4 qconj(vec4);
-vec4 qmul(vec4, vec4);
-vec4 qsandwich(vec4, vec4);
+vec4 conj(vec4);
+vec4 mul(vec4, vec4);
+vec4 sandwich(vec4, vec4);
 
 struct Dual { vec4 u; vec4 v; };
-Dual dmul(Dual, Dual);
-Dual dconj(Dual);
-Dual dsandwich(Dual, Dual);
+Dual mul(Dual, Dual);
+Dual conj(Dual);
+Dual sandwich(Dual, Dual);
 
-Dual dqmul(Dual, vec4);
-Dual qdmul(vec4, Dual);
-Dual qdsandwich(vec4, Dual);
+Dual mul(Dual, vec4);
+Dual mul(vec4, Dual);
+Dual sandwich(vec4, Dual);
 
 const vec4 model_u = vec4(cos(M_PI/8),0,sin(M_PI/8),0), model_v = vec4(0, 0, 0.25, 0);
 uniform vec4 u = model_u, v = model_v;
@@ -24,9 +24,8 @@ in vec4 pos_in;
 out vec4 pos_out;
 
 void main(){
-	Dual x = Dual(vec4(1,0,0,0), vec4(0, pos_in.xyz));
-	Dual y = dsandwich(Dual(u, v), x);
-	//Dual y = dsandwich(model, x);
-	gl_Position = projection * vec4(y.v.yzw, 1);
+	Dual x = Dual(vec4(1,0,0,0), vec4(0, pos_in.xyz)),
+		mxm = sandwich(Dual(u, v), x);
+	gl_Position = projection * vec4(mxm.v.yzw, 1);
     pos_out = gl_Position;
 }
