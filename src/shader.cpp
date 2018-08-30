@@ -99,7 +99,7 @@ bool Program::link(bool force) {
 	return linked;
 }
 
-GLuint Program::locate(const char *name) {
+GLint Program::locate(const char *name) {
 	auto location = glGetUniformLocation(value, name);
 	if(location < 0) {
 		status.code = Events::StatusWarn;

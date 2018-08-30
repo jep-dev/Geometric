@@ -69,7 +69,7 @@ struct Program {
 		return attached = Detail::attach(value, std::forward<S>(s)...);
 	}
 	bool link(bool force = true);
-	GLuint locate(const char *name);
+	GLint locate(const char *name);
 	Program(GLuint value);
 	Program(void);
 	virtual ~Program(void) { glDeleteProgram(value); value = 0; }
