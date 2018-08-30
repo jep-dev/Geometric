@@ -11,23 +11,34 @@ struct Hnd: Presenter<Hnd> {
 	std::ostringstream oss;
 	using Handler::operator();
 	Events::Status operator()(SDL_KeyboardEvent const& k) {
-		auto proj = gl::glGetUniformLocation(program, "projection"),
-				u = gl::glGetUniformLocation(program, "u"),
-				v = gl::glGetUniformLocation(program, "v");
+		auto mu = program.locate("model.u"), mv = program.locate("model.v"),
+				u = program.locate("u"), v = program.locate("v");
 		switch(k.keysym.sym) {
 			case SDLK_ESCAPE: case SDLK_q:
 				return { Events::StatusQuit, k.timestamp };
 			case SDLK_1: {
-				gl::glUniform4f(u, 1, 0, 1, 0);
-				gl::glUniform4f(v, 1, 1, 0, 0);
+				gl::glUniform4f(mu, 1, 0, 0, 0);
+				gl::glUniform4f(mv, 0, 0, 0, 0);
+				gl::glUniform4f(u, 1, 0, 0, 0);
+				gl::glUniform4f(v, 0, 0, 0, 0);
 			} break;
 			case SDLK_2: {
-				gl::glUniform4f(u, 1, 0, 1, 0);
-				gl::glUniform4f(v, 1, 0, 1, 0);
+				gl::glUniform4f(mu, 1, 0, 0, 0);
+				gl::glUniform4f(mv, 0, 1, 0, 0);
+				gl::glUniform4f(u, 1, 0, 0, 0);
+				gl::glUniform4f(v, 0, 1, 0, 0);
 			} break;
 			case SDLK_3: {
-				gl::glUniform4f(u, 1, 0, 1, 0);
-				gl::glUniform4f(v, 1, 0, 0, 1);
+				gl::glUniform4f(mu, 1, 0, 0, 0);
+				gl::glUniform4f(mv, 0, 0, 1, 0);
+				gl::glUniform4f(u, 1, 0, 0, 0);
+				gl::glUniform4f(v, 0, 0, 1, 0);
+			} break;
+			case SDLK_4: {
+				gl::glUniform4f(mu, 0, 1, 0, 0);
+				gl::glUniform4f(mv, 0, 0, 0, 0);
+				gl::glUniform4f(u, 0, 1, 0, 0);
+				gl::glUniform4f(v, 0, 0, 0, 0);
 			} break;
 			default: break;
 		}
@@ -153,6 +164,10 @@ int main(int argc, const char *argv[]) {
 	if(projection < 0)
 		return cout << hnd.program.status, 1;
 	hnd.project(projection, top, right, near, far);
+
+	/*auto u = hnd.program.locate("u"), v = hnd.program.locate("v");
+	glUniform4f(u, 1, 0, 0, 0);
+	glUniform4f(v, 1, 0, 0, 0);*/
 
 	// Create and initialize vertex array and buffer
 	GLuint vao;
