@@ -20,13 +20,6 @@ struct Presenter: Events::Handler<S> {
 	View::ShaderTable shaders;
 	View::Program program;
 
-	/*template<class U>
-	Events::Status attach_shader(U const& key) {
-		auto it = shaders.find(key);
-		if(it == shaders.end()) return false;
-		return program.attach(*it);
-	}*/
-
 	/** Initializer given both a type and a path; source/compile/attach and recurse on success */
 	template<class... T>
 	Events::Status init(const gl::GLenum type, std::string const& fpath, T &&... t) {
