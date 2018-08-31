@@ -12,28 +12,55 @@ struct Hnd: Presenter<Hnd> {
 	using Handler::operator();
 	Events::Status operator()(SDL_KeyboardEvent const& k) {
 		using namespace gl;
-		auto mu = program.locate("model.u"), mv = program.locate("model.v"),
-				u = program.locate("u"), v = program.locate("v");
-		switch(k.keysym.sym) {
-			case SDLK_ESCAPE: case SDLK_q:
-				return { Events::StatusQuit, k.timestamp };
-			case SDLK_1:
-				glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, 0.0, 0);
-				glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, 0.0, 0);
+		auto mu = locations["model.u"], mv = locations["model.v"],
+				u = locations["u"], v = locations["v"];
+		/*auto mu = program.locate("model.u"), mv = program.locate("model.v"),
+				u = program.locate("u"), v = program.locate("v");*/
+		auto const& sym = k.keysym.sym;
+		if(sym == SDLK_ESCAPE || sym == SDLK_q)
+			return {Events::StatusQuit, k.timestamp};
+		if(k.state == SDL_RELEASED) {
+			switch(k.keysym.sym) {
+				case SDLK_ESCAPE: case SDLK_q:
+					return { Events::StatusQuit, k.timestamp };
+				case SDLK_l:
+					oss << "Uniform locations:\n";
+					for(auto const& l : locations)
+						oss << "\t[" << l.first << "] => " << l.second << "\n";
+					break;
+				case SDLK_0:
+					oss << "Setting uniforms to default\n";
+					glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, 0, 0);
+					glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, 0, 0);
+				case SDLK_1:
+					oss << "Setting uniforms to preset 1\n";
+					glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, 0.05, 0);
+					glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, 0.05, 0);
+					break;
+				case SDLK_2:
+					oss << "Setting uniforms to preset 2\n";
+					glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, 0.1, 0);
+					glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, 0.1, 0);
+					break;
+				case SDLK_3:
+					oss << "Setting uniforms to preset 3\n";
+					glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, .15, 0);
+					glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, .15, 0);
+					break;
+				case SDLK_4:
+					oss << "Setting uniforms to preset 4\n";
+					glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, .2, 0);
+					glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, .2, 0);
+					break;
+				case SDLK_h:
+				default:
+					oss << "KEY\tBINDING\n"
+						"h\t" "this help message\n"
+						"q|Esc\t" "quit\n"
+						"0..4\t" "set uniforms to presets 0-4\n"
+						"l\t" "list uniform locations\n";
 				break;
-			case SDLK_2:
-				glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, 0.1, 0);
-				glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, 0.1, 0);
-				break;
-			case SDLK_3:
-				glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, 0.2, 0);
-				glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, 0.2, 0);
-				break;
-			case SDLK_4:
-				glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, 0.3, 0);
-				glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, 0.3, 0);
-				break;
-			default: break;
+			}
 		}
 		return { Events::StatusPass, k.timestamp };
 	}
@@ -42,20 +69,17 @@ struct Hnd: Presenter<Hnd> {
 		value_type const& value = c.value,
 			value_max = std::numeric_limits<value_type>::max();
 		auto fvalue = float(value) / value_max;
-		*this << "";
-		oss << "Caught controller " << c.axis << " -> " << int(100*fvalue) << "%";
+		oss << "Caught controller " << c.axis << " -> " << int(100*fvalue) << "%\n";
 		return { Events::StatusPass, c.timestamp };
 	}
 	Events::Status operator()(SDL_ControllerButtonEvent const& b) {
-		*this << "";
-		oss << "Caught controller " << b.button << ", state " << b.state;
+		oss << "Caught controller " << b.button << ", state " << b.state << "\n";
 		return { Events::StatusPass, b.timestamp };
 	}
 	Events::Status operator()(SDL_WindowEvent const& w) {
-		*this << "";
 		switch(w.event) {
 			case SDL_WINDOWEVENT_CLOSE:
-				*this << "Caught window close event";
+				oss << "Caught window close event\n";
 				return { Events::StatusQuit, w.timestamp };
 			case SDL_WINDOWEVENT_MOVED: break;
 			case SDL_WINDOWEVENT_RESIZED:
@@ -68,7 +92,7 @@ struct Hnd: Presenter<Hnd> {
 		*this << "";
 		oss << "Caught mouse " << int(b.button)
 			<< " " << ((b.type == SDL_MOUSEBUTTONDOWN) ? "press" : "release")
-			<< " at (" << b.x << ", " << b.y << ")";
+			<< " at (" << b.x << ", " << b.y << ")\n";
 		return { Events::StatusPass, b.timestamp };
 	}
 
@@ -84,7 +108,7 @@ struct Hnd: Presenter<Hnd> {
 	}
 	template<class S>
 	Hnd& operator<<(S const& s) {
-		if(size()) oss << '\n';
+		//if(size()) oss << '\n';
 		return oss << s, *this;
 	}
 	template<class S>
@@ -111,8 +135,6 @@ int main(int argc, const char *argv[]) {
 	// Initialize projection matrix values and vertices
 	float near = 1, far = 2, mid = (near + far)/2, right = 1, top = 1;
 	GLfloat points[][3] = {
-		/*{-right, mid, -top}, {right, mid, -top}, {right, mid, top},
-		{-right, mid, -top}, {right, mid, top}, {-right, mid, top}*/
 		{-right, mid, -top}, {right, mid, -top}, {right, mid, top}, {-right, mid, top}
 	};
 	GLuint indices[] = {0, 1, 2, 2, 3, 0};
@@ -139,11 +161,10 @@ int main(int argc, const char *argv[]) {
 	}
 
 	Hnd hnd;
+	cout << hnd.frame << endl;
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	/*auto used = hnd.init(gl::GL_VERTEX_SHADER, share + "dual.glsl", share + "vert.glsl",
-			gl::GL_FRAGMENT_SHADER, share + "frag.glsl");*/
 	auto used = hnd.init(gl::GL_VERTEX_SHADER, share + "vert.glsl",
 			gl::GL_FRAGMENT_SHADER, share + "frag.glsl");
 	if(!used.good()) {
@@ -152,18 +173,24 @@ int main(int argc, const char *argv[]) {
 		cout << endl;
 		return 1;
 	}
+	hnd.locate("projection", "u", "v", "model.u", "model.v");
+
+	/*const char *unis[] = {"projection", "u", "v", "model.u", "model.v"};
+	std::map<std::string, GLint> locs;
+	for(auto const& uni : unis) {
+		auto const& loc = locs[uni] = glGetUniformLocation(hnd.program, uni);
+		cout << "[" << uni << "] => " << loc << endl;
+	}*/
 
 	// Locate and initialize MVP matrix
-	auto projection = hnd.program.locate("projection");
+	/*auto projection = hnd.program.locate("projection");
 	if(projection < 0)
-		return cout << hnd.program.status, 1;
-	hnd.project(projection, top, right, near, far);
+		return cout << hnd.program.status, 1;*/
+	hnd.project(hnd.locations["projection"], top, right, near, far);
 
-	auto mu = hnd.program.locate("model.u"), mv = hnd.program.locate("model.v"),
+	/*auto mu = hnd.program.locate("model.u"), mv = hnd.program.locate("model.v"),
 			u = hnd.program.locate("u"), v = hnd.program.locate("v");
-	cout << "model = {" << mu << ", " << mv << "}; u = " << u << "; v = " << v << endl;
-	/*glUniform4f(mu, 1, 0, 0, 0);
-	glUniform4f(mv, 0, 0, 0, 0);*/
+	cout << "model = {" << mu << ", " << mv << "}; u = " << u << "; v = " << v << endl;*/
 
 	// Create and initialize vertex array and buffer
 	GLuint vao;
@@ -184,7 +211,7 @@ int main(int argc, const char *argv[]) {
 			break;
 		// Task
 		if(hnd.size()) {
-			cout << "\e[u\e[K" << hnd << flush;
+			cout << hnd << flush;
 			hnd.clear();
 		}
 		/*float ctheta = cos(theta), stheta = sin(theta);
@@ -198,7 +225,7 @@ int main(int argc, const char *argv[]) {
 
 	if(hnd.size())
 		cout << hnd << "\n";
-	cout << "Frame's message:\n" << hnd.frame << endl;
+	//cout << "Frame's message:\n" << hnd.frame << endl;
 
 	// Clean up what isn't done through RAII already
 	glDeleteVertexArrays(1, &vao);
