@@ -116,7 +116,8 @@ auto dot(Quaternion<L> const& l, Quaternion<R> const& r) {
 }
 
 template<class L, class R, class T>
-auto slerp(Quaternion<L> const& lhs, Quaternion<R> const& rhs, T && t, bool normalize = false) {
+Quaternion<std::common_type_t<L,R,T>> slerp(Quaternion<L> const& lhs,
+		Quaternion<R> const& rhs, T && t, bool normalize = false) {
 	auto l = lhs.normalize();
 	auto r = rhs.normalize();
 	auto d = dot(l, r);
