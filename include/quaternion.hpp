@@ -93,6 +93,12 @@ template<class S> struct Quaternion {
 
 };
 
+template<class L, class R>
+auto dot(Quaternion<L> const& l, Quaternion<R> const& r) {
+	return l.w*r.w + l.x*r.x + l.y*r.y + l.z*r.z;
+}
+
+
 template<class W, class X, class Y, class Z>
 Quaternion<std::common_type_t<W,X,Y,Z>> rotation(W theta, X x, Y y, Z z) {
 	auto c = cos(theta/2), s = sin(theta/2);
@@ -106,13 +112,14 @@ Quaternion<std::common_type_t<L,R,T>> lerp(Quaternion<L> const& lhs,
 }
 template<class L, class R, class T>
 auto nlerp(L && l, R && r, T && t) -> decltype(lerp(l, r, t)) {
-	//return lerp(std::forward<L>(l), std::forward<R>(r), std::forward<T>(t)).normalize();
 	return lerp(l.normalize(), r.normalize(), std::forward<T>(t));
 }
 
-template<class L, class R>
-auto dot(Quaternion<L> const& l, Quaternion<R> const& r) {
-	return l.w*r.w + l.x*r.x + l.y*r.y + l.z*r.z;
+template<class L1, class R1, class L2, class R2, class S, class T>
+Quaternion<std::common_type_t<L1, R1, L2, R2, S, T>>
+lerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
+		Quaternion<L2> const& l2, Quaternion<R2> const& r2, S const& s, T const& t) {
+	return lerp(lerp(l1, r1, s), lerp(l2, r2, s), t);
 }
 
 template<class L, class R, class T>
@@ -127,6 +134,14 @@ Quaternion<std::common_type_t<L,R,T>> slerp(Quaternion<L> const& lhs,
 		st0 = sin(t0), stt = sin(tt),
 		a = cos(tt) - d * stt / st0, b = stt / st0;
 	return normalize ? a * l + b * r : a * lhs + b * rhs;
+}
+
+template<class L1, class R1, class L2, class R2, class S, class T>
+Quaternion<std::common_type_t<L1, R1, L2, R2, S, T>>
+slerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
+		Quaternion<L2> const& l2, Quaternion<R2> const& r2,
+		S const& s, T const& t, bool normalize = false) {
+	return slerp(slerp(l1, r1, s, normalize), slerp(l2, r2, s, normalize), t, normalize);
 }
 
 #endif
