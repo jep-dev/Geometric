@@ -53,8 +53,8 @@ Dual sandwich(Dual l, vec4 r) { return mul(mul(l, r), conj(l)); }
 uniform mat4 projection;
 
 const vec4 u0 = vec4(1,0,0,0), v0 = vec4(0,0,0,0);
-uniform vec4 u = vec4(1,0,0,0), v = vec4(0,0,0,0);
-uniform Dual model = Dual(vec4(1,0,0,0), vec4(0,0,0,0));
+uniform vec4 u = u0, v = v0;
+uniform Dual model = Dual(u0, v0);
 
 in vec4 pos_in;
 out vec4 pos_out;
