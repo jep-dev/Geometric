@@ -6,6 +6,8 @@
 #include "shader.hpp"
 #include "resource.hpp"
 
+#include "dual.tpp"
+
 struct Hnd;
 struct Hnd: Presenter<Hnd> {
 	std::ostringstream oss;
@@ -14,15 +16,17 @@ struct Hnd: Presenter<Hnd> {
 		using namespace gl;
 		auto mu = locations["model.u"], mv = locations["model.v"],
 				u = locations["u"], v = locations["v"];
-		/*auto mu = program.locate("model.u"), mv = program.locate("model.v"),
-				u = program.locate("u"), v = program.locate("v");*/
 		auto const& sym = k.keysym.sym;
 		if(sym == SDLK_ESCAPE || sym == SDLK_q)
 			return {Events::StatusQuit, k.timestamp};
-		if(k.state == SDL_RELEASED) {
+		if(k.state == SDL_PRESSED) {
 			switch(k.keysym.sym) {
 				case SDLK_ESCAPE: case SDLK_q:
 					return { Events::StatusQuit, k.timestamp };
+				default: break;
+			}
+		} else {
+			switch(k.keysym.sym) {
 				case SDLK_l:
 					oss << "Uniform locations:\n";
 					for(auto const& l : locations)
@@ -32,6 +36,7 @@ struct Hnd: Presenter<Hnd> {
 					oss << "Setting uniforms to default\n";
 					glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, 0, 0);
 					glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, 0, 0);
+					break;
 				case SDLK_1:
 					oss << "Setting uniforms to preset 1\n";
 					glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, 0.05, 0);
@@ -52,6 +57,19 @@ struct Hnd: Presenter<Hnd> {
 					glUniform4f(mu, 1, 0, 0, 0); glUniform4f(mv, 0, 0, .2, 0);
 					glUniform4f(u, 1, 0, 0, 0); glUniform4f(v, 0, 0, .2, 0);
 					break;
+				case SDLK_p: {
+					GLfloat uvals[4] = {0}, vvals[4] = {0};
+					if(mu >= 0 && mv >= 0) {
+						glGetUniformfv(program, mu, uvals);
+						glGetUniformfv(program, mv, vvals);
+					} else if(u >= 0 && v >= 0) {
+						glGetUniformfv(program, u, uvals);
+						glGetUniformfv(program, v, vvals);
+					} else break;
+					DualQuaternion<float> d = {uvals[0], uvals[1], uvals[2], uvals[3],
+							vvals[0], vvals[1], vvals[2], vvals[3]};
+					oss << "model = " << d << "\n";
+				} break;
 				case SDLK_h:
 				default:
 					oss << "KEY\tBINDING\n"
@@ -173,24 +191,8 @@ int main(int argc, const char *argv[]) {
 		cout << endl;
 		return 1;
 	}
-	hnd.locate("projection", "u", "v", "model.u", "model.v");
-
-	/*const char *unis[] = {"projection", "u", "v", "model.u", "model.v"};
-	std::map<std::string, GLint> locs;
-	for(auto const& uni : unis) {
-		auto const& loc = locs[uni] = glGetUniformLocation(hnd.program, uni);
-		cout << "[" << uni << "] => " << loc << endl;
-	}*/
-
-	// Locate and initialize MVP matrix
-	/*auto projection = hnd.program.locate("projection");
-	if(projection < 0)
-		return cout << hnd.program.status, 1;*/
-	hnd.project(hnd.locations["projection"], top, right, near, far);
-
-	/*auto mu = hnd.program.locate("model.u"), mv = hnd.program.locate("model.v"),
-			u = hnd.program.locate("u"), v = hnd.program.locate("v");
-	cout << "model = {" << mu << ", " << mv << "}; u = " << u << "; v = " << v << endl;*/
+	hnd.locate("projection", "u", "v", "model.u", "model.v")
+			.project(hnd.locations["projection"], top, right, near, far);
 
 	// Create and initialize vertex array and buffer
 	GLuint vao;
