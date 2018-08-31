@@ -19,6 +19,16 @@ struct Presenter: Events::Handler<S> {
 
 	View::ShaderTable shaders;
 	View::Program program;
+	std::map<std::string, gl::GLint> locations;
+	template<class U, class... V>
+	S& locate(U const& u, V const&... v) {
+		if(locations.find(u) == locations.end() || (locations[u] < 0))
+			locations[u] = program.locate(u);
+		return locate(v...);
+	}
+	S& locate(void) {
+		return static_cast<S&>(*this);
+	}
 
 	/** Initializer given both a type and a path; source/compile/attach and recurse on success */
 	template<class... T>
