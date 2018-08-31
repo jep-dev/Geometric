@@ -64,6 +64,7 @@ void main(){
 	x = Dual(u0, vec4(0, pos_in.xyz));
 	//Dual mxm = sandwich(model, x);
 	Dual mxm = sandwich(Dual(u, v), x);
+	//Dual mxm = sandwich(Dual(u0, v0), x);
 
 	gl_Position = projection * vec4(mxm.v.yzw, 1);
 	pos_out = gl_Position;
