@@ -82,7 +82,7 @@ FILES_SO:=$(sort $(call REPAT,CPP,SO,$(SRCS_SO)))
 TARGET?=$(firstword $(FILES_EXE))
 default: $(TARGET) $(COMPLETE)
 
-$(COMPLETE): $(FILES_SO) $(FILES_EXE); @echo $(CXXFLAGS) > $@
+$(COMPLETE): $(FILES_SO) $(FILES_EXE); @echo $(CXXFLAGS) $(CXXFLAGS_COMPLETE) > $@
 
 val-%:; @echo $($*)
 var-%:; @echo '"$$($*)"="$($*)"'
