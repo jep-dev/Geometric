@@ -1,7 +1,11 @@
-#include "math.hpp"
 #include <iostream>
 #include <iomanip>
 #include <vector>
+
+#include "math.hpp"
+#include "parse.hpp"
+
+using namespace Streams;
 
 template<class S>
 std::ostream& center(std::ostream& out, S const& s, unsigned N) {
@@ -13,9 +17,8 @@ std::ostream& center(std::ostream& out, S const& s, unsigned N) {
 	return out << setw(dlen0) << "" << str << setw(dlen1) << "";
 }
 
-int main(int argc, const char *argv[]) {
+void test_near(void) {
 	using namespace std;
-
 	typedef float T;
 
 	static constexpr const char *epsilon = "\u03B5";
@@ -64,5 +67,61 @@ int main(int argc, const char *argv[]) {
 		endl(cout << '|');
 	}
 	hrule(cout) << endl;
+}
 
+
+void print_split(std::vector<std::string> const& in) {
+	bool met = false;
+	for(auto const& s : in) {
+		auto split = split_outer(s);
+		if(met) std::cout << ", ";
+		met = true;
+		switch(split.size()) {
+			case 0:
+				break;
+			case 1:
+				std::cout << split[0];
+				break;
+			default:
+				std::cout << '{';
+				print_split(split);
+				std::cout << '}';
+				break;
+		}
+	}
+}
+
+void test_interactive(void) {
+	std::cout << "Enter an expression: \n";
+
+	std::string line;
+	std::getline(std::cin, line);
+	if(line == "") return;
+
+	auto assigned = split_assign(line);
+	auto len0 = assigned.first.length(),
+			len1 = assigned.second.length();
+	if(len0)
+		std::cout << '[' << assigned.first << ']';
+	if(len0 && len1)
+		std::cout << " = ";
+	if(len1) {
+		std::cout << '`';
+		print_split(split_outer(assigned.second));
+		std::cout << '`';
+	}
+	std::cout << std::endl;
+	test_interactive();
+}
+
+int main(int argc, const char *argv[]) {
+	bool interactive = false;
+	for(unsigned i = 1; i < argc; i++) {
+		if(std::string(argv[i]) == "-i") interactive = true;
+	}
+	if(interactive) {
+		test_interactive();
+	} else {
+		test_near();
+	}
 }
