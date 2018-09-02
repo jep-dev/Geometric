@@ -94,5 +94,12 @@ auto sclerp(DualQuaternion<L> const& lhs, DualQuaternion<R> const& rhs, T && t)
 	auto ou = slerp(lu, ru, t), ov = lerp(lv, rv, t);
 	return {ou.w, ou.x, ou.y, ou.z, ov.w, ov.x, ov.y, ov.z};
 }
+template<class L1, class R1, class L2, class R2, class S, class T>
+DualQuaternion<std::common_type_t<L1,R1,L2,R2,S,T>>
+sclerp(DualQuaternion<L1> const& l1, DualQuaternion<R1> const& r1,
+		DualQuaternion<L2> const& l2, DualQuaternion<R2> const& r2,
+		S && s, T && t) {
+	return sclerp(sclerp(l1, r1, s), sclerp(l2, r2, s), t);
+}
 
 #endif
