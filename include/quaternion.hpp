@@ -88,7 +88,7 @@ template<class S> struct Quaternion {
 	}
 	template<class L>
 	friend auto operator/(Quaternion<L> const& lhs, Quaternion<S> const& rhs) {
-		return lhs * *(rhs.normalize());
+		return lhs * *rhs / rhs.lengthSquared();
 	}
 
 };
