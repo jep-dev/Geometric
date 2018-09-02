@@ -15,7 +15,7 @@ template<class S>
 struct Presenter: Events::Handler<S> {
 	using Events::Handler<S>::operator();
 	View::Frame frame;
-	Model model;
+	Model<float> model;
 
 	View::ShaderTable shaders;
 	View::Program program;
