@@ -1,6 +1,8 @@
 #ifndef VIEW_HPP
 #define VIEW_HPP
 
+#include <vector>
+
 #include <glbinding/gl/gl.h>
 #include <glbinding/Binding.h>
 
@@ -14,6 +16,11 @@ template<class T, unsigned N>
 void bufferData(GLenum target, GLuint vbo, const T (& data) [N], GLenum usage) {
 	glBindBuffer(target, vbo);
 	glBufferData(target, sizeof(data), data, usage);
+}
+template<class T>
+void bufferData(GLenum target, GLuint vbo, std::vector<T> const& data, GLenum usage) {
+	glBindBuffer(target, vbo);
+	glBufferData(target, data.size(), &data[0], usage);
 }
 
 /** Directly draws an array of vertices */
