@@ -8,6 +8,10 @@
 
 #include "dual.tpp"
 
+// Joystick, haptics, and gamecontroller cause udev error!
+// Audio, timer, and video are safe
+#define SUBSYSTEMS SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK
+
 struct Hnd;
 struct Hnd: Presenter<Hnd> {
 	std::ostringstream oss;
@@ -165,11 +169,12 @@ int main(int argc, const char *argv[]) {
 		delim = "\\", pos = self.find_last_of(delim);
 	share = self.substr(0, pos+1) + ".." + delim + "share" + delim;
 
-	Initializer initializer([](void) { SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER); },
+	Initializer initializer([](void) { SDL_Init(SUBSYSTEMS); },
 		[](void) -> bool {
-			auto inits = SDL_INIT_VIDEO | SDL_INIT_TIMER;
-			return (SDL_WasInit(0) & inits) == inits;
+			return (SDL_WasInit(0) & SUBSYSTEMS) == SUBSYSTEMS;
 		}, SDL_Quit);
+	SDL_ClearError(); // TODO remove when udev errors are resolved
+
 	if(!initializer) {
 		cout << "Could not initialize SDL";
 		string err = SDL_GetError();
