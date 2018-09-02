@@ -23,15 +23,6 @@ template<class T> std::pair<long, long> minimax(T && t);
 template<class T> long numDigits(T const& t);
 
 
-/*
-template<class L, class R>
-bool near_zero(L lhs, R rhs) { return abs(lhs) <= rhs; }
-
-template<class L, class R, class T>
-bool near(L lhs, R rhs, T least) { return near_zero(lhs - rhs, least); }
-*/
-
-
 /* Credit to floating-point-gui.de for the combination of relative and absolute comparisons;
  * I read enough of Bruce Dawson's articles to decide that a "decent" solution will have to do
  * without specific constraints. */
