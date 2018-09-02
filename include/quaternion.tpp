@@ -2,8 +2,36 @@
 #define QUATERNION_TPP
 
 #include <sstream>
+#include <iomanip>
 
 #include "quaternion.hpp"
+
+template<class L, class S>
+L& print(L &lhs, Quaternion<S> const& rhs) {
+	bool nz = false;
+	for(auto i : {'e', 'i', 'j', 'k'}) {
+		auto const& q = rhs[i];
+		auto q0 = q*0;
+		if(q == q0) continue;
+		auto q2 = q*q;
+		if(q2 == q) lhs << (nz ? "+" : "");
+		else if(q2 == -q) lhs << (nz ? "-" : "-");
+		else if(q > 0) lhs << (nz ? "+" : "") << q;
+		else lhs << (nz ? "-" : "-") << -q;
+		lhs << i;
+		nz = true;
+	}
+	if(!nz) lhs << '0';
+	return lhs;
+}
+template<class L, class S>
+L& print_fixed(L &lhs, Quaternion<S> const& rhs, unsigned prec = 3) {
+	std::ostringstream oss;
+	oss.precision(prec);
+	oss << std::fixed;
+	print(oss, rhs);
+	return lhs << oss.str(), lhs;
+}
 
 template<class L, class S>
 L& operator<<(L &lhs, Quaternion<S> const& rhs) {
@@ -17,19 +45,7 @@ L& operator<<(L &lhs, Quaternion<S> const& rhs) {
 
 	bool nz = false;
 	std::ostringstream oss;
-	for(auto i : {'e', 'i', 'j', 'k'}) {
-		auto const& q = rhs[i];
-		auto q0 = q*0;
-		if(q == q0) continue;
-		auto q2 = q*q;
-		if(q2 == q) oss << (nz ? "+" : "");
-		else if(q2 == -q) oss << (nz ? "-" : "-");
-		else if(q > q0) oss << (nz ? "+" : "") << q;
-		else oss << (nz ? "-" : "-") << -q;
-		oss << i;
-		nz = true;
-	}
-	if(!nz) oss << '0';
+	print(oss, rhs);
 	return lhs << oss.str(), lhs;
 }
 
