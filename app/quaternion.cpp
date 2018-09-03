@@ -17,9 +17,9 @@ int main(int argc, const char *argv[]) {
 		bord[1] = '|';
 
 		Quaternion<T> LHS[] = {{1}, {0,1}, {0,0,1}, {0,0,0,1}},
-			RHS[] = {scale1 * rotation(angle, 1, 0, 0),
-					scale1 * rotation(angle, 0, 1, 0),
-					scale1 * rotation(angle, 0, 0, 1)};
+			RHS[] = {rotation(angle, 1, 0, 0),
+					rotation(angle, 0, 1, 0),
+					rotation(angle, 0, 0, 1)};
 
 		auto fills = setfill(' '), fillu = setfill('_');
 		auto setn = setw(N);
@@ -41,20 +41,24 @@ int main(int argc, const char *argv[]) {
 		endl(cout);
 		for(auto const& lhs : LHS) {
 			for(auto const& rhs : RHS) {
-				cout << '(' << ((scale2/scale1)*rhs) << ")*" << scale1 << "/\u221A2 * " << lhs
-						<< " * (" << (*rhs*(scale2/scale1)) << ")*" << scale1 << "/\u221A2 = "
-						<< setw(numDigits(scale1)+2) << right << (rhs * lhs * * rhs) << endl;
+				cout << '(' << std::string(rhs) << ")*" << lhs
+						<< "*(" << std::string(*rhs) << ") = "
+						<< (rhs * lhs * * rhs) << endl;
 			}
 		}
 		for(auto const& rhs : RHS) {
 			auto scaled = scale2 / scale1 * rhs;
 			ostringstream oss1, oss2, oss3;
-			oss1 << scaled, oss2 << scale1 << "/\u221A2";
+			oss1 << std::string(scaled), oss2 << scale1 << "/\u221A2";
 			auto str1 = oss1.str(), str2 = oss2.str(), str3 = str1 + "*" + str2;
+			ostringstream oss4, oss5, oss6;
+			print_fixed(oss4, rhs/rhs, 3) << ';';
+			print_fixed(oss5, rhs.normalize(), 3) << ';';
+			print_fixed(oss6, 1/rhs, 3);
 			cout << "For u = " << str1 << "...\n"
-				"   u/u  = " << rhs/rhs << ";\n"
-				"  u/|u| = " << rhs.normalize() << ";\n"
-				"   1/u  = " << 1/rhs << "\n";
+				"   u/u  = " << oss4.str() << "\n"
+				"  u/|u| = " << oss5.str() << "\n"
+				"   1/u  = " << oss6.str() << "\n";
 		}
 		return 0;
 	}
