@@ -2,6 +2,21 @@
 
 namespace Streams {
 
+template<class S, class T>
+auto parse_value(S const& s, T const& def)
+		-> std::enable_if_t<std::is_arithmetic<T>::value, T> {
+	istringstream iss(s);
+	T local = def;
+	iss >> local;
+	return iss.fail() ? def : local;
+}
+template<class S, class T>
+auto parse_positive(S const& s, T const& def)
+		-> std::enable_if_t<std::is_arithmetic<T>::value, T> {
+	auto value = parse_value(s, def);
+	return (value > 0) ? value : def;
+}
+
 std::string trim(std::string const& in) {
 	int p0 = 0, p1 = in.length()-1;
 	bool met = false;
