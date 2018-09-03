@@ -35,31 +35,26 @@ int main(int argc, const char *argv[]) {
 	using std::endl;
 	using ISS = std::istringstream;
 
-	int max_value = (1 << 15) - 1;
-	float dead = .25;
-	/*for(int i = 0; i < 10; i++) {
-		int x = max_value * i / 10, y = x;
-		auto p = deadzone(x, y, max_value, dead);
-		cout << "For x = " << x << ", y = " << y << ", deadzone = " << dead << endl;
-		cout << "\tadjusted = {" << p.first << ", " << p.second << "}" << endl;
-	}
-	return 0;*/
-
-
-	int default_delay = 100, seconds = 5, default_iterations = seconds * 1000 / default_delay,
-			iterations = default_iterations, delay = default_delay;
-	if(argc > 1)
-		iterations = Streams::parse_positive(argv[1], default_iterations);
-	if(argc > 2)
-		delay = Streams::parse_positive(argv[2], default_delay);
-
-	int out = 0;
 	bool cont = true;
+	int out = 0, seconds = 5,
+			default_delay = 100, delay = default_delay,
+			default_iterations = seconds * 1000 / default_delay,
+			iterations = default_iterations;
+
+
+	if(argc > 1) iterations = Streams::parse_positive(argv[1], default_iterations);
+	if(argc > 2) delay = Streams::parse_positive(argv[2], default_delay);
+
 	std::map<unsigned, SDL_Joystick*> joys;
+	std::map<Uint8, int> axes;
+	float dead = .25;
+	unsigned nJoysticks = SDL_NumJoysticks(), max_value = (1 << 15) - 1,
+			l1 = 0, l2 = 1, r1 = 3, r2 = 4; // TODO query/ask for axis ID's?
+	axes[l1] = axes[l2] = axes[r1] = axes[r2] = 0;
 
 	SDL_Init(INIT);
+	SDL_ClearError(); // clears udev error
 	do {
-		SDL_ClearError();
 		if((SDL_WasInit(0) & INIT) != INIT) {
 			cout << "Could not initialize the joystick subsystem." << endl;
 			out = 1;
@@ -84,9 +79,6 @@ int main(int argc, const char *argv[]) {
 		return out;
 	}
 
-	std::map<Uint8, int> axes;
-	unsigned l1 = 0, l2 = 1, r1 = 3, r2 = 4;
-	axes[l1] = axes[l2] = axes[r1] = axes[r2] = 0;
 	while(cont) {
 		SDL_Event ev;
 		while(SDL_PollEvent(&ev)) {
