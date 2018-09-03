@@ -24,6 +24,12 @@ L& print(L &lhs, Quaternion<S> const& rhs) {
 	if(!nz) lhs << '0';
 	return lhs;
 }
+template<class S>
+std::string to_string(Quaternion<S> const& q) {
+	std::ostringstream oss;
+	print(oss, q);
+	return oss.str();
+}
 template<class L, class S>
 L& print_fixed(L &lhs, Quaternion<S> const& rhs, unsigned prec = 3) {
 	std::ostringstream oss;
@@ -47,6 +53,12 @@ L& print_fixed(L &lhs, Quaternion<S> const& rhs, unsigned prec = 3) {
 	/*print(oss, rhs);
 	return lhs << oss.str(), lhs;*/
 }
+template<class S>
+std::string to_string(Quaternion<S> const& q, unsigned prec) {
+	std::ostringstream oss;
+	print_fixed(oss, q, prec);
+	return oss.str();
+}
 
 template<class L, class S>
 L& operator<<(L &lhs, Quaternion<S> const& rhs) {
@@ -65,9 +77,7 @@ L& operator<<(L &lhs, Quaternion<S> const& rhs) {
 }
 template<class S>
 Quaternion<S>::operator std::string(void) const {
-	std::ostringstream oss;
-	print_fixed(oss, *this, 3);
-	return oss.str();
+	return to_string(*this, 3);
 }
 
 #endif
