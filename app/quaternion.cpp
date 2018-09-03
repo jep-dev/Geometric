@@ -39,26 +39,22 @@ int main(int argc, const char *argv[]) {
 			cout << fills;
 		}
 		endl(cout);
-		for(auto const& lhs : LHS) {
-			for(auto const& rhs : RHS) {
-				cout << '(' << std::string(rhs) << ")*" << lhs
-						<< "*(" << std::string(*rhs) << ") = "
-						<< (rhs * lhs * * rhs) << endl;
-			}
-		}
 		for(auto const& rhs : RHS) {
-			auto scaled = scale2 / scale1 * rhs;
-			ostringstream oss1, oss2, oss3;
-			oss1 << std::string(scaled), oss2 << scale1 << "/\u221A2";
-			auto str1 = oss1.str(), str2 = oss2.str(), str3 = str1 + "*" + str2;
-			ostringstream oss4, oss5, oss6;
-			print_fixed(oss4, rhs/rhs, 3) << ';';
-			print_fixed(oss5, rhs.normalize(), 3) << ';';
-			print_fixed(oss6, 1/rhs, 3);
-			cout << "For u = " << str1 << "...\n"
-				"   u/u  = " << oss4.str() << "\n"
-				"  u/|u| = " << oss5.str() << "\n"
-				"   1/u  = " << oss6.str() << "\n";
+			auto q = sqrt(2)/2*rhs;
+			cout << "For u = " << to_string(q) << ": u/u = " << to_string(q/q, 3) << "; "
+					"u/|u| = " << to_string(q.normalize(), 3) << "; "
+					"1/u = " << to_string(1/q, 3) << '.' << endl;
+		}
+		endl(cout);
+		for(auto const& rhs : RHS) {
+			cout << "For u = " << std::string(rhs) << ": ";
+			bool met = false;
+			for(auto const& lhs : LHS) {
+				if(met) cout << "; ";
+				met = true;
+				cout << "u(" << lhs << ")u* = " << (rhs*lhs**rhs);
+			}
+			cout << endl;
 		}
 		return 0;
 	}
