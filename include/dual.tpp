@@ -70,4 +70,17 @@ DualQuaternion<S>::operator std::string(void) const {
 	return oss.str();
 }
 
+template<class S>
+std::string to_string(DualQuaternion<S> const& s) {
+	std::ostringstream oss;
+	print(oss, s);
+	return oss.str();
+}
+template<class S>
+std::string to_string(DualQuaternion<S> const& s, unsigned prec) {
+	std::ostringstream oss;
+	print(oss, s, prec);
+	return oss.str();
+}
+
 #endif
