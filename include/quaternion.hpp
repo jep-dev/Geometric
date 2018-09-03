@@ -145,4 +145,9 @@ slerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
 	return slerp(slerp(l1, r1, s, normalize), slerp(l2, r2, s, normalize), t, normalize);
 }
 
+template<class S>
+std::string to_string(Quaternion<S> const& q);
+template<class S>
+std::string to_string(Quaternion<S> const& q, unsigned prec);
+
 #endif

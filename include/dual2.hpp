@@ -69,6 +69,11 @@ public:
 
 };
 
+template<class S>
+std::string to_string(DualQuaternion<S> const& d);
+template<class S>
+std::string to_string(DualQuaternion<S> const& d, unsigned prec);
+
 template<class L, class R, class T>
 auto sclerp(DualQuaternion<L> const& lhs, DualQuaternion<R> const& rhs, T && t)
 		-> DualQuaternion<std::common_type_t<L,R,T>> {

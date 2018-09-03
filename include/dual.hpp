@@ -103,4 +103,9 @@ sclerp(DualQuaternion<L1> const& l1, DualQuaternion<R1> const& r1,
 	return sclerp(sclerp(l1, r1, s), sclerp(l2, r2, s), t);
 }
 
+template<class S>
+std::string to_string(DualQuaternion<S> const& d);
+template<class S>
+std::string to_string(DualQuaternion<S> const& d, unsigned prec);
+
 #endif
