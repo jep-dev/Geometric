@@ -29,8 +29,23 @@ L& print_fixed(L &lhs, Quaternion<S> const& rhs, unsigned prec = 3) {
 	std::ostringstream oss;
 	oss.precision(prec);
 	oss << std::fixed;
-	print(oss, rhs);
+	bool nz = false;
+	for(auto i : {'e', 'i', 'j', 'k'}) {
+		auto const& q = rhs[i];
+		auto q0 = q*0;
+		if(q == q0) continue;
+		auto q2 = q*q;
+		if(q2 == q) oss << (nz ? "+" : "");
+		else if(q2 == -q) oss << (nz ? "-" : "-");
+		else if(q > 0) oss << (nz ? "+" : "") << q;
+		else oss << (nz ? "-" : "-") << -q;
+		oss << i;
+		nz = true;
+	}
+	if(!nz) oss << '0';
 	return lhs << oss.str(), lhs;
+	/*print(oss, rhs);
+	return lhs << oss.str(), lhs;*/
 }
 
 template<class L, class S>
@@ -43,10 +58,16 @@ L& operator<<(L &lhs, Quaternion<S> const& rhs) {
 	// 	lhs << (v < v*0 ? "" : "+") << v << labels[i], i++;
 	// return lhs;
 
-	bool nz = false;
+	//bool nz = false;
 	std::ostringstream oss;
 	print(oss, rhs);
 	return lhs << oss.str(), lhs;
+}
+template<class S>
+Quaternion<S>::operator std::string(void) const {
+	std::ostringstream oss;
+	print_fixed(oss, *this, 3);
+	return oss.str();
 }
 
 #endif
