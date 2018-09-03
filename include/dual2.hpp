@@ -62,6 +62,7 @@ public:
 	auto operator^(Quaternion<T> const& rhs) -> Quaternion<std::common_type_t<S,T>> const
 			{ return {u * rhs * *u, v * rhs * *u - u * rhs * *v}; }
 	bool operator==(DualQuaternion const& d) const { return u == d.u && v == d.v; }
+	operator std::string(void) const;
 	DualQuaternion(S p, S q = 0, S r = 0, S s = 0, S w = 0, S x = 0, S y = 0, S z = 0):
 		u{p, q, r, s}, v{w, x, y, z} {}
 	DualQuaternion(Quaternion<S> u = {0}, Quaternion<S> v = {0}): u(u), v(v) {}

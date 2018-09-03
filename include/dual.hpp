@@ -80,6 +80,7 @@ template<class S> struct DualQuaternion {
 	bool operator==(DualQuaternion const& d) const
 		{ return s == d.s && t == d.t && u == d.u && v == d.v
 				&& w == d.w && x == d.x && y == d.y && z == d.z; }
+	operator std::string(void) const;
 };
 
 /** Stream insertion operator; left generic to support ostringstream, etc. exactly. */
