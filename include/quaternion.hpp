@@ -90,6 +90,7 @@ template<class S> struct Quaternion {
 	friend auto operator/(Quaternion<L> const& lhs, Quaternion<S> const& rhs) {
 		return lhs * *rhs / rhs.lengthSquared();
 	}
+	operator std::string(void) const;
 
 };
 
