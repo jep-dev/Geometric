@@ -10,6 +10,8 @@
 #include "math.hpp"
 #include "quaternion.tpp"
 
+template<class S> struct DualQuaternion;
+
 /** A dual quaternion with a flat structure. */
 template<class S> struct DualQuaternion {
 	using type = S;
@@ -47,6 +49,12 @@ template<class S> struct DualQuaternion {
 	/** Euclidean norm. */
 	type length(void) const { return sqrt(lengthSquared()); }
 	/** Conjugate; composed by the complex and dual conjugates. */
+	template<class T> DualQuaternion& operator=(DualQuaternion<T> const& d) {
+		s = d.s, t = d.t, u = d.u, v = d.v;
+		w = d.w, x = d.w, y = d.y, z = d.z;
+		return *this;
+	}
+
 	DualQuaternion operator*(void) const { return {s, -t, -u, -v, -w, x, y, z}; }
 	DualQuaternion operator-(void) const { return {-s, -t, -u, -v, -w, -x, -y, -z}; }
 	DualQuaternion operator*(DualQuaternion const& d) const {
@@ -73,9 +81,46 @@ template<class S> struct DualQuaternion {
 	/** (Left) scalar product. */
 	template<class C> friend DualQuaternion operator*(C const& c, DualQuaternion const& d)
 		{ return {c*d.s, c*d.t, c*d.u, c*d.v, c*d.w, c*d.x, c*d.y, c*d.z}; }
-	/*bool operator>(DualQuaternion const& d) const
-		{ return s > d.s && t > d.t && u > d.u && v > d.v
-				&& w > d.w && x > d.x && y > d.y && z > d.z; }*/
+
+	template<class T>
+	operator DualQuaternion<T>(void) {
+		return {T(s), T(t), T(u), T(v), T(w), T(x), T(y), T(z)};
+	}
+	template<class T>
+	DualQuaternion& operator*=(DualQuaternion<T> const& t) {
+		return *this = *this * DualQuaternion<S>{t.s, t.t, t.u, t.v, t.w, t.x, t.y, t.z};
+	}
+	template<class T>
+	DualQuaternion& operator*=(T const& t) { return *this = *this * t; }
+
+	template<class T>
+	DualQuaternion& operator+=(DualQuaternion<T> const& t) {
+		return *this = *this + DualQuaternion<S>{t.s, t.t, t.u, t.v, t.w, t.x, t.y, t.z};
+	}
+	template<class T>
+	DualQuaternion& operator-=(DualQuaternion<T> const& t) {
+		return *this = *this - DualQuaternion<S>{t.s, t.t, t.u, t.v, t.w, t.x, t.y, t.z};
+	}
+	template<class T>
+	DualQuaternion& operator/=(Quaternion<T> const& q) {
+		return *this = *this / Quaternion<S>{q.w, q.x, q.y, q.z};
+	}
+
+	/* First define operator+(T), operator-(T) if you want these, e.g.
+	 *   template<class T> DualQuaternion operator+(Quaternion<T> const& q)
+	 * If q is a rotation, does adding a rotation make sense?
+	 * Adding to the dual components might, but quaternions can't represent translation on their
+	 * own, so this interpretation is a problem, too.
+	 * Even adding dual quaternions to one another is only intended for construction.
+	 */
+	/*
+	template<class T>
+	DualQuaternion& operator+=(T const& t) { return *this = *this + t; }
+	template<class T>
+	DualQuaternion& operator-=(T const& t) { return *this = *this - t; }
+	*/
+
+
 	/** Equality operator; true if and only if all members are identical. */
 	bool operator==(DualQuaternion const& d) const
 		{ return s == d.s && t == d.t && u == d.u && v == d.v
@@ -107,5 +152,31 @@ template<class S>
 std::string to_string(DualQuaternion<S> const& d);
 template<class S>
 std::string to_string(DualQuaternion<S> const& d, unsigned prec);
+
+// Gosh, it sure would be nice to have templates right about now.
+// Template user-defined literals require that the template argument is char...,
+// which would force parsing to play a role in literals.
+#define USERDEF_TEMPLATE(CLASS,PARAM,UD,S,T,U,V,W,X,Y,Z) \
+CLASS<PARAM> operator"" UD(long long unsigned d) { \
+	return {PARAM(S), PARAM(T), PARAM(U), PARAM(V), PARAM(W), PARAM(X), PARAM(Y), PARAM(Z)}; \
+} \
+CLASS<PARAM> operator"" UD(long double d) { \
+	return {PARAM(S), PARAM(T), PARAM(U), PARAM(V), PARAM(W), PARAM(X), PARAM(Y), PARAM(Z)}; \
+}
+#define USERDEF_TEMPLATES(CLASS, P1, UD1, P2, UD2, S, T, U, V, W, X, Y, Z) \
+	USERDEF_TEMPLATE(CLASS, P1, UD1, S, T, U, V, W, X, Y, Z) \
+	USERDEF_TEMPLATE(CLASS, P2, UD2, S, T, U, V, W, X, Y, Z)
+
+USERDEF_TEMPLATES(DualQuaternion, float, _e, double, _de, d,0,0,0, 0,0,0,0)
+USERDEF_TEMPLATES(DualQuaternion, float, _i, double, _di, 0,d,0,0, 0,0,0,0)
+USERDEF_TEMPLATES(DualQuaternion, float, _j, double, _dj, 0,0,d,0, 0,0,0,0)
+USERDEF_TEMPLATES(DualQuaternion, float, _k, double, _dk, 0,0,0,d, 0,0,0,0)
+USERDEF_TEMPLATES(DualQuaternion, float, _E, double, _dE, 0,0,0,0, d,0,0,0)
+USERDEF_TEMPLATES(DualQuaternion, float, _I, double, _dI, 0,0,0,0, 0,d,0,0)
+USERDEF_TEMPLATES(DualQuaternion, float, _J, double, _dJ, 0,0,0,0, 0,0,d,0)
+USERDEF_TEMPLATES(DualQuaternion, float, _K, double, _dK, 0,0,0,0, 0,0,0,d)
+
+#undef USERDEF_TEMPLATE
+#undef USERDEF_TEMPLATES
 
 #endif
