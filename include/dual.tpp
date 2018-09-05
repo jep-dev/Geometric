@@ -79,7 +79,7 @@ std::string to_string(DualQuaternion<S> const& s) {
 template<class S>
 std::string to_string(DualQuaternion<S> const& s, unsigned prec) {
 	std::ostringstream oss;
-	print(oss, s, prec);
+	print_fixed(oss, s, prec);
 	return oss.str();
 }
 
