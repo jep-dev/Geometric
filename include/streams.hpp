@@ -14,6 +14,11 @@ using std::ostream;
 using std::istream;
 using std::ostringstream;
 using std::istringstream;
+
+template<class S>
+std::ostream& center(std::ostream& out, S const& s, unsigned N);
+std::string center(std::string const& out, unsigned N, char fill = ' ', bool leftish = true);
+
 }
 
 #endif
