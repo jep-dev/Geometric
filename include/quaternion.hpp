@@ -3,15 +3,19 @@
 
 #include "math.hpp"
 
+template<class S> struct Quaternion;
+template<class S> struct DualQuaternion;
+
 template<class S> struct Quaternion {
 	using type = S;
 	S w, x, y, z;
+
 	/** Access the members by index or by unit. */
 	const S& operator[](unsigned i) const {
 		switch(i) {
-			case 1: case 'i': return x;
-			case 2: case 'j': return y;
-			case 3: case 'k': return z;
+			case 1: case 'i': case 'x': return x;
+			case 2: case 'j': case 'y': return y;
+			case 3: case 'k': case 'z': return z;
 			default: return w;
 		}
 	}
@@ -21,48 +25,55 @@ template<class S> struct Quaternion {
 	 * are visible from any method, but can't return the required mutable reference. */
 	S& operator[](unsigned i) {
 		switch(i) {
-			case 1: case 'i': return x;
-			case 2: case 'j': return y;
-			case 3: case 'k': return z;
+			case 1: case 'i': case 'x': return x;
+			case 2: case 'j': case 'y': return y;
+			case 3: case 'k': case 'z': return z;
 			default: return w;
 		}
 	}
+
 	/** Square, as in product with itself. */
-	S square(void) const {
-		return w*w - x*x - y*y - z*z;
-	}
+	S square(void) const { return w*w - x*x - y*y - z*z; }
 	/** Square of the norm, as in sum of squared elements. */
-	S lengthSquared(void) const {
-		return w*w + x*x + y*y + z*z;
-	}
+	S lengthSquared(void) const { return w*w + x*x + y*y + z*z; }
 	/** Euclidean norm. */
-	S length(void) const {
-		return sqrt(lengthSquared());
+	S length(void) const { return sqrt(lengthSquared()); }
+
+	operator DualQuaternion<S>(void) const;
+	template<class C, class SC = std::common_type_t<S,C>>
+	DualQuaternion<SC> operator+(DualQuaternion<C> const& d) const {
+		return (DualQuaternion<S>)*this + d;
 	}
+
 	/** Complex conjugate. */
 	Quaternion operator*(void) const { return {w, -x, -y, -z}; }
+
 	/** (Right) scalar multiplication. */
 	template<class T>
-	Quaternion<std::common_type_t<S,T>> operator*(T const& t) const { return {w*t, x*t, y*t, z*t}; }
+	Quaternion<std::common_type_t<S,T>> operator*(T const& t) const
+		{ return {w*t, x*t, y*t, z*t}; }
+
 	/** Negation operator. */
 	Quaternion operator-(void) const { return {-w, -x, -y, -z}; }
+
 	/** Difference; currently relies on left addition and negation. */
-	template<class T> auto operator-(T && rhs) const -> decltype((*this) + -rhs) {
-		return (*this) + -rhs;
-	}
+	template<class T> auto operator-(T && rhs) const -> decltype((*this) + -rhs)
+		{ return (*this) + -rhs; }
+
 	/** Component-wise sum. */
-	template<class T> auto operator+(Quaternion<T> const& r) const
-	-> Quaternion<std::common_type_t<S,T>> {
-		return { w+r.w, x+r.x, y+r.y, z+r.z };
-	}
+	template<class T, class ST = std::common_type_t<S,T>>
+	Quaternion<ST> operator+(Quaternion<T> const& r) const
+		{ return { w+r.w, x+r.x, y+r.y, z+r.z }; }
+
 	/** Product. */
-	template<class T> auto operator*(Quaternion<T> const& r) const
-	-> Quaternion<std::common_type_t<S,T>> {
+	template<class T, class ST = std::common_type_t<S,T>>
+	Quaternion<ST> operator*(Quaternion<T> const& r) const {
 		return {
 			w*r.w - x*r.x - y*r.y - z*r.z,  w*r.x + x*r.w + y*r.z - z*r.y,
 			w*r.y + y*r.w - x*r.z + z*r.x,  w*r.z + z*r.w + x*r.y - y*r.x
 		};
 	}
+
 	Quaternion normalize(void) const {
 		auto len = length();
 		//return *this * (1/len);
@@ -70,34 +81,43 @@ template<class S> struct Quaternion {
 		if(near(len, 1)) return *this;
 		return *this * (1/len);
 	}
-	template<class U>
-	friend auto operator*(U && u, Quaternion const& q)
-	-> Quaternion<std::common_type_t<U,S>> {
-		return {u * q.w, u * q.x, u * q.y, u * q.z};
+	template<class T, class ST = std::common_type_t<S,T>>
+	std::enable_if<std::is_arithmetic<ST>::value, Quaternion<ST>>
+	operator^(T const& t) const {
+		auto len = lengthSquared();
+		// Use proximity?
+		if(len == 0) return 1;
+		len = sqrt(len);
+		auto r = pow(len, t);
+		auto normed = *this / len;
+		ST t0 = acos(normed.w), c0 = cos(t0), s0 = sin(t0),
+			t1 = t0 * t, c1 = cos(t1), s1 = sin(t1), scale = len * s1 / s0;
+		return { r * c1, normed.x * scale, normed.y * scale, normed.z * scale };
 	}
 
-	template<class U>
-	auto operator/(U const& u)
-			-> Quaternion<std::common_type_t<S,U>> const {
-		return {w / u, x / u, y / u, z / u};
-	}
-	template<class U>
-	friend auto operator/(U const& u, Quaternion const& q)
-			-> Quaternion<std::common_type_t<U,S>> {
-		return u * *q / q.length();
-	}
-	template<class L>
-	friend auto operator/(Quaternion<L> const& lhs, Quaternion<S> const& rhs) {
-		return lhs * *rhs / rhs.lengthSquared();
-	}
+	template<class U, class US = std::common_type_t<U,S>>
+	friend Quaternion<US> operator*(U && u, Quaternion const& q)
+		{ return {u * q.w, u * q.x, u * q.y, u * q.z}; }
+
+	template<class U, class US = std::common_type_t<S,U>>
+	Quaternion<US> operator/(U const& u) const
+		{ return {w / u, x / u, y / u, z / u}; }
+
+	template<class U, class US = std::common_type_t<S,U>>
+	friend Quaternion<US> operator/(U const& u, Quaternion const& q)
+		{ return u * *q / q.length(); }
+
+	template<class L, class LS = std::common_type_t<L, S>>
+	friend auto operator/(Quaternion<L> const& lhs, Quaternion<S> const& rhs)
+		-> decltype(lhs*rhs) { return lhs * *rhs / rhs.lengthSquared(); }
+
 	operator std::string(void) const;
 
 };
 
 template<class L, class R>
-auto dot(Quaternion<L> const& l, Quaternion<R> const& r) {
-	return l.w*r.w + l.x*r.x + l.y*r.y + l.z*r.z;
-}
+std::common_type_t<L,R> dot(Quaternion<L> const& l, Quaternion<R> const& r)
+	{ return l.w*r.w + l.x*r.x + l.y*r.y + l.z*r.z; }
 
 
 template<class W, class X, class Y, class Z>
@@ -106,25 +126,22 @@ Quaternion<std::common_type_t<W,X,Y,Z>> rotation(W theta, X x, Y y, Z z) {
 	return {c, s*x, s*y, s*z};
 }
 
-template<class L, class R, class T>
-Quaternion<std::common_type_t<L,R,T>> lerp(Quaternion<L> const& lhs,
-		Quaternion<R> const& rhs, T t) {
-	return lhs * (1-t) + rhs * t;
-}
-template<class L, class R, class T>
-auto nlerp(L && l, R && r, T && t) -> decltype(lerp(l, r, t)) {
-	return lerp(l.normalize(), r.normalize(), std::forward<T>(t));
-}
+template<class L, class R = L, class T = L, class LRT = std::common_type_t<L,R,T>>
+Quaternion<LRT> lerp(Quaternion<L> const& lhs, Quaternion<R> const& rhs, T t)
+	{ return lhs * (1-t) + rhs * t; }
 
-template<class L1, class R1, class L2, class R2, class S, class T>
-Quaternion<std::common_type_t<L1, R1, L2, R2, S, T>>
-lerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
-		Quaternion<L2> const& l2, Quaternion<R2> const& r2, S const& s, T const& t) {
-	return lerp(lerp(l1, r1, s), lerp(l2, r2, s), t);
-}
+template<class L, class R = L, class T = L>
+auto nlerp(L && l, R && r, T && t) -> decltype(lerp(l, r, t))
+	{ return lerp(l.normalize(), r.normalize(), std::forward<T>(t)); }
 
-template<class L, class R, class T>
-Quaternion<std::common_type_t<L,R,T>> slerp(Quaternion<L> const& lhs,
+template<class L1, class R1 = L1, class L2 = L1, class R2 = R1,
+		class S = L1, class T = S, class LRST = std::common_type_t<L1,R1,L2,R2,S,T>>
+Quaternion<LRST> lerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
+		Quaternion<L2> const& l2, Quaternion<R2> const& r2, S const& s, T const& t)
+	{ return lerp(lerp(l1, r1, s), lerp(l2, r2, s), t); }
+
+template<class L, class R = L, class T = L, class LRT = std::common_type_t<L,R,T>>
+Quaternion<LRT> slerp(Quaternion<L> const& lhs,
 		Quaternion<R> const& rhs, T && t, bool normalize = false) {
 	auto l = lhs.normalize();
 	auto r = rhs.normalize();
@@ -137,17 +154,36 @@ Quaternion<std::common_type_t<L,R,T>> slerp(Quaternion<L> const& lhs,
 	return normalize ? a * l + b * r : a * lhs + b * rhs;
 }
 
-template<class L1, class R1, class L2, class R2, class S, class T>
-Quaternion<std::common_type_t<L1, R1, L2, R2, S, T>>
-slerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
+template<class L1, class R1 = L1, class L2 = L1, class R2 = R1,
+		class S = L1, class T = S, class LRST = std::common_type_t<L1,R1,L2,R2,S,T>>
+Quaternion<LRST> slerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
 		Quaternion<L2> const& l2, Quaternion<R2> const& r2,
 		S const& s, T const& t, bool normalize = false) {
 	return slerp(slerp(l1, r1, s, normalize), slerp(l2, r2, s, normalize), t, normalize);
 }
 
-template<class S>
-std::string to_string(Quaternion<S> const& q);
-template<class S>
-std::string to_string(Quaternion<S> const& q, unsigned prec);
+template<class S> std::string to_string(Quaternion<S> const& q);
+template<class S> std::string to_string(Quaternion<S> const& q, unsigned prec);
+
+// Generate user-defined literals for likely parameter types
+#define USERDEF_TEMPLATE(CLASS,PARAM,UD,W,X,Y,Z) \
+CLASS<PARAM> operator"" UD(long long unsigned d) \
+	{ return {PARAM(W), PARAM(X), PARAM(Y), PARAM(Z)}; } \
+CLASS<PARAM> operator"" UD(long double d) \
+	{ return {PARAM(W), PARAM(X), PARAM(Y), PARAM(Z)}; }
+
+// Generate user-defined literals for given suffixes / template arguments
+#define USERDEF_TEMPLATES(CLASS, P1, UD1, P2, UD2, W, X, Y, Z) \
+	USERDEF_TEMPLATE(CLASS, P1, UD1, W, X, Y, Z) \
+	USERDEF_TEMPLATE(CLASS, P2, UD2, W, X, Y, Z)
+
+// Generate user-defined literals in {""_e -> Q<float>, ..., ""_dk -> Q<double>}
+USERDEF_TEMPLATES(Quaternion, float, _e, double, _de, d,0,0,0)
+USERDEF_TEMPLATES(Quaternion, float, _i, double, _di, 0,d,0,0)
+USERDEF_TEMPLATES(Quaternion, float, _j, double, _dj, 0,0,d,0)
+USERDEF_TEMPLATES(Quaternion, float, _k, double, _dk, 0,0,0,d)
+
+#undef USERDEF_TEMPLATE
+#undef USERDEF_TEMPLATES
 
 #endif
