@@ -54,13 +54,25 @@ public:
 	template<class C>
 	friend auto operator*(C const& c, DualQuaternion const& d)
 		-> DualQuaternion<std::common_type_t<S,C>> { return {c*d.u, c*d.v}; }
+
 	template<class T>
-	auto operator^(DualQuaternion<T> const& rhs)
-		-> DualQuaternion<std::common_type_t<S,T>> const
-			{ return {u * rhs.u * *u, u * rhs.v * *u}; }
+	DualQuaternion& operator*=(T const& t) { return *this = *this * t; }
 	template<class T>
-	auto operator^(Quaternion<T> const& rhs) -> Quaternion<std::common_type_t<S,T>> const
-			{ return {u * rhs * *u, v * rhs * *u - u * rhs * *v}; }
+	DualQuaternion& operator+=(T const& t) { return *this = *this + t; }
+	template<class T>
+	DualQuaternion& operator-=(DualQuaternion<T> const& d) { return *this = *this - t; }
+	template<class T>
+	DualQuaternion& operator/=(Quaternion<T> const& q) { return *this = *this / t; }
+
+	template<class T>
+	auto operator^(DualQuaternion<T> const& r) const
+			-> DualQuaternion<std::common_type_t<S,T>>
+		{ return { r.u * u * *r.u, r.u * u * *r.v + r.u * v * *r.u + r.v * u * *r.u }; }
+	template<class T>
+	auto operator^(Quaternion<T> const& r) const
+			-> DualQuaternion<std::common_type_t<S,T>>
+		{ return { r * u * *r, r * v * *r }; }
+
 	bool operator==(DualQuaternion const& d) const { return u == d.u && v == d.v; }
 	operator std::string(void) const;
 	DualQuaternion(S p, S q = 0, S r = 0, S s = 0, S w = 0, S x = 0, S y = 0, S z = 0):
