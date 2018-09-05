@@ -75,8 +75,8 @@ std::pair<std::string, std::string> split_assign(std::string const& in) {
 	std::string stripped = trim(in);
 	auto pos = stripped.find("="), n = stripped.length();
 	if(pos == std::string::npos)
-		return out.second = trim(stripped), out;
-	decltype(pos) p0 = 0, p1 = pos-1, p2 = pos+1, p3 = n-1;
+		return out.second = stripped, out;
+	int p0 = 0, p1 = pos-1, p2 = pos+1, p3 = n-1;
 	if(p1 >= p0)
 		out.first = trim(stripped.substr(p0, p1-p0+1));
 	if(p3 >= p2)
