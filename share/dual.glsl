@@ -1,6 +1,9 @@
 #version 330
 
-struct Dual { vec4 u; vec4 v; };
+struct Dual { vec4 u, v; };
+
+Dual xyzw_to_dual(vec4 xyzw) { return Dual(vec4(1,0,0,0), vec4(0, xyzw.yzw)); }
+Dual wxyz_to_dual(vec4 wxyz) { return Dual(vec4(1,0,0,0), vec4(0, wxyz.xyz)); }
 
 // Conjugate of a quaternion
 vec4 conj(vec4 q) { return vec4(q.x, -q.yzw); }
@@ -46,4 +49,3 @@ Dual sandwich(Dual u, Dual v) { return mul(mul(u, v), conj(u)); }
 Dual sandwich(vec4 l, Dual r) { return mul(mul(l, r), conj(l)); }
 // Dual 'sandwich' product of a quaternion
 Dual sandwich(Dual l, vec4 r) { return mul(mul(l, r), conj(l)); }
-
