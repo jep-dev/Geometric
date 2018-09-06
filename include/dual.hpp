@@ -8,10 +8,6 @@
 ///@endcond
 
 #include "math.hpp"
-#include "quaternion.hpp"
-#include "quaternion.tpp"
-
-template<class S> struct DualQuaternion;
 
 /** A dual quaternion with a flat structure. */
 template<class S> struct DualQuaternion {
@@ -43,6 +39,8 @@ template<class S> struct DualQuaternion {
 			default: return s;
 		}
 	}
+	operator Point<S>(void) const { return {x, y, z}; }
+
 	/** Square, as in product with itself. */
 	value_type square(void) const { return *this * *this; }
 	/** Square of the norm, as in sum of squared elements. */
@@ -122,12 +120,12 @@ template<class S> struct DualQuaternion {
 	DualQuaternion& operator/=(Quaternion<T> const& q)
 		{ return *this = *this / Quaternion<S>{q.w, q.x, q.y, q.z}; }
 
-	template<class T, class ST = std::common_type_t<S,T>>
+	/*template<class T, class ST = std::common_type_t<S,T>>
 	std::enable_if_t<std::is_arithmetic<T>::value, DualQuaternion<ST>>
 	operator^(T const& r) const {
 		return {}; // TODO
 		//return (DualQuaternion<ST>)*this;
-	}
+	}*/
 	template<class T, class V = typename T::value_type, class SV = std::common_type_t<S,V>>
 	DualQuaternion<SV> operator^(T const& r) const { return r * *this * *r; }
 
@@ -137,6 +135,23 @@ template<class S> struct DualQuaternion {
 				&& w == d.w && x == d.x && y == d.y && z == d.z; }
 	operator std::string(void) const;
 };
+
+template<class S, class T, class ST = std::common_type_t<S,T>>
+DualQuaternion<ST> to_dual(Quaternion<S> const& s, Quaternion<T> const& t)
+	{ return {s.w, s.x, s.y, s.z, t.w, t.x, t.y, t.z}; }
+
+template<class S, unsigned SN, class T = S, unsigned TN = SN,
+		class ST = std::common_type_t<S,T>>
+DualQuaternion<ST> to_dual(const S (&s)[SN], const T (&t)[TN]) {
+	static_assert(SN >= 4 && TN >= 4, "Components must contain (at least) 4 elements");
+	return {s[0], s[1], s[2], s[3], t[0], t[1], t[2], t[3]};
+}
+template<class X, class Y = X, class Z = X, class XYZ = std::common_type_t<X,Y,Z>>
+DualQuaternion<XYZ> point(X && x, Y && y, Z && z)
+	{ return {(XYZ)1, (XYZ)0, (XYZ)0, (XYZ)0, (XYZ)0, (XYZ)x, (XYZ)y, (XYZ)z}; }
+template<class X, class Y = X, class Z = X, class XYZ = std::common_type_t<X,Y,Z>>
+DualQuaternion<XYZ> translation(X && x, Y && y, Z && z)
+	{ return point<X,Y,Z,XYZ>(x/2, y/2, z/2); }
 
 // TODO interpretation of dot product? Mind the dual*dual components?
 template<class S, class T>
@@ -163,10 +178,6 @@ sclerp(DualQuaternion<L1> const& l1, DualQuaternion<R1> const& r1,
 		S && s, T && t)
 	{ return sclerp(sclerp(l1, r1, s), sclerp(l2, r2, s), t); }
 
-
-template<class S>
-Quaternion<S>::operator DualQuaternion<S>(void) const
-	{ return {w, x, y, z}; }
 
 template<class S, class C, class SC = std::common_type_t<S,C>>
 DualQuaternion<SC> operator*(DualQuaternion<S> const& l, Quaternion<C> const& r) {
@@ -199,17 +210,19 @@ DualQuaternion<SC> operator*(DualQuaternion<S> const& l, DualQuaternion<C> const
 			l.s*r.z + l.t*r.y - l.u*r.x + l.v*r.w + l.w*r.v + l.x*r.u - l.y*r.t + l.z*r.s
 		};
 }
+template<class S, class T, class ST = std::common_type_t<S,T>>
+DualQuaternion<ST> operator+(Quaternion<S> const& q, DualQuaternion<T> const& r)
+	{ return {q.w+r.s, q.x+r.t, q.y+r.u, q.z+r.v, r.w, r.x, r.y, r.z}; }
+template<class S, class T, class ST = std::common_type_t<S,T>>
+DualQuaternion<ST> operator+(DualQuaternion<S> const& q, Quaternion<T> const& r)
+	{ return r + q; }
+
 template<class S, class C, class SC = std::common_type_t<S,C>>
 std::enable_if_t<!std::is_same<S,C>::value, DualQuaternion<SC>>
 operator+(DualQuaternion<S> const& lhs, DualQuaternion<C> const& rhs) {
 	DualQuaternion<SC> l = lhs, r = rhs;
 	return l + r;
 }
-
-/** Stream insertion operator; left generic to support ostringstream, etc. exactly. */
-template<class L, class S> L& operator<<(L&, DualQuaternion<S> const&);
-template<class S> std::string to_string(DualQuaternion<S> const& d);
-template<class S> std::string to_string(DualQuaternion<S> const& d, unsigned prec);
 
 // Gosh, it sure would be nice to have templates right about now.
 // Template user-defined literals require that the template argument is char...,
