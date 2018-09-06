@@ -19,16 +19,24 @@ struct Presenter: Events::Handler<S> {
 
 	View::ShaderTable shaders;
 	View::Program program;
+
 	std::map<std::string, gl::GLint> locations;
+	S& locate(void) { return static_cast<S&>(*this); }
 	template<class U, class... V>
 	S& locate(U const& u, V const&... v) {
-		if(locations.find(u) == locations.end() || (locations[u] < 0))
-			locations[u] = program.locate(u);
+		if((locations[u] = program.locate(u)) < 0)
+			locations.erase(u);
 		return locate(v...);
 	}
-	S& locate(void) {
-		return static_cast<S&>(*this);
-	}
+
+	// Initializer given a path without a type; provide a type and recurse
+	template<class... T>
+	Events::Status init(std::string const& fpath, T &&... t)
+		{ return init(gl::GL_VERTEX_SHADER, fpath, std::forward<T>(t)...); }
+	/** Initializer in transition from one shader type to another; discard type1 and recurse */
+	template<class... T>
+	Events::Status init(const gl::GLenum type1, const gl::GLenum type2, T &&... t)
+		{ return init(type2, std::forward<T>(t)...); }
 
 	/** Initializer given both a type and a path; source/compile/attach and recurse on success */
 	template<class... T>
@@ -41,17 +49,6 @@ struct Presenter: Events::Handler<S> {
 		return init(type, std::forward<T>(t)...);
 	}
 
-	// Initializer given a path without a type; provide a type and recurse
-	/*template<class... T>
-	Events::Status init(std::string const& fpath, T &&... t) {
-		return init(gl::GL_VERTEX_SHADER, fpath, std::forward<T>(t)...);
-	}*/
-
-	/** Initializer in transition from one shader type to another; discard type1 and recurse */
-	template<class... T>
-	Events::Status init(const gl::GLenum type1, const gl::GLenum type2, T &&... t) {
-		return init(type2, std::forward<T>(t)...);
-	}
 	/** Default initializer - links and uses the program as-is */
 	Events::Status init(const gl::GLenum type = gl::GL_VERTEX_SHADER) {
 		if(!program.link()) return program.status;
@@ -63,19 +60,38 @@ struct Presenter: Events::Handler<S> {
 		gl::glUseProgram(program);
 		return static_cast<S&>(*this);
 	}
-	gl::GLfloat projection[16] = {0};
-	S& project(gl::GLuint dest, float right, float top, float near, float far) {
+	template<class T>
+	S& set_model(DualQuaternion<T> const& m) {
+		locate("model[0]", "model[1]");
+		gl::glUniform4f(locations["model[0]"], m.s, m.t, m.u, m.v);
+		gl::glUniform4f(locations["model[1]"], m.w, m.x, m.y, m.z);
+		return static_cast<S&>(*this);
+	}
+	//gl::GLfloat projection[16] = {0};
+	S& project(float l, float r, float b, float t, float n, float f) {
 		using namespace View;
-		float mx = near / right, mz = near / top, mwy = -1,
-			dy = near - far,
-			myy = (far + near) / dy,
-			myw = 2 * near * far / dy;
-		projection[0] = mx;
-		projection[6] = -myy;
-		projection[7] = -mwy;
-		projection[9] = mz;
-		projection[14] = myw;
-		glUniformMatrix4fv(0, 1, GL_FALSE, projection);
+
+		// TODO Why the FUCK are uniforms/constants/locals behaving differently
+		// Uniforms init and change correctly, but used in expressions, produce
+		// a black screen or even unshaded (white) geometry
+		// Disabling for now
+
+		// Optimized method - decompose projection matrix into one multiply-add
+		/*locate("projection[0]", "projection[1]");
+		// Multiply by {x, y, w, 0}
+		glUniform4f(locations["projection[0]"], 2*n/r, 2*n/t, 2*n*f/(n-f), 0);
+		// Multiply by z
+		glUniform4f(locations["projection[1]"], (r+l)/(r-l), (t+b)/(t-b), (n+f)/(n-f), -1);*/
+
+		// Traditional method - projection matrix is opaque to shader
+		/*locate("projection");
+		GLfloat values[] = {
+				2*n/r, 0, (r+l)/(r-l), 0,
+				0, 2*n/t, (t+b)/(t-b), 0,
+				0,     0, (n+f)/(n-f), 0, //2*n*f/(n-f),
+				0,     0,          -1, 0};
+		glUniformMatrix4fv(locations["projection"], 1, GL_FALSE, values);*/
+
 		return static_cast<S&>(*this);
 	}
 
