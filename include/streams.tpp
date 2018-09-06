@@ -6,12 +6,13 @@
 namespace Streams {
 
 template<class S>
-std::ostream& center(std::ostream& out, S const& s, unsigned N) {
+std::ostream& center(std::ostream& out, S const& s, unsigned N, bool leftish) {
 	using namespace std;
 	ostringstream oss;
 	oss << s;
 	auto str = oss.str();
 	auto len = str.length(), dlen = N - len, dlen0 = dlen/2, dlen1 = dlen - dlen0;
+	if(leftish) std::swap(dlen0, dlen1);
 	return out << setw(dlen0) << "" << str << setw(dlen1) << "";
 }
 std::string center(std::string const& s, unsigned N, char fill, bool leftish) {
