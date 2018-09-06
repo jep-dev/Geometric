@@ -16,7 +16,7 @@ using std::ostringstream;
 using std::istringstream;
 
 template<class S>
-std::ostream& center(std::ostream& out, S const& s, unsigned N);
+std::ostream& center(std::ostream& out, S const& s, unsigned N, bool leftish = true);
 std::string center(std::string const& out, unsigned N, char fill = ' ', bool leftish = true);
 
 }
