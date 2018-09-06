@@ -3,11 +3,8 @@
 
 #include "math.hpp"
 
-template<class S> struct Quaternion;
-template<class S> struct DualQuaternion;
-
 template<class S> struct Quaternion {
-	using type = S;
+	using value_type = S;
 	S w, x, y, z;
 
 	/** Access the members by index or by unit. */
@@ -32,6 +29,8 @@ template<class S> struct Quaternion {
 		}
 	}
 
+	operator DualQuaternion<S>(void) const { return {w, x, y, z}; }
+
 	/** Square, as in product with itself. */
 	S square(void) const { return w*w - x*x - y*y - z*z; }
 	/** Square of the norm, as in sum of squared elements. */
@@ -39,11 +38,6 @@ template<class S> struct Quaternion {
 	/** Euclidean norm. */
 	S length(void) const { return sqrt(lengthSquared()); }
 
-	operator DualQuaternion<S>(void) const;
-	template<class C, class SC = std::common_type_t<S,C>>
-	DualQuaternion<SC> operator+(DualQuaternion<C> const& d) const {
-		return (DualQuaternion<S>)*this + d;
-	}
 
 	/** Complex conjugate. */
 	Quaternion operator*(void) const { return {w, -x, -y, -z}; }
@@ -115,10 +109,15 @@ template<class S> struct Quaternion {
 
 };
 
+template<class S, unsigned M, class T = S>
+Quaternion<T>& operator>>(const S (&s)[M], Quaternion<T> &q) {
+	static_assert(M >= 4, "The source array must (at least) 4 elements long");
+	return q.w = s[0], q.x = s[1], q.y = s[2], q.z = s[3], q;
+}
+
 template<class L, class R>
 std::common_type_t<L,R> dot(Quaternion<L> const& l, Quaternion<R> const& r)
 	{ return l.w*r.w + l.x*r.x + l.y*r.y + l.z*r.z; }
-
 
 template<class W, class X, class Y, class Z>
 Quaternion<std::common_type_t<W,X,Y,Z>> rotation(W theta, X x, Y y, Z z) {
@@ -126,23 +125,22 @@ Quaternion<std::common_type_t<W,X,Y,Z>> rotation(W theta, X x, Y y, Z z) {
 	return {c, s*x, s*y, s*z};
 }
 
-template<class L, class R = L, class T = L, class LRT = std::common_type_t<L,R,T>>
+template<class L, class R, class T, class LRT>
 Quaternion<LRT> lerp(Quaternion<L> const& lhs, Quaternion<R> const& rhs, T t)
 	{ return lhs * (1-t) + rhs * t; }
 
-template<class L, class R = L, class T = L>
+template<class L, class R, class T>
 auto nlerp(L && l, R && r, T && t) -> decltype(lerp(l, r, t))
 	{ return lerp(l.normalize(), r.normalize(), std::forward<T>(t)); }
 
-template<class L1, class R1 = L1, class L2 = L1, class R2 = R1,
-		class S = L1, class T = S, class LRST = std::common_type_t<L1,R1,L2,R2,S,T>>
+template<class L1, class R1, class L2, class R2, class S, class T, class LRST>
 Quaternion<LRST> lerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
 		Quaternion<L2> const& l2, Quaternion<R2> const& r2, S const& s, T const& t)
 	{ return lerp(lerp(l1, r1, s), lerp(l2, r2, s), t); }
 
-template<class L, class R = L, class T = L, class LRT = std::common_type_t<L,R,T>>
+template<class L, class R, class T, class LRT>
 Quaternion<LRT> slerp(Quaternion<L> const& lhs,
-		Quaternion<R> const& rhs, T && t, bool normalize = false) {
+		Quaternion<R> const& rhs, T && t, bool normalize) {
 	auto l = lhs.normalize();
 	auto r = rhs.normalize();
 	auto d = dot(l, r);
@@ -154,11 +152,10 @@ Quaternion<LRT> slerp(Quaternion<L> const& lhs,
 	return normalize ? a * l + b * r : a * lhs + b * rhs;
 }
 
-template<class L1, class R1 = L1, class L2 = L1, class R2 = R1,
-		class S = L1, class T = S, class LRST = std::common_type_t<L1,R1,L2,R2,S,T>>
+template<class L1, class R1, class L2, class R2, class S, class T, class LRST>
 Quaternion<LRST> slerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
 		Quaternion<L2> const& l2, Quaternion<R2> const& r2,
-		S const& s, T const& t, bool normalize = false) {
+		S const& s, T const& t, bool normalize) {
 	return slerp(slerp(l1, r1, s, normalize), slerp(l2, r2, s, normalize), t, normalize);
 }
 
