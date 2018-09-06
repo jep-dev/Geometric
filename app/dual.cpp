@@ -11,6 +11,10 @@
 #endif
 
 #include "dual.tpp"
+#include "quaternion.hpp"
+#include "point.hpp"
+
+#include "math.tpp"
 
 #ifndef DUAL_IMPL
 #define DUAL_IMPL "unknown"
@@ -67,6 +71,7 @@ int main(int argc, const char *argv[]) {
 
 	typedef float T;
 	typedef DualQuaternion<T> DQ;
+	typedef Point<T> PT;
 	typedef DQ (binary) (DQ const&, DQ const&);
 
 	/*DQ p1 = 1_e + 1_I, p2 = 1_e + 1_J, dp = p2 - p1;
@@ -241,6 +246,25 @@ for(long i = 0, n = cols[0].size(); i < n; i++) {
 				cout << col << std::string(widths[j] - col.length() + 2, ' ');
 			}
 			cout << endl;
+		}
+	}
+
+	{
+		/*DQ transforms[] = {1_i, 1_j, 1_k, 1_e + 1_I, 1_e + 1_J, 1_e + 1_K};
+		Quaternion<T> transforms[] = { 1_e, rotation(float(M_PI/4), 1, 0, 0),
+			rotation(float(M_PI/4), 0, 1, 0), rotation(float(M_PI/4), 0, 0, 1)};*/
+		DQ transforms[] = {
+				rotation(float(M_PI/2), 1, 0, 0),
+				rotation(float(M_PI/2), 0, 1, 0),
+				rotation(float(M_PI/2), 0, 0, 1),
+				1_e + 0.5_I, 1_e + 0.5_J, 1_e + 0.5_K
+		};
+		PT pts[] = {{}, {1}, 1_e + 1_J, 1_e + 1_K};
+		for(auto const& pt : pts) {
+			cout << "Point: " << pt << endl;
+			for(auto const& t : transforms) {
+				cout << "  ^(" << std::string(t) << ") = " << to_string(pt ^ t, 1) << endl;
+			}
 		}
 	}
 }
