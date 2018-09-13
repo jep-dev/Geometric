@@ -6,6 +6,7 @@
 #include "shader.hpp"
 #include "resource.hpp"
 #include "streams.tpp"
+#include "timing.hpp"
 
 #include "dual.tpp"
 #include "point.hpp"
@@ -15,7 +16,7 @@
 // Audio, timer, and video are safe
 #define SUBSYSTEMS SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK
 
-#define USE_CUBE 0
+#define USE_MODEL 2
 
 struct Hnd;
 struct Hnd: Presenter<Hnd> {
@@ -28,10 +29,10 @@ struct Hnd: Presenter<Hnd> {
 		using DQ = decltype(transform);
 		//locate("projection[0]", "projection[1]", "model[0]", "model[1]");
 		//locate("projection", "model[0]", "model[1]");
-		locate("model[0]", "model[1]");
+		locate("model.u", "model.v");
 		GLint //proj[] = {locations["projection[0]"], locations["projection[1]"]},
 				//proj = locations["projection"],
-				mod[] = {locations["model[0]"], locations["model[1]"]};
+				mod[] = {locations["model.u"], locations["model.v"]};
 		auto const& sym = k.keysym.sym;
 		if(sym == SDLK_ESCAPE || sym == SDLK_q)
 			return {Events::StatusQuit, k.timestamp};
@@ -53,6 +54,7 @@ struct Hnd: Presenter<Hnd> {
 				case SDLK_1: pressed = "1: "; transform = (1_e + .1_I) * transform; break;
 				case SDLK_2: pressed = "2: "; transform = (1_e + .1_J) * transform; break;
 				case SDLK_3: pressed = "3: "; transform = (1_e + .1_k) * transform; break;
+				case SDLK_5: pressed = "5: "; transform = 1_i; break;
 				case SDLK_0: pressed = "0: ";
 					transform = rotation(.1*M_PI, 1, 0, 0) * transform; break;
 				case SDLK_9: pressed = "9: ";
@@ -101,33 +103,6 @@ struct Hnd: Presenter<Hnd> {
 				DualQuaternion<float> d = {u[0], u[1], u[2], u[3], v[0], v[1], v[2], v[3]};
 				oss << pressed << "Model = " << std::string(d) << std::endl;
 			}
-			/*auto print_row = [&] (GLfloat w, GLfloat x, GLfloat y, GLfloat z, const char *p)
-					-> std::ostringstream& {
-				return oss << std::showpos << std::fixed << std::setprecision(1)
-					<< "[" << std::setw(3) << w << " " << std::setw(3) << x << " "
-					<< std::setw(3) << y << " " << std::setw(3) << z << "]" << p, oss;
-			};
-			if(print_projection && proj >= 0) {
-				GLfloat p[16] = {0};
-				glGetUniformfv(program, proj, p);
-				endl(print_row(p[0], p[1], p[2], p[3], " X"));
-				endl(print_row(p[4], p[5], p[6], p[7], " Y"));
-				endl(print_row(p[8], p[9], p[10], p[11], " Z"));
-				endl(print_row(p[11], p[12], p[13], p[14], " W"));
-			}*/
-			/*if(print_projection && proj[0] >= 0 && proj[1] >= 0) {
-				GLfloat u[4] = {0}, v[4] = {0};
-				glGetUniformfv(program, proj[0], u);
-				glGetUniformfv(program, proj[1], v);
-				oss << "Projection: ";
-				print_row(u[0], u[1], u[2], u[3], "") << ", ";
-				print_row(v[0], v[1], v[2], v[3], "") << std::endl;
-
-				endl(print_row(u[0], 0, v[0], 0, " X"));
-				endl(print_row(0, u[1], v[1], 0, " Y"));
-				endl(print_row(0, 0, v[2], u[2], " Z"));
-				endl(print_row(0, 0, v[3], 0, " W"));
-			}*/
 		}
 		return { Events::StatusPass, k.timestamp };
 	}
@@ -148,9 +123,11 @@ struct Hnd: Presenter<Hnd> {
 			case SDL_WINDOWEVENT_CLOSE:
 				oss << "Caught window close event\n";
 				return { Events::StatusQuit, w.timestamp };
-			case SDL_WINDOWEVENT_MOVED: break;
+			case SDL_WINDOWEVENT_MOVED:
 			case SDL_WINDOWEVENT_RESIZED:
-			case SDL_WINDOWEVENT_SIZE_CHANGED: break;
+			case SDL_WINDOWEVENT_SIZE_CHANGED:
+				project();
+			break;
 			default: break;
 		}
 		return { Events::StatusPass, w.timestamp };
@@ -167,53 +144,44 @@ struct Hnd: Presenter<Hnd> {
 	Events::Status operator()(S const& s) {
 		return { Events::StatusPass, s.timestamp };
 	}
-	std::size_t size(void) {
-		return oss.tellp();
-	}
-	Hnd& clear(void) {
-		return oss.str(""), *this;
-	}
+	std::size_t size(void) { return oss.tellp(); }
+	Hnd& clear(void) { return oss.str(""), *this; }
 	template<class S>
-	Hnd& operator<<(S const& s) {
-		//if(size()) oss << '\n';
-		return oss << s, *this;
-	}
+	Hnd& operator<<(S const& s) { return oss << s, *this; }
 	template<class S>
-	friend S& operator<<(S& s, Hnd const& hnd) {
-		auto res = hnd.oss.str();
-		if(res.length()) s << res;
-		return s;
-	}
+	friend S& operator<<(S& s, Hnd const& hnd) { return s << hnd.oss.str(), s; }
 };
 
 template<class S, class T, class RAD = T>
 void sphere(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
-		Point<T> const& center, RAD radius = 1, unsigned M = 10, unsigned N = 10) {
+		Point<T> const& center, RAD radius = 1, unsigned M = 100, unsigned N = 100) {
 	auto get_angle = [] (unsigned i, unsigned I, T t0, T t1)
 			-> T { return t0 + (t1-t0)*i/(I-1); };
-	auto get_theta = [=] (unsigned j) -> T { return get_angle(j, M, 0, T(M_PI*2)); };
-	auto get_phi = [=] (unsigned i) -> T { return get_angle(i, N, -T(M_PI/2), T(M_PI/2)); };
+	auto get_theta = [=] (unsigned j) -> T { return get_angle(j, N, 0, T(M_PI*2)); };
+	auto get_phi = [=] (unsigned i) -> T { return get_angle(i, M, -T(M_PI), T(M_PI)); };
 
-	Point<T> rel = {0, 0, T(radius)};
-	for(unsigned j = 0; j < M; j++) {
-		Quaternion<T> rj = rotation(get_theta(j), 0, 1, 0);
-		for(unsigned i = 0; i < N; i++) {
-			Quaternion<T> ri = rotation(get_phi(i), 1, 0, 0);
-			auto pt = center + (rel ^ (rj * ri));
-			vertices.emplace_back(S(pt.x));
-			vertices.emplace_back(S(pt.y));
-			vertices.emplace_back(S(pt.z));
-			vertices.emplace_back(S(1));
-		}
-	}
-	for(unsigned j0 = 0, j1 = 1; j0 < M; j0++, j1 = (j0+1) % M) {
-		for(unsigned i0 = 0, i1 = 1; i0 < N; i0++, i1 = (i0+1) % N) {
-			indices.emplace_back(j0*N+i0);
-			indices.emplace_back(j0*N+i1);
-			indices.emplace_back(j1*N+i1);
-			indices.emplace_back(j0*N+i0);
-			indices.emplace_back(j1*N+i1);
-			indices.emplace_back(j1*N+i0);
+	for(unsigned j = 0, N2 = N+1; j <= N; j++) {
+		auto phi = get_phi(j), cp = cos(phi), sp = sin(phi);
+		for(unsigned i = 0, M2 = M+1; i <= M; i++) {
+			S theta = get_theta(i), ct = cos(theta), st = sin(theta);
+			vertices.emplace_back(center.x + radius * ct * sp);
+			vertices.emplace_back(center.y + radius * cp);
+			vertices.emplace_back(center.z + radius * st * sp);
+			if(j && ((i*j)&1)) {
+				auto row = j*M2, prev = row + (i+M)%M2, cur = row + i;
+				indices.emplace_back(prev-M-1);
+				indices.emplace_back(cur-M-1);
+				indices.emplace_back(cur);
+				indices.emplace_back(cur);
+				indices.emplace_back(prev);
+				indices.emplace_back(prev-M-1);
+				/*indices.emplace_back(index-N-2);
+				indices.emplace_back(index-N-1);
+				indices.emplace_back(index);
+				indices.emplace_back(index);
+				indices.emplace_back(index-1);
+				indices.emplace_back(index-N-2);*/
+			}
 		}
 	}
 
@@ -246,10 +214,8 @@ void cube(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
 	face(tne, tse, bse, bne, e); // East
 	face(tsw, tnw, bnw, bsw, w); // West
 	for(auto const& p : points) {
-		for(auto const& px : {p.x, p.y, p.z}) {
+		for(auto const& px : {p.x, p.y, p.z})
 			vertices.emplace_back(S(px));
-		}
-		vertices.emplace_back(S(1));
 	}
 	{
 		cout << std::right;
@@ -288,7 +254,6 @@ void cube(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
 		vertices.emplace_back(T(tp.x));
 		vertices.emplace_back(T(tp.y));
 		vertices.emplace_back(T(tp.z));
-		vertices.emplace_back(1);
 		//if(lim > 0) {
 			std::cout << tp.x << "  " << tp.y << "  " << tp.z << std::endl;
 			//lim--;
@@ -302,6 +267,30 @@ void cube(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
 			tne, tnw, tsw, tne, tsw, tse, // top
 			bse, bsw, bnw, bse, bnw, bne, // bottom
 		}) indices.emplace_back(i);
+}
+
+template<class S, class T, class U>
+void sheet(std::vector<S> & vertices, std::vector<T> & indices,
+	Point<U> a, Point<U> b, Point<U> c, Point<U> d, unsigned M = 10, unsigned N = 10) {
+	for(auto i = 0; i <= M; i++) {
+		U s = U(i)/M;
+		for(auto j = 0; j <= N; j++) {
+			U t = U(j)/N;
+			auto u = (1-t)*((1-s)*a+s*b) + t*(s*c+(1-s)*d);
+			vertices.emplace_back(S(u.x));
+			vertices.emplace_back(S(u.y));
+			vertices.emplace_back(S(u.z));
+			if(i && j) {
+				auto index = (i-1)*(N+1)+j-1;
+				indices.emplace_back(index);
+				indices.emplace_back(index+1);
+				indices.emplace_back(index+N+2);
+				indices.emplace_back(index+N+2);
+				indices.emplace_back(index+N+1);
+				indices.emplace_back(index);
+			}
+		}
+	}
 }
 
 int main(int argc, const char *argv[]) {
@@ -318,14 +307,14 @@ int main(int argc, const char *argv[]) {
 		if(ss.fail()) N = -1;
 	}
 	// Initialize projection matrix values and vertices
-	float width = 2, height = 2, depth = 6,
-			near = 2, far = near + depth,
+	float width = 5, height = 5, depth = 10,
+			near = 1, far = near + depth,
 			mid = (near + far)/2,
 			right = width/2, left = -right,
 			top = height/2, bottom = -top;
 	auto scale = right * 0.25f;
 
-#if USE_CUBE > 0
+#if USE_MODEL > 0
 	std::vector<GLfloat> points;
 	std::vector<GLuint> indices;
 	/*for(DualQuaternion<float> transformation : {
@@ -335,10 +324,16 @@ int main(int argc, const char *argv[]) {
 		}) cube(points, indices, transformation, scale);*/
 	for(Point<float> p : {
 			Point<float>{0, 0, -mid}}) {
-#if USE_CUBE == 1
-		cube(points, indices, p, .5);
+#if USE_MODEL == 1
+		cube(points, indices, p, right);
+#elif USE_MODEL == 2
+		sphere(points, indices, p, right);
 #else
-		sphere(points, indices, p, .5);
+		{
+			Point<GLfloat> a = {-1, -1, -mid}, b = {1, -1, -mid},
+					c = {1, 1, -mid}, d = {-1, 1, -mid};
+			sheet(points, indices, a, b, c, d, 10, 10);
+		}
 #endif
 	}
 	auto indicesSize = indices.size(), pointsSize = points.size();
@@ -348,16 +343,34 @@ int main(int argc, const char *argv[]) {
 			{right*0.9f, top*0.9f, mid}, {-right*0.9f, top*0.9f, mid}
 			//{-right, mid, -top}, {right, mid, -top}, {right, mid, top}, {-right, mid, top}
 		};*/
-	GLfloat points[][4] = {
-			{0.1*-right, -0.1*top, -mid}, {0.1*right, -0.1*top, -mid},
-			{0.1*right, 0.1*top, -mid}, {-0.1*right, 0.1*top, -mid}
+
+	/*std::vector<GLfloat> points = {
+		left, bottom, mid, 1,
+		right, bottom, mid, 1,
+		right, top, mid, 1,
+		left, top, mid, 1
+	};*/
+	/*GLfloat points[][4] = {
+			{left, bottom, mid, 1}, {right, bottom, mid, 1},
+			{right, top, mid, 1}, {left, top, mid, 1}
+	};*/
+	std::vector<GLfloat> points = {
+	//GLfloat points[] = {
+			left*.1f,  bottom*.1f, -mid, 1, right*.1f, bottom*.1f, -mid, 1,
+			right*.1f, top*.1f,    -mid, 1, left*.1f,  top*.1f,    -mid, 1
+	};
+	/*GLfloat points[][4] = {
+			{0.1f*-right, -0.1f*top, -mid}, {0.1f*right, -0.1f*top, -mid},
+			{0.1f*right, 0.1f*top, -mid}, {-0.1f*right, 0.1f*top, -mid}
 			//{-right, -top, -mid}, {right, -top, -mid}, {right, top, -mid}, {-right, top, -mid}
-		};
-	for(auto const& p : points)
-		cout << p[0] << "  " << p[1] << "  " << p[2] << endl;
-	//GLuint indices[] = {0, 1, 2, 0, 2, 3};
-	GLuint indices[] = {0, 2, 1, 0, 1, 3};
-	auto indicesSize = sizeof(indices)/sizeof(indices[0]);
+		};*/
+	GLuint indices[] =
+	//std::vector<GLuint> indices =
+		//{0, 1, 2, 0, 2, 3, 0, 2, 1, 0, 1, 3};
+		{0, 1, 2, 2, 3, 0};
+		//{0, 2, 1, 0, 1, 3};
+	auto indicesSize = sizeof(indices);///sizeof(indices[0]);
+	//auto indicesSize = indices.size(), pointsSize = points.size();*/
 #endif
 
 	// Locate shaders from execution path
@@ -396,7 +409,7 @@ int main(int argc, const char *argv[]) {
 		return 1;
 	}
 	//hnd.locate("projection[0]", "projection[1]", "model[0]", "model[1]")
-	hnd.locate("projection", "model[0]", "model[1]")
+	hnd.locate("l", "r", "b", "t", "n", "f", "model[0]", "model[1]")
 		.project(left, right, bottom, top, near, far);
 
 	// Create and initialize vertex array and buffer
@@ -431,11 +444,14 @@ int main(int argc, const char *argv[]) {
 		}
 	}*/
 
+	hnd.project(left, right, bottom, top, near, far);
 
-	cout << "\e[s";
+
+	auto stopwatch = Timing::make_stopwatch();
 	float theta = 0;
 	// Poll/render loop
 	for(auto i = 0;; i++, theta += M_PI/8) {
+		stopwatch.advance();
 		if(!hnd.poll())
 			break;
 		// Task
@@ -443,12 +459,13 @@ int main(int argc, const char *argv[]) {
 			cout << hnd << flush;
 			hnd.clear();
 		}
-		/*float ctheta = cos(theta), stheta = sin(theta);
-		glUniform4f(mu, ctheta, 0, stheta, 0);
-		glUniform4f(mv, 0, 0, 0.2, 0);*/
 		// Render
 		hnd.frame.clear().draw(vao, GL_TRIANGLES, indicesSize, GL_UNSIGNED_INT, nullptr).flip();
-		SDL_Delay(100);
+		double ms_elapsed = stopwatch.update().count()*1000,
+			ms_ideal = 1000/60.0, ms_diff = ms_ideal - ms_elapsed;
+		if(ms_diff > 0) {
+			SDL_Delay(unsigned(ms_diff));
+		}
 		if((N >= 0) && (i >= N)) break;
 	}
 
