@@ -4,12 +4,6 @@
 #include <vector>
 #include <map>
 
-#ifdef DUAL2
-#include "dual2.hpp"
-#else
-#include "dual.hpp"
-#endif
-
 #include "dual.tpp"
 #include "quaternion.hpp"
 #include "point.hpp"
@@ -217,8 +211,8 @@ for(long i = 0, n = cols[0].size(); i < n; i++) {
 		//DQ l1 = {1}, r1 = {0,1}, l2 = {0,0,1}, r2 = {0,0,0,1};
 		DQ l1 = {1},
 				r1 = {0,1,0,0,0,0,0,0},
-				l2 = {0,0,1,0,0,0,0,0},
-				r2 = {0,0,0,1,0,0,0,0};
+				l2 = {0,0,0,0,0,0,0,1},
+				r2 = {1};
 		vector<vector<string>> cols;
 		vector<unsigned> widths;
 		for(auto j = 0; j < N; j++) {
