@@ -7,42 +7,30 @@
 #include <limits>
 #include <utility>
 
+#include "math.hpp"
+#include "utility.hpp"
+
 template<class> struct Point;
 template<class> struct Quaternion;
 template<class> struct DualQuaternion;
 
-template<class L, class R = L, class T = L, class LRT = std::common_type_t<L,R,T>>
-Quaternion<LRT> lerp(Quaternion<L> const& lhs, Quaternion<R> const& rhs, T t);
-template<class L, class R = L, class T = L>
-auto nlerp(L && l, R && r, T && t) -> decltype(lerp(l, r, t));
-template<class L1, class R1 = L1, class L2 = L1, class R2 = R1,
-		class S = L1, class T = S, class LRST = std::common_type_t<L1,R1,L2,R2,S,T>>
-Quaternion<LRST> lerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
-		Quaternion<L2> const& l2, Quaternion<R2> const& r2, S const& s, T const& t);
-template<class L, class R = L, class T = L, class LRT = std::common_type_t<L,R,T>>
-Quaternion<LRT> slerp(Quaternion<L> const& lhs,
-		Quaternion<R> const& rhs, T && t, bool normalize = false);
-template<class L1, class R1 = L1, class L2 = L1, class R2 = R1,
-		class S = L1, class T = S, class LRST = std::common_type_t<L1,R1,L2,R2,S,T>>
-Quaternion<LRST> slerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
-		Quaternion<L2> const& l2, Quaternion<R2> const& r2,
-		S const& s, T const& t, bool normalize = false);
-
 /** Stream insertion operator; left generic to support ostringstream, etc. exactly. */
+template<class L, class S> L& operator<<(L&, Point<S> const&);
+template<class L, class S> L& operator<<(L&, Quaternion<S> const&);
 template<class L, class S> L& operator<<(L&, DualQuaternion<S> const&);
-template<class S> std::string to_string(DualQuaternion<S> const& d);
-template<class S> std::string to_string(DualQuaternion<S> const& d, unsigned prec);
-template<class S> std::string to_string(Quaternion<S> const& d);
-template<class S> std::string to_string(Quaternion<S> const& d, unsigned prec);
-template<class S> std::string to_string(Point<S> const& d);
-template<class S> std::string to_string(Point<S> const& d, unsigned prec);
+//template<class S> std::string to_string(Point<S> const& d);
+//template<class S> std::string to_string(Quaternion<S> const& d);
+//template<class S> std::string to_string(DualQuaternion<S> const& d);
+template<class S, class DELIM = const char*>
+std::string to_string(Point<S> const& d, unsigned prec = 0, DELIM delim = "+");
+template<class S, class DELIM = const char*>
+std::string to_string(Quaternion<S> const& d, unsigned prec = 0, DELIM delim = "+");
+template<class S, class DELIM = const char*>
+std::string to_string(DualQuaternion<S> const& d, unsigned prec = 0, DELIM delim = "+");
 
-template<class S>
+template<class S, class DELIM = const char*>
 std::enable_if_t<std::is_arithmetic<S>::value, std::string>
-to_string(S const& s);
-template<class S>
-std::enable_if_t<std::is_arithmetic<S>::value, std::string>
-to_string(S const& s, unsigned prec);
+to_string(S const& s, unsigned prec = 0, DELIM delim = "+");
 
 /** Abstract comparison to zero (mainly intended for floating point types) */
 template<class L, class R = L>
@@ -52,9 +40,6 @@ bool near_zero(L, R = std::numeric_limits<std::remove_reference_t<L>>::epsilon()
 template<class L, class R = L, class T = R>
 bool near(L, R, T = std::numeric_limits<
 		std::remove_reference_t<std::common_type_t<L,R>>>::epsilon());
-
-/** Abstract minimax (pair with first=min and second=max) */
-template<class T> std::pair<long, long> minimax(T && t);
 
 /** Abstract number of digits in decimal */
 template<class T> long numDigits(T const& t);
@@ -77,19 +62,6 @@ bool near(L lhs, R rhs, T least) {
 template<class L, class T>
 bool near_zero(L lhs, T least) {
 	return near(lhs, 0, least);
-}
-
-
-template<class T>
-std::pair<long, long> minimax(T && t) {
-	long m0 = std::numeric_limits<long>::max(), m1 = 0;
-	for(auto &it : t) {
-		long len = it.length();
-		m0 = std::min(len, m0);
-		m1 = std::max(len, m1);
-	}
-	if(m0 > m1) m0 = m1;
-	return {m0, m1};
 }
 
 template<class T>
