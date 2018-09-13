@@ -11,6 +11,12 @@ struct Point {
 	template<class T>
 	Point<S>& operator+=(Point<T> const& p)
 		{ return x += S(p.x), y += S(p.y), z += S(p.z), *this; }
+	template<class T, class ST = std::common_type_t<S,T>>
+	friend Point<ST> operator*(T const& t, Point<S> const& p)
+		{ return {t*p.x, t*p.y, t*p.z}; }
+	template<class T, class ST = std::common_type_t<S,T>>
+	Point<ST> operator*(T const& t)
+		{ return {x*t, y*t, z*t}; }
 
 	template<class T, class ST = std::common_type_t<S,T>>
 	Point<ST> operator-(Point<T> const& p) const { return {x-p.x, y-p.y, z-p.z}; }
@@ -45,16 +51,24 @@ struct Point {
 	friend struct DualQuaternion<S>;
 	operator DualQuaternion<S>(void) const { return {1, 0, 0, 0, 0, x, y, z}; }
 	template<class T>
-	friend T& operator<<(T &t, Point const& p) { return t << (DualQuaternion<S>) p, t; }
+	friend T& operator<<(T &t, Point const& p) { return t << to_string(p), t; }
+		//{ return t << (DualQuaternion<S>) p, t; }
 	operator std::string(void) const { return std::string((DualQuaternion<S>) *this); }
 };
-template<class S>
+template<class S, class T, class ST = std::common_type_t<S,T>>
+ST dot(Point<S> const& s, Point<T> const& t)
+	{ return ST(s.x*t.x + s.y*t.y + s.z*t.z); }
+template<class S, class T, class ST = std::common_type_t<S,T>>
+Point<ST> cross(Point<S> const& s, Point<T> const& t)
+	{ return {s.y*t.z-s.z*t.y, s.z*t.x-s.x*t.z, s.x*t.y-s.y*t.x}; }
+
+/*template<class S>
 std::string to_string(Point<S> const& p)
-	{ return "<" + to_string(p.x) + ", " + to_string(p.y) + ", " + to_string(p.z) + ">"; }
-template<class S>
-std::string to_string(Point<S> const& p, unsigned prec) {
-	return "<" + to_string(p.x, prec) + ", " + to_string(p.y, prec)
-			+ ", " + to_string(p.z, prec) + ">";
+	{ return "<" + to_string(p.x) + ", " + to_string(p.y) + ", " + to_string(p.z) + ">"; }*/
+template<class S, class DELIM>
+std::string to_string(Point<S> const& p, unsigned prec, DELIM delim) {
+	return "(" + to_string(p.x, prec, delim) + ", " + to_string(p.y, prec, delim)
+			+ ", " + to_string(p.z, prec, delim) + ")";
 }
 
 #endif
