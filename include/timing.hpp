@@ -61,8 +61,8 @@ struct Stopwatch: Diff<CLOCK, DUR> {
 		Diff<CLOCK, DUR>(p0, p1) { }
 };
 /** Utility returning a Stopwatch (clock specialization) */
-template<class CLOCK, class DUR = typename CLOCK::duration>
-Stopwatch<CLOCK, DUR> make_stopwatch(CLOCK) { return {}; }
+template<class CLOCK = high_resolution_clock, class DUR = typename CLOCK::duration>
+Stopwatch<CLOCK, DUR> make_stopwatch(CLOCK = {}) { return {}; }
 
 /** Utility returning a Stopwatch (time point specialization) */
 template<class CLOCK, class DUR = typename CLOCK::duration>
