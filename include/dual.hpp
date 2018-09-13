@@ -8,6 +8,7 @@
 ///@endcond
 
 #include "math.hpp"
+#include "quaternion.hpp"
 
 /** A dual quaternion with a flat structure. */
 template<class S> struct DualQuaternion {
@@ -55,6 +56,7 @@ template<class S> struct DualQuaternion {
 	}
 
 	DualQuaternion operator*(void) const { return {s, -t, -u, -v, -w, x, y, z}; }
+	DualQuaternion operator~(void) const { return {s, t, u, v, w, -x, -y, -z}; }
 	DualQuaternion operator-(void) const { return {-s, -t, -u, -v, -w, -x, -y, -z}; }
 
 	/* If q is a rotation, does adding a rotation make sense?
@@ -160,23 +162,28 @@ std::common_type_t<S,T> dot(DualQuaternion<S> const& l, DualQuaternion<T> const&
 			+ l.w*r.w + l.x*r.x + l.y*r.y + l.z*r.z;
 }
 
-template<class L, class R = L, class T = L, class LRT = std::common_type_t<L,R,T>>
-DualQuaternion<LRT> sclerp(DualQuaternion<L> const& lhs, DualQuaternion<R> const& rhs, T && t) {
-	auto ou = slerp<LRT>({lhs.s, lhs.t, lhs.u, lhs.v},
-			{rhs.s, rhs.t, rhs.u, rhs.v}, t),
-		ov = lerp<LRT>({lhs.w, lhs.x, lhs.y, lhs.z}, {rhs.w, rhs.x, rhs.y, rhs.z}, t);
-	/*auto ou = slerp(Quaternion<L>{lhs.s, lhs.t, lhs.u, lhs.v},
-			Quaternion<L>{lhs.w, lhs.x, lhs.y, lhs.z}, t),
-		ov = lerp(Quaternion<R>{rhs.s, rhs.t, rhs.u, rhs.v},
-			Quaternion<R>{rhs.w, rhs.x, rhs.y, rhs.z}, t);*/
+template<class L, class R, class T, class LRT = std::common_type_t<L,R,T>>
+DualQuaternion<LRT> lerp(DualQuaternion<L> const& lhs, DualQuaternion<R> const& rhs, T const& t)
+	{ return lhs*(1-t) + (rhs-lhs)*t; }
+/*template<class L1, class R1, class L2, class R2, class S, class T, class LRST>
+DualQuaternion<LRST> lerp(DualQuaternion<L1> const& l1, DualQuaternion<R1> const& r1,
+		DualQuaternion<L2> const& l2, DualQuaternion<R2> const& r2, S && s, T && t)
+	{ return lerp(lerp(l1, r1, s), lerp(l2, r2, s), t); }*/
+template<class L, class R, class T, class LRT = std::common_type_t<L,R,T>>
+DualQuaternion<LRT> sclerp(DualQuaternion<L> const& lhs, DualQuaternion<R> const& rhs,
+		T && t, bool normalize = false) {
+	auto ou = slerp(Quaternion<L>{lhs.s, lhs.t, lhs.u, lhs.v},
+			Quaternion<R>{rhs.s, rhs.t, rhs.u, rhs.v}, t, normalize),
+		ov = lerp(Quaternion<L>{lhs.w, lhs.x, lhs.y, lhs.z},
+			Quaternion<R>{rhs.w, rhs.x, rhs.y, rhs.z}, t);
 	return {ou.w, ou.x, ou.y, ou.z, ov.w, ov.x, ov.y, ov.z};
 }
-template<class L1, class R1 = L1, class L2 = L1, class R2 = R1, class S = L1, class T = S>
-DualQuaternion<std::common_type_t<L1,R1,L2,R2,S,T>>
-sclerp(DualQuaternion<L1> const& l1, DualQuaternion<R1> const& r1,
+template<class L1, class R1 = L1, class L2 = L1, class R2 = R1, class S = L1, class T = S,
+		class LRST = std::common_type_t<L1, R1, L2, R2, S, T>>
+DualQuaternion<LRST> sclerp(DualQuaternion<L1> const& l1, DualQuaternion<R1> const& r1,
 		DualQuaternion<L2> const& l2, DualQuaternion<R2> const& r2,
-		S && s, T && t)
-	{ return sclerp(sclerp(l1, r1, s), sclerp(l2, r2, s), t); }
+			S && s, T && t, bool normalize = false)
+	{ return sclerp(sclerp(l1, r1, s, normalize), sclerp(l2, r2, s, normalize), t, normalize); }
 
 
 template<class S, class C, class SC = std::common_type_t<S,C>>

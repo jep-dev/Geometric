@@ -30,6 +30,8 @@ template<class S> struct Quaternion {
 	}
 
 	operator DualQuaternion<S>(void) const { return {w, x, y, z}; }
+	template<class T> bool operator==(Quaternion<T> const& rhs) const
+		{ return w == rhs.w && x == rhs.x && y == rhs.y && z == rhs.z; }
 
 	/** Square, as in product with itself. */
 	S square(void) const { return w*w - x*x - y*y - z*z; }
@@ -125,22 +127,22 @@ Quaternion<std::common_type_t<W,X,Y,Z>> rotation(W theta, X x, Y y, Z z) {
 	return {c, s*x, s*y, s*z};
 }
 
-template<class L, class R, class T, class LRT>
+template<class L, class R, class T, class LRT = std::common_type_t<L,R,T>>
 Quaternion<LRT> lerp(Quaternion<L> const& lhs, Quaternion<R> const& rhs, T t)
 	{ return lhs * (1-t) + rhs * t; }
 
-template<class L, class R, class T>
-auto nlerp(L && l, R && r, T && t) -> decltype(lerp(l, r, t))
-	{ return lerp(l.normalize(), r.normalize(), std::forward<T>(t)); }
+template<class L, class R, class T, class LRT = std::common_type_t<L,R,T>>
+Quaternion<LRT> nlerp(Quaternion<L> const& l, Quaternion<R> const& r, T const& t)
+	{ return lerp(l.normalize(), r.normalize(), t); }
 
-template<class L1, class R1, class L2, class R2, class S, class T, class LRST>
+/*template<class L1, class R1, class L2, class R2, class S, class T, class LRST>
 Quaternion<LRST> lerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
 		Quaternion<L2> const& l2, Quaternion<R2> const& r2, S const& s, T const& t)
-	{ return lerp(lerp(l1, r1, s), lerp(l2, r2, s), t); }
+	{ return lerp(lerp(l1, r1, s), lerp(l2, r2, s), t); }*/
 
-template<class L, class R, class T, class LRT>
+template<class L, class R, class T, class LRT = std::common_type_t<L,R,T>>
 Quaternion<LRT> slerp(Quaternion<L> const& lhs,
-		Quaternion<R> const& rhs, T && t, bool normalize) {
+		Quaternion<R> const& rhs, T && t, bool normalize = false) {
 	auto l = lhs.normalize();
 	auto r = rhs.normalize();
 	auto d = dot(l, r);
@@ -151,16 +153,12 @@ Quaternion<LRT> slerp(Quaternion<L> const& lhs,
 		a = cos(tt) - d * stt / st0, b = stt / st0;
 	return normalize ? a * l + b * r : a * lhs + b * rhs;
 }
-
-template<class L1, class R1, class L2, class R2, class S, class T, class LRST>
-Quaternion<LRST> slerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
-		Quaternion<L2> const& l2, Quaternion<R2> const& r2,
-		S const& s, T const& t, bool normalize) {
-	return slerp(slerp(l1, r1, s, normalize), slerp(l2, r2, s, normalize), t, normalize);
-}
-
-template<class S> std::string to_string(Quaternion<S> const& q);
-template<class S> std::string to_string(Quaternion<S> const& q, unsigned prec);
+template<class L1, class R1 = L1, class L2 = L1, class R2 = L2,
+		class S = L1, class T = S, class LRT = std::common_type_t<L1, R1, L2, R2, S, T>>
+Quaternion<LRT> slerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
+Quaternion<L2> const& l2, Quaternion<R2> const& r2,
+		S const& s, T const& t, bool normalize = false)
+	{ return slerp(slerp(l1, r1, s), slerp(l2, r2, s), t); }
 
 // Generate user-defined literals for likely parameter types
 #define USERDEF_TEMPLATE(CLASS,PARAM,UD,W,X,Y,Z) \
