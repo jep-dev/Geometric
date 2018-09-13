@@ -5,6 +5,7 @@
 
 #include "math.hpp"
 #include "reader.hpp"
+#include "streams.hpp"
 #include "utility.hpp"
 
 int main(int argc, const char *argv[]) {
@@ -41,7 +42,7 @@ int main(int argc, const char *argv[]) {
 			cout << "done (" << dest.size() << " lines)";
 			auto flags = cout.flags();
 			auto i = 0;
-			auto mm = minimax(dest);
+			auto mm = Streams::minimax(dest);
 			long lw = numDigits(dest.size()), rw = numDigits(mm.second), bw = sep.length(),
 				cw = 80 - lw - rw - 2*bw;
 			for(auto const& line : dest) {
