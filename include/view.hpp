@@ -20,7 +20,7 @@ void bufferData(GLenum target, GLuint vbo, const T (& data) [N], GLenum usage) {
 template<class T>
 void bufferData(GLenum target, GLuint vbo, std::vector<T> const& data, GLenum usage) {
 	glBindBuffer(target, vbo);
-	glBufferData(target, data.size(), &data[0], usage);
+	glBufferData(target, data.size()*sizeof(data[0]), &data[0], usage);
 }
 
 /** Directly draws an array of vertices */
