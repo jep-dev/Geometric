@@ -7,6 +7,7 @@
 
 #include "pretty.tpp"
 #include "format.hpp"
+#include "streams.hpp"
 
 #include "quaternion.hpp"
 #include "quaternion.tpp"
@@ -34,7 +35,7 @@ int main(int argc, const char *argv[]) {
 			v[1] = (oss[1] << *quat, oss[1]).str();
 			v[2] = (oss[2] << -quat, oss[2]).str();
 			v[3] = (oss[3] << quat, oss[3]).str();
-		auto len = minimax(v).second;
+		auto len = Streams::minimax(v).second;
 		for(auto i = 0; i < N; i++) {
 			OSS result;
 			result << setw(len) << right << v[i];
