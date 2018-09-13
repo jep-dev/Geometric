@@ -23,6 +23,8 @@ void main(){
 			pcx = 1-pow(ncx,32), pcy = 1-pow(ncy,32), pcz = 1-pow(ncz,32),
 			pxyz = pcx*pcy*pcz;
 			color = vec4(x-2, ay/axyz, az/axyz, 1);
+	float c = ncos(gl_PrimitiveID), s = nsin(gl_PrimitiveID);
+	color = vec4(c, s, (c+s)/2, 1);
 	//color = vec4(ax*pcx, ay*pcy, az*pcz, 1);
 	//color = vec4(abs(pos_out.x)/4, abs(pos_out.y)/4, abs(pos_out.z)/4, 1);
 	//color = vec4(renorm(cos(pos_out.x*M_PI)),
