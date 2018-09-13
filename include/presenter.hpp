@@ -19,6 +19,8 @@ struct Presenter: Events::Handler<S> {
 
 	View::ShaderTable shaders;
 	View::Program program;
+	float right = 5, left = -right, top = 5, bottom = -top,
+			near = 1, far = 10;
 
 	std::map<std::string, gl::GLint> locations;
 	S& locate(void) { return static_cast<S&>(*this); }
@@ -62,37 +64,38 @@ struct Presenter: Events::Handler<S> {
 	}
 	template<class T>
 	S& set_model(DualQuaternion<T> const& m) {
-		locate("model[0]", "model[1]");
-		gl::glUniform4f(locations["model[0]"], m.s, m.t, m.u, m.v);
-		gl::glUniform4f(locations["model[1]"], m.w, m.x, m.y, m.z);
+		locate("model.u", "model.v");
+		gl::glUniform4f(locations["model.u"], m.s, m.t, m.u, m.v);
+		gl::glUniform4f(locations["model.v"], m.w, m.x, m.y, m.z);
 		return static_cast<S&>(*this);
 	}
 	//gl::GLfloat projection[16] = {0};
-	S& project(float l, float r, float b, float t, float n, float f) {
+	S& project(void) {
 		using namespace View;
-
-		// TODO Why the FUCK are uniforms/constants/locals behaving differently
-		// Uniforms init and change correctly, but used in expressions, produce
-		// a black screen or even unshaded (white) geometry
-		// Disabling for now
-
-		// Optimized method - decompose projection matrix into one multiply-add
-		/*locate("projection[0]", "projection[1]");
-		// Multiply by {x, y, w, 0}
-		glUniform4f(locations["projection[0]"], 2*n/r, 2*n/t, 2*n*f/(n-f), 0);
-		// Multiply by z
-		glUniform4f(locations["projection[1]"], (r+l)/(r-l), (t+b)/(t-b), (n+f)/(n-f), -1);*/
-
-		// Traditional method - projection matrix is opaque to shader
-		/*locate("projection");
-		GLfloat values[] = {
-				2*n/r, 0, (r+l)/(r-l), 0,
-				0, 2*n/t, (t+b)/(t-b), 0,
-				0,     0, (n+f)/(n-f), 0, //2*n*f/(n-f),
-				0,     0,          -1, 0};
-		glUniformMatrix4fv(locations["projection"], 1, GL_FALSE, values);*/
+		float a = 1;
+		int w = 0, h = 0, x = 0, y = 0;
+		SDL_GetWindowSize(frame, &w, &h);
+		SDL_GetWindowPosition(frame, &x, &y);
+		if(w > 0 && h > 0) {
+			a = float(h)/w;
+			glViewport(0, 0, w, h);
+		}
+		locate("a", "l", "r", "b", "t", "n", "f");
+		glUniform1f(locations["a"], a);
+		glUniform1f(locations["l"], left);
+		glUniform1f(locations["r"], right);
+		glUniform1f(locations["b"], bottom);
+		glUniform1f(locations["t"], top);
+		glUniform1f(locations["n"], near);
+		glUniform1f(locations["f"], far);
 
 		return static_cast<S&>(*this);
+	}
+	S& project(float l, float r, float b, float t, float n, float f) {
+		left = l; right = r;
+		bottom = b; top = t;
+		near = n; far = f;
+		return project();
 	}
 
 	template<class... T>
