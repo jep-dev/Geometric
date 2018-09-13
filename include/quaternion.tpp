@@ -6,7 +6,7 @@
 
 #include "quaternion.hpp"
 
-template<class L, class S>
+/*template<class L, class S>
 L& print(L &lhs, Quaternion<S> const& rhs) {
 	bool nz = false;
 	for(auto i : {'e', 'i', 'j', 'k'}) {
@@ -23,23 +23,29 @@ L& print(L &lhs, Quaternion<S> const& rhs) {
 	}
 	if(!nz) lhs << '0';
 	return lhs;
-}
-template<class S>
+}*/
+/*template<class S>
 std::string to_string(Quaternion<S> const& q) {
 	std::ostringstream oss;
 	print(oss, q);
 	return oss.str();
-}
-template<class L, class S>
-L& print_fixed(L &lhs, Quaternion<S> const& rhs, unsigned prec = 3) {
+}*/
+template<class L, class S, class DELIM = const char*>
+L& print(L &lhs, Quaternion<S> const& rhs, unsigned prec = 0, DELIM delim = "+") {
 	std::ostringstream oss;
-	oss.precision(prec);
-	oss << std::fixed;
+	if(prec) {
+		oss.precision(prec);
+		oss << std::fixed;
+	}
 	bool nz = false;
 	for(auto i : {'e', 'i', 'j', 'k'}) {
 		auto const& q = rhs[i];
-		auto q0 = q*0;
-		if(q == q0) continue;
+		if(prec) {
+			if(std::abs(q) < std::pow(.1f, prec)) continue;
+		} else {
+			auto q0 = q*0;
+			if(q == q0) continue;
+		}
 		auto q2 = q*q;
 		if(q2 == q) oss << (nz ? "+" : "");
 		else if(q2 == -q) oss << (nz ? "-" : "-");
@@ -53,11 +59,10 @@ L& print_fixed(L &lhs, Quaternion<S> const& rhs, unsigned prec = 3) {
 	/*print(oss, rhs);
 	return lhs << oss.str(), lhs;*/
 }
-template<class S>
-std::string to_string(Quaternion<S> const& q, unsigned prec) {
+template<class S, class DELIM>
+std::string to_string(Quaternion<S> const& q, unsigned prec, DELIM delim) {
 	std::ostringstream oss;
-	print_fixed(oss, q, prec);
-	return oss.str();
+	return print(oss, q, prec, delim), oss.str();
 }
 
 template<class L, class S>

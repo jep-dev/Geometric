@@ -1,11 +1,13 @@
 #ifndef DUAL_TPP
 #define DUAL_TPP
 
+#include "dual.hpp"
 #include "quaternion.hpp"
 #include "quaternion.tpp"
+
 #include <iosfwd>
 
-template<class L, class S>
+/*template<class L, class S>
 L& print(L &lhs, DualQuaternion<S> const& rhs) {
 	bool nz = false;
 	for(auto i : {'e', 'i', 'j', 'k', 'E', 'I', 'J', 'K'}) {
@@ -22,17 +24,24 @@ L& print(L &lhs, DualQuaternion<S> const& rhs) {
 	}
 	if(!nz) lhs << '0';
 	return lhs;
-}
+}*/
 
-template<class L, class S>
-L& print_fixed(L &lhs, DualQuaternion<S> const& rhs, unsigned prec) {
+template<class L, class S, class DELIM = const char*>
+L& print(L &lhs, DualQuaternion<S> const& rhs, unsigned prec, DELIM delim = "+") {
 	bool nz = false;
 	std::ostringstream oss;
-	oss.precision(prec);
-	oss << std::fixed;
+	if(prec) {
+		oss.precision(prec);
+		oss << std::fixed;
+	}
 	for(auto i : {'e', 'i', 'j', 'k', 'E', 'I', 'J', 'K'}) {
 		auto const& q = rhs[i];
-		if(std::abs(q) < std::pow(.1f, prec)) continue;
+		if(prec) {
+			if(std::abs(q) < std::pow(.1f, prec)) continue;
+		} else {
+			auto q0 = q*0;
+			if(q == q0) continue;
+		}
 		auto q2 = q*q;
 		if(q2 == q) oss << (nz ? "+" : "");
 		else if(q2 == -q) oss << (nz ? "-" : "-");
@@ -43,8 +52,6 @@ L& print_fixed(L &lhs, DualQuaternion<S> const& rhs, unsigned prec) {
 	}
 	if(!nz) oss << '0';
 	return lhs << oss.str(), lhs;
-	/*print(oss, rhs);
-	return lhs << oss.str(), lhs;*/
 }
 
 template<class L, class S>
@@ -60,27 +67,24 @@ L& operator<<(L &lhs, DualQuaternion<S> const& rhs) {
 	lhs << oss.str();
 	return lhs;*/
 	std::ostringstream oss;
-	print(oss, rhs);
+	print(oss, rhs, 0);
 	return lhs << oss.str(), lhs;
 }
-template<class S>
-DualQuaternion<S>::operator std::string(void) const {
-	std::ostringstream oss;
-	print_fixed(oss, *this, 3);
-	return oss.str();
-}
 
+template<class S, class DELIM>
+std::string to_string(DualQuaternion<S> const& s, unsigned prec, DELIM delim) {
+	std::ostringstream oss;
+	return print(oss, s, prec, delim), oss.str();
+}
 template<class S>
+DualQuaternion<S>::operator std::string(void) const
+	{ return to_string(*this, 3, "+"); }
+
+/*template<class S>
 std::string to_string(DualQuaternion<S> const& s) {
 	std::ostringstream oss;
 	print(oss, s);
 	return oss.str();
-}
-template<class S>
-std::string to_string(DualQuaternion<S> const& s, unsigned prec) {
-	std::ostringstream oss;
-	print_fixed(oss, s, prec);
-	return oss.str();
-}
+}*/
 
 #endif
