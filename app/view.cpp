@@ -40,12 +40,11 @@ struct Hnd: Presenter<Hnd> {
 			switch(k.keysym.sym) {
 				case SDLK_ESCAPE: case SDLK_q:
 					return { Events::StatusQuit, k.timestamp };
+				case SDLK_PLUS: near = .1; far = 100; project(); break;
+				case SDLK_MINUS: near = 1; far = 10; project(); break;
 				default: break;
 			}
 		} else {
-			switch(k.keysym.sym) {
-				default: break;
-			}
 			bool print_location = false, print_projection = false, print_model = true;
 			auto old_transform = transform;
 			const char *pressed = "";
@@ -158,29 +157,30 @@ void sphere(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
 	auto get_angle = [] (unsigned i, unsigned I, T t0, T t1)
 			-> T { return t0 + (t1-t0)*i/(I-1); };
 	auto get_theta = [=] (unsigned j) -> T { return get_angle(j, N, 0, T(M_PI*2)); };
-	auto get_phi = [=] (unsigned i) -> T { return get_angle(i, M, -T(M_PI), T(M_PI)); };
+	auto get_phi = [=] (unsigned i) -> T { return get_angle(i, M, -T(M_PI/2), T(M_PI/2)); };
 
 	for(unsigned j = 0, N2 = N+1; j <= N; j++) {
 		auto phi = get_phi(j), cp = cos(phi), sp = sin(phi);
 		for(unsigned i = 0, M2 = M+1; i <= M; i++) {
 			S theta = get_theta(i), ct = cos(theta), st = sin(theta);
-			vertices.emplace_back(center.x + radius * ct * sp);
-			vertices.emplace_back(center.y + radius * cp);
-			vertices.emplace_back(center.z + radius * st * sp);
-			if(j && ((i*j)&1)) {
-				auto row = j*M2, prev = row + (i+M)%M2, cur = row + i;
-				indices.emplace_back(prev-M-1);
-				indices.emplace_back(cur-M-1);
-				indices.emplace_back(cur);
-				indices.emplace_back(cur);
-				indices.emplace_back(prev);
-				indices.emplace_back(prev-M-1);
-				/*indices.emplace_back(index-N-2);
-				indices.emplace_back(index-N-1);
-				indices.emplace_back(index);
-				indices.emplace_back(index);
-				indices.emplace_back(index-1);
-				indices.emplace_back(index-N-2);*/
+			vertices.emplace_back(center.x + radius * ct * cp);
+			vertices.emplace_back(center.y + radius * sp);
+			vertices.emplace_back(center.z + radius * st * cp);
+			auto row = j*M2;
+			if(!i && j) {
+				indices.emplace_back(row);
+				indices.emplace_back(row+M);
+				indices.emplace_back(row+M-N2);
+				indices.emplace_back(row+M-N2);
+				indices.emplace_back(row-N2);
+				indices.emplace_back(row);
+			} else if(i && j) {
+				indices.emplace_back(row+i);
+				indices.emplace_back(row+i-1);
+				indices.emplace_back(row+i-1-M2);
+				indices.emplace_back(row+i-1-M2);
+				indices.emplace_back(row+i-M2);
+				indices.emplace_back(row+i);
 			}
 		}
 	}
@@ -271,7 +271,7 @@ void cube(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
 
 template<class S, class T, class U>
 void sheet(std::vector<S> & vertices, std::vector<T> & indices,
-	Point<U> a, Point<U> b, Point<U> c, Point<U> d, unsigned M = 10, unsigned N = 10) {
+	Point<U> a, Point<U> b, Point<U> c, Point<U> d, unsigned M = 100, unsigned N = 100) {
 	for(auto i = 0; i <= M; i++) {
 		U s = U(i)/M;
 		for(auto j = 0; j <= N; j++) {
@@ -312,66 +312,26 @@ int main(int argc, const char *argv[]) {
 			mid = (near + far)/2,
 			right = width/2, left = -right,
 			top = height/2, bottom = -top;
+	int wmesh = 126, hmesh = wmesh;
 	auto scale = right * 0.25f;
 
-#if USE_MODEL > 0
 	std::vector<GLfloat> points;
 	std::vector<GLuint> indices;
-	/*for(DualQuaternion<float> transformation : {
-			1_e + 3 * 1_I, 1_e - 3 * 1_I,
-			1_e + 3 * 1_J, 1_e - 3 * 1_J,
-			1_e + 3 * 1_K, 1_e - 3 * 1_K
-		}) cube(points, indices, transformation, scale);*/
 	for(Point<float> p : {
 			Point<float>{0, 0, -mid}}) {
 #if USE_MODEL == 1
 		cube(points, indices, p, right);
 #elif USE_MODEL == 2
-		sphere(points, indices, p, right);
+		sphere(points, indices, p, right, wmesh, hmesh);
 #else
 		{
 			Point<GLfloat> a = {-1, -1, -mid}, b = {1, -1, -mid},
 					c = {1, 1, -mid}, d = {-1, 1, -mid};
-			sheet(points, indices, a, b, c, d, 10, 10);
+			sheet(points, indices, a, b, c, d, wmesh, hmesh);
 		}
 #endif
 	}
 	auto indicesSize = indices.size(), pointsSize = points.size();
-# else
-	/*GLfloat points[][3] = {
-			{-right*0.9f, -top*0.9f, mid}, {right*0.9f, -top*0.9f, mid},
-			{right*0.9f, top*0.9f, mid}, {-right*0.9f, top*0.9f, mid}
-			//{-right, mid, -top}, {right, mid, -top}, {right, mid, top}, {-right, mid, top}
-		};*/
-
-	/*std::vector<GLfloat> points = {
-		left, bottom, mid, 1,
-		right, bottom, mid, 1,
-		right, top, mid, 1,
-		left, top, mid, 1
-	};*/
-	/*GLfloat points[][4] = {
-			{left, bottom, mid, 1}, {right, bottom, mid, 1},
-			{right, top, mid, 1}, {left, top, mid, 1}
-	};*/
-	std::vector<GLfloat> points = {
-	//GLfloat points[] = {
-			left*.1f,  bottom*.1f, -mid, 1, right*.1f, bottom*.1f, -mid, 1,
-			right*.1f, top*.1f,    -mid, 1, left*.1f,  top*.1f,    -mid, 1
-	};
-	/*GLfloat points[][4] = {
-			{0.1f*-right, -0.1f*top, -mid}, {0.1f*right, -0.1f*top, -mid},
-			{0.1f*right, 0.1f*top, -mid}, {-0.1f*right, 0.1f*top, -mid}
-			//{-right, -top, -mid}, {right, -top, -mid}, {right, top, -mid}, {-right, top, -mid}
-		};*/
-	GLuint indices[] =
-	//std::vector<GLuint> indices =
-		//{0, 1, 2, 0, 2, 3, 0, 2, 1, 0, 1, 3};
-		{0, 1, 2, 2, 3, 0};
-		//{0, 2, 1, 0, 1, 3};
-	auto indicesSize = sizeof(indices);///sizeof(indices[0]);
-	//auto indicesSize = indices.size(), pointsSize = points.size();*/
-#endif
 
 	// Locate shaders from execution path
 	string self = argv[0], delim = "/", share = "share" + delim;
