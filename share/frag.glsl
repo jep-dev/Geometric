@@ -16,24 +16,20 @@ float nsin(float x) {
 }
 
 void main(){
-	//float c = (gl_PrimitiveID&255)/256.0f;
-	//color = vec4(sqrt(1-c*c), c, 1-c, 1);
-	//int id = gl_PrimitiveID & 255;
-	int id = gl_PrimitiveID & 255;
-	int bits[8] = int[8](id&1, (id>>1)&1, (id>>2)&1, (id>>3)&1,
-			(id>>4)&1, (id>>5)&1, (id>>6)&1, (id>>7)&1);
-	float theta = (id&15)*M_PI/4;
-	//float theta = (id&255)*M_PI/128;
-	color = vec4(nsin(theta), nsin(theta+M_PI*2/3), nsin(theta+M_PI*4/3), 1);
+	float x = pos_out.x, y = pos_out.y, z = pos_out.z,
+			ax = abs(x), ay = abs(y), az = abs(z),
+			axyz = ax*ax+ay*ay+az*az,
+			ncx = ncos(x*M_PI*2), ncy = ncos(y*M_PI*2), ncz = ncos(z*M_PI*2),
+			pcx = 1-pow(ncx,32), pcy = 1-pow(ncy,32), pcz = 1-pow(ncz,32),
+			pxyz = pcx*pcy*pcz,
+			r = sqrt(ax*ax+az*az), s = atan(az, r)*8, t = atan(az, ax)*8,
+				s2 = s + M_PI*2/3, s3 = s + M_PI*4/3,
+				t2 = t + M_PI*2/3, t3 = t + M_PI*4/3;
+	color = vec4(nsin(s), nsin(s2), nsin(s3), 1);
+	//color = vec4(nsin(s*64), nsin(s*64+M_PI*2/3), nsin(s*64+M_PI*4/3), 1);
 
 
-	//float x = pos_out.x, y = pos_out.y, z = pos_out.z,
-			//ax = abs(x), ay = abs(y), az = abs(z),
-			//axyz = ax*ax+ay*ay+az*az,
-			//ncx = ncos(x*M_PI*2), ncy = ncos(y*M_PI*2), ncz = ncos(z*M_PI*2),
-			//pcx = 1-pow(ncx,32), pcy = 1-pow(ncy,32), pcz = 1-pow(ncz,32),
-			//pxyz = pcx*pcy*pcz;
-			//color = vec4(x-2, ay/axyz, az/axyz, 1);
+	//color = vec4(ax/axyz, ay/axyz, az/axyz, 1);
 	//color = vec4(ax*pcx, ay*pcy, az*pcz, 1);
 	//color = vec4(abs(pos_out.x)/4, abs(pos_out.y)/4, abs(pos_out.z)/4, 1);
 	//color = vec4(renorm(cos(pos_out.x*M_PI)),
