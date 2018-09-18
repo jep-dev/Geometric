@@ -24,6 +24,16 @@ struct Point {
 	Point<S>& operator-=(Point<T> const& p)
 		{ return x -= S(p.x), y -= S(p.y), z -= S(p.z), *this; }
 
+	S lengthSquared(void) const { return x*x + y*y + z*z; }
+	S length(void) const { return sqrt(lengthSquared()); }
+
+	Point normalize(void) const {
+		auto len = length();
+		if(near_zero(len)) return {0}; // TODO
+		if(near(len, 1)) return *this;
+		return *this * (1/len);
+	}
+
 	template<class T, class ST = std::common_type_t<S,T>>
 	Point<ST> operator^(Quaternion<T> const& t) const {
 		ST p = -t.x*x - t.y*y - t.z*z, q = t.w*x + t.y*z - t.z*y,
