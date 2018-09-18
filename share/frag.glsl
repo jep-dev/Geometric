@@ -18,14 +18,10 @@ float nsin(float x) {
 void main(){
 	float x = pos_out.x, y = pos_out.y, z = pos_out.z,
 			ax = abs(x), ay = abs(y), az = abs(z),
-			axyz = ax*ax+ay*ay+az*az,
-			ncx = ncos(x*M_PI*2), ncy = ncos(y*M_PI*2), ncz = ncos(z*M_PI*2),
-			pcx = 1-pow(ncx,32), pcy = 1-pow(ncy,32), pcz = 1-pow(ncz,32),
-			pxyz = pcx*pcy*pcz,
-			r = sqrt(ax*ax+az*az), s = atan(az, r)*8, t = atan(az, ax)*8,
-				s2 = s + M_PI*2/3, s3 = s + M_PI*4/3,
-				t2 = t + M_PI*2/3, t3 = t + M_PI*4/3;
-	color = vec4(nsin(s), nsin(s2), nsin(s3), 1);
+			rxz = sqrt(ax*ax+az*az),
+			t = (atan(rxz, ay)*4)*8,
+			t2 = t + M_PI*2/3, t3 = t + M_PI*4/3;
+	color = vec4(nsin(t), nsin(t2), nsin(t3), 1);
 	//color = vec4(nsin(s*64), nsin(s*64+M_PI*2/3), nsin(s*64+M_PI*4/3), 1);
 
 
