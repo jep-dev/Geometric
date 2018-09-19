@@ -6,6 +6,10 @@
 #include "shader.hpp"
 #include "resource.hpp"
 #include "streams.tpp"
+/*
+#define USE_DEVIL
+#include "texture.hpp"
+*/
 #include "timing.hpp"
 
 #include "dual.tpp"
@@ -40,8 +44,9 @@ struct Hnd: Presenter<Hnd> {
 			switch(k.keysym.sym) {
 				case SDLK_ESCAPE: case SDLK_q:
 					return { Events::StatusQuit, k.timestamp };
-				case SDLK_PLUS: near = .1; far = 100; project(); break;
-				case SDLK_MINUS: near = 1; far = 10; project(); break;
+				case SDLK_MINUS:
+				case SDLK_KP_MINUS: project(-4, 4, -4, 4, 1, 10); project(); break;
+				case SDLK_EQUALS: project(-2.5, 2.5, -2.5, 2.5, 1, 10); project(); break;
 				default: break;
 			}
 		} else {
@@ -53,7 +58,6 @@ struct Hnd: Presenter<Hnd> {
 				case SDLK_1: pressed = "1: "; transform = (1_e + .1_I) * transform; break;
 				case SDLK_2: pressed = "2: "; transform = (1_e + .1_J) * transform; break;
 				case SDLK_3: pressed = "3: "; transform = (1_e + .1_k) * transform; break;
-				case SDLK_5: pressed = "5: "; transform = 1_i; break;
 				case SDLK_0: pressed = "0: ";
 					transform = rotation(.1*M_PI, 1, 0, 0) * transform; break;
 				case SDLK_9: pressed = "9: ";
@@ -62,6 +66,7 @@ struct Hnd: Presenter<Hnd> {
 					transform = rotation(.1*M_PI, 0, 0, 1) * transform; break;
 				default: print_model = false;
 			}
+			set_model(transform);
 
 			switch(k.keysym.sym) {
 				case SDLK_l: print_location = true; break;
@@ -88,7 +93,6 @@ struct Hnd: Presenter<Hnd> {
 				default:
 				break;
 			}
-			set_model(transform);
 			if(print_location) {
 				oss << "Uniform locations:\n";
 				for(auto const& l : locations)
@@ -125,7 +129,7 @@ struct Hnd: Presenter<Hnd> {
 			case SDL_WINDOWEVENT_MOVED:
 			case SDL_WINDOWEVENT_RESIZED:
 			case SDL_WINDOWEVENT_SIZE_CHANGED:
-				project();
+				project(left, right, bottom, top, near, far);
 			break;
 			default: break;
 		}
@@ -167,18 +171,12 @@ void sphere(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
 			vertices.emplace_back(center.y + radius * sp);
 			vertices.emplace_back(center.z + radius * st * cp);
 			auto row = j*M2;
-			if(!i && j) {
-				indices.emplace_back(row);
-				indices.emplace_back(row+M);
-				indices.emplace_back(row+M-N2);
-				indices.emplace_back(row+M-N2);
-				indices.emplace_back(row-N2);
-				indices.emplace_back(row);
-			} else if(i && j) {
+			if(j) {
+				int I = i ? i - 1 : M;
 				indices.emplace_back(row+i);
-				indices.emplace_back(row+i-1);
-				indices.emplace_back(row+i-1-M2);
-				indices.emplace_back(row+i-1-M2);
+				indices.emplace_back(row+I);
+				indices.emplace_back(row+I-M2);
+				indices.emplace_back(row+I-M2);
 				indices.emplace_back(row+i-M2);
 				indices.emplace_back(row+i);
 			}
@@ -306,6 +304,8 @@ int main(int argc, const char *argv[]) {
 		ss >> N;
 		if(ss.fail()) N = -1;
 	}
+
+
 	// Initialize projection matrix values and vertices
 	float width = 5, height = 5, depth = 10,
 			near = 1, far = near + depth,
@@ -359,6 +359,7 @@ int main(int argc, const char *argv[]) {
 	glEnable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_2D);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	auto used = hnd.init(share + "dual.glsl", share + "vert.glsl",
@@ -369,6 +370,15 @@ int main(int argc, const char *argv[]) {
 		cout << endl;
 		return 1;
 	}
+	/*string texPath = share + "link.png";
+	Texture tex(texPath.c_str());
+	if(!tex.created) {
+		cout << "Not created" << endl;
+	} else if(!tex.sourced) {
+		cout << "Not sourced" << endl;
+	} else {
+		cout << "Texture... success?" << endl;
+	}*/
 	//hnd.locate("projection[0]", "projection[1]", "model[0]", "model[1]")
 	hnd.locate("l", "r", "b", "t", "n", "f", "model[0]", "model[1]")
 		.project(left, right, bottom, top, near, far);
