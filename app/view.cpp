@@ -45,8 +45,9 @@ struct Hnd: Presenter<Hnd> {
 				case SDLK_ESCAPE: case SDLK_q:
 					return { Events::StatusQuit, k.timestamp };
 				case SDLK_MINUS:
-				case SDLK_KP_MINUS: project(-4, 4, -4, 4, 1, 10); project(); break;
-				case SDLK_EQUALS: project(-2.5, 2.5, -2.5, 2.5, 1, 10); project(); break;
+				case SDLK_KP_MINUS: project(-4, 4, -4, 4, 1, 10); break;
+				case SDLK_KP_PLUS:
+				case SDLK_EQUALS: project(-2.5, 2.5, -2.5, 2.5, 1, 10); break;
 				default: break;
 			}
 		} else {
