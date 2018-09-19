@@ -18,13 +18,19 @@ uniform Dual model = Dual(u0, v0);
 in vec4 pos_in;
 out vec4 pos_out;
 
+vec4 project(vec4 A) {
+	float asp = sqrt(a);
+	// GL multiplication of vectors is parallel, which allows
+	// a decomposition of the projection matrix into a MAD-friendly
+	// sum of products, eliminating most of the zeroes.
+	return 2*n*vec4(A.xyw, 1)*vec4(asp/r, 1/(asp*t), f/(n-f), 0)
+			+ A.z*vec4(asp*(r+l)/(r-l), (t+b)/(asp*(t-b)), (n+f)/(n-f), -1);
+}
+
 void main(){
 	Dual x0 = Dual(u0, vec4(0, pos_in.xyz)),
 		s = sandwich(model, x0);
 	float aspect = sqrt(a);
-	//gl_Position = 2*n*vec4(1/r, 1/t, f/(n-f), 0) * vec4(s.v.yz, pos_in.w, 1)
-	//	+ s.v.w * vec4((r+l)/(r-l), (t+b)/(t-b), (n+f)/(n-f), -1);
-	gl_Position = 2*n*vec4(aspect/r, 1/(aspect*t), f/(n-f), 0) * vec4(s.v.yz, pos_in.w, 1)
-		+ s.v.w * vec4(aspect*(r+l)/(r-l), (t+b)/(aspect*(t-b)), (n+f)/(n-f), -1);
-	pos_out = gl_Position;
+	gl_Position = project(vec4(s.v.yzw, pos_in.w));
+	pos_out = project(vec4(x0.v.yzw, pos_in.w));
 }
