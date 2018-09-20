@@ -10,7 +10,7 @@ namespace View {
 struct Texture {
 	const char *fname;
 	unsigned int flags;
-	GLuint value;
+	GLuint value = 0;
 	bool created = false, sourced = false;
 	unsigned int line = 0;
 	ILint width = 0, height = 0;
