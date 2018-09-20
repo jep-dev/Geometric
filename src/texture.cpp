@@ -6,7 +6,6 @@ namespace View {
 
 #ifdef USE_SOIL
 Texture::Texture(const char *fname, unsigned int flags): fname(fname) {
-	value = 0;
 	glGenTextures(1, &value);
 	glBindTexture(GL_TEXTURE_2D, value);
 	//glCreateTextures(GL_TEXTURE_2D, 1, &value);
