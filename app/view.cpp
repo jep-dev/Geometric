@@ -15,6 +15,7 @@
 #include "dual.tpp"
 #include "point.hpp"
 #include "math.tpp"
+#include "joystick.hpp"
 
 // Joystick, haptics, and gamecontroller cause udev error!
 // Audio, timer, and video are safe
@@ -26,7 +27,65 @@ struct Hnd;
 struct Hnd: Presenter<Hnd> {
 	DualQuaternion<float> transform = {1};
 	std::ostringstream oss;
+
+	std::map<unsigned, Joystick> joysticks;
+
 	using Handler::operator();
+	Events::Status operator()(SDL_JoyDeviceEvent const& jde) {
+		auto found = joysticks.find(jde.which);
+		switch(jde.type) {
+			case SDL_JOYDEVICEADDED:
+				if(found == joysticks.end()) {
+					joysticks.emplace(jde.which, jde.which);
+				} else {
+					auto & joy = found -> second;
+					if(!joy.open(jde.which)) {
+						joysticks.erase(found);
+						return { Events::StatusError, jde.timestamp };
+						// Annotate failure?
+					}
+				}
+				break;
+			case SDL_JOYDEVICEREMOVED:
+				if(found != joysticks.end())
+					joysticks.erase(found);
+				break;
+			default: break;
+		}
+		return { Events::StatusPass, jde.timestamp };
+	}
+	Events::Status operator()(SDL_JoyAxisEvent const& ja) {
+		auto found = joysticks.find(ja.which);
+		if(found == joysticks.end())
+			return { Events::StatusWarn, ja.timestamp };
+		auto & joy = found -> second;
+		joy.axes[ja.axis] = ja.value/float(SDL_JOYSTICK_AXIS_MAX);
+		return { Events::StatusPass, ja.timestamp };
+	}
+	Events::Status operator()(SDL_JoyHatEvent const& jh) {
+		auto found = joysticks.find(jh.which);
+		if(found == joysticks.end())
+			return { Events::StatusWarn, jh.timestamp };
+		auto & joy = found -> second;
+		joy.hat.first = joy.hat.second;
+		joy.hat.second = jh.hat;
+		return { Events::StatusPass, jh.timestamp };
+	}
+	Events::Status operator()(SDL_JoyButtonEvent const& jb) {
+		auto found = joysticks.find(jb.which);
+		if(found == joysticks.end())
+			return { Events::StatusWarn, jb.timestamp };
+		auto & joy = found -> second;
+		auto button = joy.buttons.find(jb.button);
+		if(button == joy.buttons.end()) {
+			joy.buttons.emplace(jb.button,
+					Joystick::History<>{jb.state, jb.state});
+		} else {
+			button -> second.first = button -> second.second;
+			button -> second.second = jb.state;
+		}
+		return { Events::StatusPass, jb.timestamp };
+	}
 	Events::Status operator()(SDL_KeyboardEvent const& k) {
 		using namespace gl;
 		using Streams::center;
@@ -121,20 +180,6 @@ struct Hnd: Presenter<Hnd> {
 	Events::Status operator()(SDL_ControllerButtonEvent const& b) {
 		oss << "Caught controller " << b.button << ", state " << b.state << "\n";
 		return { Events::StatusPass, b.timestamp };
-	}
-	Events::Status operator()(SDL_WindowEvent const& w) {
-		switch(w.event) {
-			case SDL_WINDOWEVENT_CLOSE:
-				oss << "Caught window close event\n";
-				return { Events::StatusQuit, w.timestamp };
-			case SDL_WINDOWEVENT_MOVED:
-			case SDL_WINDOWEVENT_RESIZED:
-			case SDL_WINDOWEVENT_SIZE_CHANGED:
-				project(left, right, bottom, top, near, far);
-			break;
-			default: break;
-		}
-		return { Events::StatusPass, w.timestamp };
 	}
 	Events::Status operator()(SDL_MouseButtonEvent const& b) {
 		*this << "";
@@ -363,6 +408,19 @@ int main(int argc, const char *argv[]) {
 	glEnable(GL_TEXTURE_2D);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	/*std::map<unsigned, Joystick> joys;
+	//std::map<Uint8, int> axes;
+	float dead = .25;
+	unsigned nJoysticks = SDL_NumJoysticks(), max_value = (1 << 15) - 1,
+			l1 = 0, l2 = 1, r1 = 3, r2 = 4; // TODO query/ask for axis ID's?
+	//axes[l1] = axes[l2] = axes[r1] = axes[r2] = 0;
+	for(unsigned i = 0; i < nJoysticks; i++) {
+		//SDL_Joystick *joy = SDL_JoystickOpen(i);
+		//if(joy) joys.emplace(i, joy);
+		Joystick joy = { i };
+		if(joy) joys.emplace(i, std::move(joy));
+	}*/
+
 	auto used = hnd.init(share + "dual.glsl", share + "vert.glsl",
 			gl::GL_FRAGMENT_SHADER, share + "frag.glsl");
 	if(!used.good()) {
@@ -380,7 +438,6 @@ int main(int argc, const char *argv[]) {
 	} else {
 		cout << "Texture... success?" << endl;
 	}*/
-	//hnd.locate("projection[0]", "projection[1]", "model[0]", "model[1]")
 	hnd.locate("l", "r", "b", "t", "n", "f", "model[0]", "model[1]")
 		.project(left, right, bottom, top, near, far);
 
