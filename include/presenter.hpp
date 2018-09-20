@@ -97,6 +97,19 @@ struct Presenter: Events::Handler<S> {
 		near = n; far = f;
 		return project();
 	}
+	Events::Status operator()(SDL_WindowEvent const& ev) {
+		switch(ev.event) {
+			case SDL_WINDOWEVENT_CLOSE:
+				return { Events::StatusQuit, ev.timestamp };
+			case SDL_WINDOWEVENT_MOVED:
+			case SDL_WINDOWEVENT_RESIZED:
+			case SDL_WINDOWEVENT_SIZE_CHANGED:
+				project();
+				break;
+			default: break;
+		}
+		return { Events::StatusPass, ev.timestamp };
+	}
 
 	template<class... T>
 	Presenter(T &&... t): frame(std::forward<T>(t)...) {}
