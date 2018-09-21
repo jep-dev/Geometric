@@ -23,6 +23,7 @@ struct Joystick {
 	using History = std::pair<S,T>;
 	SDL_JoystickID id;
 	SDL_Joystick *joystick = 0;
+	bool lazy = true;
 	std::map<unsigned, float> axes;
 	std::map<unsigned, History<>> buttons;
 	History<> hat;
@@ -41,15 +42,54 @@ struct Joystick {
 		//return *this;
 	}
 	void close(void) {
-		//if(SDL_JoystickGetAttached(joystick))
+		if(joystick && SDL_JoystickGetAttached(joystick))
 			SDL_JoystickClose(joystick);
 		joystick = 0;
 	}
-	Joystick(unsigned i) : id(id) {
-		open();
+	Joystick(unsigned i) {
+		lazy = false;
+		open(i);
 	}
-	virtual ~Joystick(void) {
-		close();
+	Joystick(void) {}
+	virtual ~Joystick(void) {}
+};
+
+struct JoystickTable {
+	using Joysticks_t = std::map<unsigned, Joystick>;
+	Joysticks_t joysticks;
+	std::size_t size(void) const { return joysticks.size(); }
+	Joysticks_t::iterator find(unsigned i) { return joysticks.find(i); }
+	Joysticks_t::const_iterator find(unsigned i) const { return joysticks.find(i); }
+	Joysticks_t::iterator end(void) { return joysticks.end(); }
+	Joysticks_t::const_iterator cend(void) const { return joysticks.cend(); }
+	Joystick& operator[](unsigned i) { return joysticks[i]; }
+	bool contains(unsigned i) const {
+		return joysticks.find(i) != joysticks.cend();
+	}
+	bool open(unsigned i) {
+		if(contains(i))
+			return joysticks[i].open(i);
+		Joystick j = {i};
+		if(j) return joysticks.emplace(i, std::move(j)), true;
+		return false;
+	}
+	void close(unsigned i) {
+		auto found = joysticks.find(i);
+		if(found != joysticks.end())
+			found -> second.close();
+	}
+	void erase(unsigned i) {
+		auto found = joysticks.find(i);
+		if(found != joysticks.end())
+			joysticks.erase(i);
+	}
+	void close_all(void) {
+		for(auto it = joysticks.begin(), e = end(); it != e; it++) {
+			it -> second.close();
+		}
+	}
+	void clear(void) {
+		joysticks.clear();
 	}
 };
 
