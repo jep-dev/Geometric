@@ -86,15 +86,15 @@ struct Handler {
 		}
 	}
 	template<class... T>
-	bool poll(T &&... t) {
+	Status poll(T &&... t) {
 		using namespace Detail;
 		auto& self = static_cast<C&>(*this);
 		SDL_Event ev;
 		while(SDL_PollEvent(&ev)) {
-			if(!self(ev, Fwd<T>(t)...))
-				return false;
+			auto out = self(ev, Fwd<T>(t)...);
+			if(!out) return out;
 		}
-		return true;
+		return { };
 	}
 };
 
