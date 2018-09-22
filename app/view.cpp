@@ -28,27 +28,21 @@ struct Hnd: Presenter<Hnd> {
 	DualQuaternion<float> transform = {1};
 	std::ostringstream oss;
 
-	std::map<unsigned, Joystick> joysticks;
+	//std::map<unsigned, Joystick> joysticks;
+	JoystickTable joysticks;
 
 	using Handler::operator();
 	Events::Status operator()(SDL_JoyDeviceEvent const& jde) {
-		auto found = joysticks.find(jde.which);
+		//auto found = joysticks.find(jde.which);
 		switch(jde.type) {
 			case SDL_JOYDEVICEADDED:
-				if(found == joysticks.end()) {
-					joysticks.emplace(jde.which, jde.which);
-				} else {
-					auto & joy = found -> second;
-					if(!joy.open(jde.which)) {
-						joysticks.erase(found);
-						return { Events::StatusError, jde.timestamp };
-						// Annotate failure?
-					}
-				}
+				if(joysticks.open(jde.which))
+					oss << "Opened joystick " << jde.which << std::endl;
+				else oss << "Could not open joystick " << jde.which << std::endl;
 				break;
 			case SDL_JOYDEVICEREMOVED:
-				if(found != joysticks.end())
-					joysticks.erase(found);
+				joysticks.erase(jde.which);
+				oss << "Removed joystick " << jde.which << std::endl;
 				break;
 			default: break;
 		}
@@ -60,6 +54,7 @@ struct Hnd: Presenter<Hnd> {
 			return { Events::StatusWarn, ja.timestamp };
 		auto & joy = found -> second;
 		joy.axes[ja.axis] = ja.value/float(SDL_JOYSTICK_AXIS_MAX);
+		oss << "Joy axis " << int(ja.axis) << std::endl;
 		return { Events::StatusPass, ja.timestamp };
 	}
 	Events::Status operator()(SDL_JoyHatEvent const& jh) {
@@ -68,7 +63,10 @@ struct Hnd: Presenter<Hnd> {
 			return { Events::StatusWarn, jh.timestamp };
 		auto & joy = found -> second;
 		joy.hat.first = joy.hat.second;
-		joy.hat.second = jh.hat;
+		joy.hat.second = jh.value;
+		// jh.hat is another index somewhat like axes
+		// TODO redesign 'hat' as 'hats'
+		oss << "Joy hat " << int(jh.value) << std::endl;
 		return { Events::StatusPass, jh.timestamp };
 	}
 	Events::Status operator()(SDL_JoyButtonEvent const& jb) {
@@ -80,7 +78,10 @@ struct Hnd: Presenter<Hnd> {
 		if(button == joy.buttons.end()) {
 			joy.buttons.emplace(jb.button,
 					Joystick::History<>{jb.state, jb.state});
+			oss << "Button " << int(jb.button) << ": " << int(jb.state) << std::endl;
 		} else {
+			oss << "Button " << int(jb.button) << ": " << int(joy.buttons[jb.button].first)
+					<< " -> " << int(jb.state) << std::endl;
 			button -> second.first = button -> second.second;
 			button -> second.second = jb.state;
 		}
@@ -481,8 +482,16 @@ int main(int argc, const char *argv[]) {
 	// Poll/render loop
 	for(auto i = 0;; i++, theta += M_PI/8) {
 		stopwatch.advance();
-		if(!hnd.poll())
+		auto polled = hnd.poll();
+		if(!polled) {
+			if(polled.errored()) cout << "Errored; ";
+			else if(polled.warned()) cout << "Warned; ";
+			else if(polled.failed()) cout << "Failed; ";
+			cout << polled.message << std::endl;
+			if(polled.quit()) hnd.joysticks.close_all();
+
 			break;
+		}
 		// Task
 		if(hnd.size()) {
 			cout << hnd << flush;
