@@ -23,7 +23,6 @@ struct Joystick {
 	using History = std::pair<S,T>;
 	SDL_JoystickID id;
 	SDL_Joystick *joystick = 0;
-	bool lazy = true;
 	std::map<unsigned, float> axes;
 	std::map<unsigned, History<>> buttons;
 	History<> hat;
@@ -47,7 +46,6 @@ struct Joystick {
 		joystick = 0;
 	}
 	Joystick(unsigned i) {
-		lazy = false;
 		open(i);
 	}
 	Joystick(void) {}
