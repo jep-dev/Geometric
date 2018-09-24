@@ -34,7 +34,7 @@ struct Joystick {
 		open(id);
 	}
 	bool open(unsigned i) {
-		close();
+		//close();
 		id = i;
 		joystick = SDL_JoystickOpen(id);
 		return joystick;
