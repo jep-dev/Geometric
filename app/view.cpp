@@ -25,24 +25,48 @@
 
 struct Hnd;
 struct Hnd: Presenter<Hnd> {
+	typedef enum {
+		e_out=0, e_info, n_streams
+	} e_stream;
 	DualQuaternion<float> transform = {1};
-	std::ostringstream oss;
+	std::ostringstream streams[n_streams];
+	bool enabled[n_streams] = { false };
+	template<class... T>
+	Hnd& enable(e_stream s, T... t) { return enabled[s] = true, enable(t...); }
+	Hnd& enable(void) { return *this; }
+	template<class... T>
+	Hnd& disable(e_stream s, T... t) { return enabled[s] = true, enable(t...); }
+	Hnd& disable(void) { return *this; }
+
 
 	//std::map<unsigned, Joystick> joysticks;
 	JoystickTable joysticks;
+
+	std::size_t size(void) /* cannot be const */ {
+		std::size_t total = 0;
+		for(auto i = 0; i < n_streams; i++) {
+			if(!enabled[i]) continue;
+			auto size = streams[i].tellp();
+			// Observe failure conditions resulting in size=-1
+			if(size > 0) total += size;
+		}
+		return total;
+	}
 
 	using Handler::operator();
 	Events::Status operator()(SDL_JoyDeviceEvent const& jde) {
 		//auto found = joysticks.find(jde.which);
 		switch(jde.type) {
 			case SDL_JOYDEVICEADDED:
+			if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
 				if(joysticks.open(jde.which))
-					oss << "Opened joystick " << jde.which << std::endl;
-				else oss << "Could not open joystick " << jde.which << std::endl;
+					streams[e_info] << "Opened joystick " << jde.which;
+				else streams[e_out] << "Could not open joystick " << jde.which;
 				break;
 			case SDL_JOYDEVICEREMOVED:
 				joysticks.erase(jde.which);
-				oss << "Removed joystick " << jde.which << std::endl;
+				if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
+				streams[e_info] << "Removed joystick " << jde.which;
 				break;
 			default: break;
 		}
@@ -54,7 +78,8 @@ struct Hnd: Presenter<Hnd> {
 			return { Events::StatusWarn, ja.timestamp };
 		auto & joy = found -> second;
 		joy.axes[ja.axis] = ja.value/float(SDL_JOYSTICK_AXIS_MAX);
-		oss << "Joy axis " << int(ja.axis) << std::endl;
+		if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
+		streams[e_info] << "Joy axis " << int(ja.axis);
 		return { Events::StatusPass, ja.timestamp };
 	}
 	Events::Status operator()(SDL_JoyHatEvent const& jh) {
@@ -66,7 +91,8 @@ struct Hnd: Presenter<Hnd> {
 		joy.hat.second = jh.value;
 		// jh.hat is another index somewhat like axes
 		// TODO redesign 'hat' as 'hats'
-		oss << "Joy hat " << int(jh.value) << std::endl;
+		if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
+		streams[e_info] << "Joy hat " << int(jh.value);
 		return { Events::StatusPass, jh.timestamp };
 	}
 	Events::Status operator()(SDL_JoyButtonEvent const& jb) {
@@ -78,10 +104,13 @@ struct Hnd: Presenter<Hnd> {
 		if(button == joy.buttons.end()) {
 			joy.buttons.emplace(jb.button,
 					Joystick::History<>{jb.state, jb.state});
-			oss << "Button " << int(jb.button) << ": " << int(jb.state) << std::endl;
+			if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
+			streams[e_info] << "Button " << int(jb.button)
+				<< ": " << int(jb.state);
 		} else {
-			oss << "Button " << int(jb.button) << ": " << int(joy.buttons[jb.button].first)
-					<< " -> " << int(jb.state) << std::endl;
+			if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
+			streams[e_info] << "Button " << int(jb.button) << ": "
+				<< int(joy.buttons[jb.button].first) << " -> " << int(jb.state);
 			button -> second.first = button -> second.second;
 			button -> second.second = jb.state;
 		}
@@ -119,12 +148,12 @@ struct Hnd: Presenter<Hnd> {
 				case SDLK_1: pressed = "1: "; transform = (1_e + .1_I) * transform; break;
 				case SDLK_2: pressed = "2: "; transform = (1_e + .1_J) * transform; break;
 				case SDLK_3: pressed = "3: "; transform = (1_e + .1_k) * transform; break;
-				case SDLK_0: pressed = "0: ";
-					transform = rotation(.1*M_PI, 1, 0, 0) * transform; break;
-				case SDLK_9: pressed = "9: ";
-					transform = rotation(.1*M_PI, 0, 1, 0) * transform; break;
 				case SDLK_8: pressed = "8: ";
 					transform = rotation(.1*M_PI, 0, 0, 1) * transform; break;
+				case SDLK_9: pressed = "9: ";
+					transform = rotation(.1*M_PI, 0, 1, 0) * transform; break;
+				case SDLK_0: pressed = "0: ";
+					transform = rotation(.1*M_PI, 1, 0, 0) * transform; break;
 				default: print_model = false;
 			}
 			set_model(transform);
@@ -133,16 +162,13 @@ struct Hnd: Presenter<Hnd> {
 				case SDLK_l: print_location = true; break;
 				case SDLK_SPACE: print_projection = true;
 				case SDLK_m: print_model = true; break;
-				/*case SDLK_5:
-					oss << "Setting projection matrix (again)\n";
-					project(-1, 1, -1, 1, 1, 3);
-					print_projection = true;
-					break;*/
 				case SDLK_h: {
 					auto lw = 6;
 					auto pad = "  ";
-					auto print_kv = [&] (const char *k, const char *v)
-						-> decltype(oss)& { return center(oss, k, lw, false) << pad << v, oss; };
+					auto print_kv = [&] (const char *k, const char *v) {
+						if(streams[e_out].tellp() > 0) streams[e_out] << '\n';
+						center(streams[e_out], k, lw, false) << pad << v;
+					};
 					print_kv("KEY", "BINDING\n");
 					print_kv("h", "this help message\n");
 					print_kv("l", "list uniform locations\n");
@@ -155,9 +181,10 @@ struct Hnd: Presenter<Hnd> {
 				break;
 			}
 			if(print_location) {
-				oss << "Uniform locations:\n";
+				if(streams[e_out].tellp() > 0) streams[e_out] << '\n';
+				streams[e_out] << "Uniform locations:\n";
 				for(auto const& l : locations)
-					oss << "\t[" << l.first << "] => " << l.second << "\n";
+					streams[e_out] << "\t[" << l.first << "] => " << l.second << "\n";
 			}
 			if(print_model && mod[0] >= 0 && mod[1] >= 0) {
 				GLfloat u[4] = {0}, v[4] = {0};
@@ -165,28 +192,22 @@ struct Hnd: Presenter<Hnd> {
 				glGetUniformfv(program, mod[1], v);
 
 				DualQuaternion<float> d = {u[0], u[1], u[2], u[3], v[0], v[1], v[2], v[3]};
-				oss << pressed << "Model = " << std::string(d) << std::endl;
+				if(streams[e_out].tellp() > 0) streams[e_out] << '\n';
+				streams[e_out] << pressed << "Model = " << std::string(d) << std::endl;
 			}
 		}
 		return { Events::StatusPass, k.timestamp };
 	}
-	Events::Status operator()(SDL_ControllerAxisEvent const& c) {
-		typedef decltype(c.value) value_type;
-		value_type const& value = c.value,
-			value_max = std::numeric_limits<value_type>::max();
-		auto fvalue = float(value) / value_max;
-		oss << "Caught controller " << c.axis << " -> " << int(100*fvalue) << "%\n";
-		return { Events::StatusPass, c.timestamp };
-	}
 	Events::Status operator()(SDL_ControllerButtonEvent const& b) {
-		oss << "Caught controller " << b.button << ", state " << b.state << "\n";
+		if(streams[e_out].tellp() > 0) streams[e_out] << '\n';
+		streams[e_info] << "Caught controller " << b.button << ", state " << b.state;
 		return { Events::StatusPass, b.timestamp };
 	}
 	Events::Status operator()(SDL_MouseButtonEvent const& b) {
-		*this << "";
-		oss << "Caught mouse " << int(b.button)
+		if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
+		streams[e_info] << "Caught mouse " << int(b.button)
 			<< " " << ((b.type == SDL_MOUSEBUTTONDOWN) ? "press" : "release")
-			<< " at (" << b.x << ", " << b.y << ")\n";
+			<< " at (" << b.x << ", " << b.y << ")";
 		return { Events::StatusPass, b.timestamp };
 	}
 
@@ -194,12 +215,29 @@ struct Hnd: Presenter<Hnd> {
 	Events::Status operator()(S const& s) {
 		return { Events::StatusPass, s.timestamp };
 	}
-	std::size_t size(void) { return oss.tellp(); }
-	Hnd& clear(void) { return oss.str(""), *this; }
+	Hnd& clear(void) {
+		//return oss.str(""), *this;
+		for(auto & i : streams)
+			i.str("");
+		return *this;
+	}
 	template<class S>
-	Hnd& operator<<(S const& s) { return oss << s, *this; }
-	template<class S>
-	friend S& operator<<(S& s, Hnd const& hnd) { return s << hnd.oss.str(), s; }
+	friend S& operator<<(S& s, Hnd const& hnd) {
+		//return s << hnd.oss.str(), s;
+		std::ostringstream oss;
+		bool printed = false;
+		for(auto i = 0; i < n_streams; i++) {
+			if(!hnd.enabled[i]) continue;
+			oss << hnd.streams[i].str();
+			if(oss.tellp() > 0) {
+				if(printed) s << '\n';
+				printed = true;
+				s << oss.str();
+			}
+			oss.str("");
+		}
+		return s;
+	}
 };
 
 template<class S, class T, class RAD = T>
@@ -475,6 +513,7 @@ int main(int argc, const char *argv[]) {
 	}*/
 
 	hnd.project(left, right, bottom, top, near, far);
+	hnd.enable(Hnd::e_info);
 
 
 	auto stopwatch = Timing::make_stopwatch();
@@ -494,7 +533,7 @@ int main(int argc, const char *argv[]) {
 		}
 		// Task
 		if(hnd.size()) {
-			cout << hnd << flush;
+			cout << /*"'" << */ hnd /* << "'" */ << endl;
 			hnd.clear();
 		}
 		// Render
@@ -508,7 +547,7 @@ int main(int argc, const char *argv[]) {
 	}
 
 	if(hnd.size())
-		cout << hnd << "\n";
+		cout /* << "'" */ << hnd /* << "'" */ << endl;
 	//cout << "Frame's message:\n" << hnd.frame << endl;
 
 	// Clean up what isn't done through RAII already
