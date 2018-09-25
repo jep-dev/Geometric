@@ -59,7 +59,9 @@ struct Point {
 	}
 
 	friend struct DualQuaternion<S>;
-	operator DualQuaternion<S>(void) const { return {1, 0, 0, 0, 0, x, y, z}; }
+	//operator DualQuaternion<S>(void) const { return {1, 0, 0, 0, 0, x, y, z}; }
+	template<class T>
+	operator DualQuaternion<T>(void) const { return {1, 0, 0, 0, 0, T(x), T(y), T(z)}; }
 	template<class T>
 	friend T& operator<<(T &t, Point const& p) { return t << to_string(p), t; }
 		//{ return t << (DualQuaternion<S>) p, t; }
@@ -80,5 +82,21 @@ std::string to_string(Point<S> const& p, unsigned prec, DELIM delim) {
 	return "(" + to_string(p.x, prec, delim) + ", " + to_string(p.y, prec, delim)
 			+ ", " + to_string(p.z, prec, delim) + ")";
 }
+
+#define USERDEF_TEMPLATE(CLASS,PARAM,UD,X,Y,Z) \
+CLASS<PARAM> operator"" UD(long long unsigned d) \
+	{ return {PARAM(X), PARAM(Y), PARAM(Z)}; } \
+CLASS<PARAM> operator"" UD(long double d) \
+	{ return {PARAM(X), PARAM(Y), PARAM(Z)}; }
+#define USERDEF_TEMPLATES(CLASS, P1, UD1, P2, UD2, X, Y, Z) \
+	USERDEF_TEMPLATE(CLASS, P1, UD1, X, Y, Z) \
+	USERDEF_TEMPLATE(CLASS, P2, UD2, X, Y, Z)
+
+USERDEF_TEMPLATES(Point, float, _x, double, _dx, d, 0, 0)
+USERDEF_TEMPLATES(Point, float, _y, double, _dy, 0, d, 0)
+USERDEF_TEMPLATES(Point, float, _z, double, _dz, 0, 0, d)
+
+#undef USERDEF_TEMPLATE
+#undef USERDEF_TEMPLATES
 
 #endif
