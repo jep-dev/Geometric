@@ -115,6 +115,18 @@ template<class S> struct DualQuaternion {
 	template<class T>
 	DualQuaternion& operator+=(DualQuaternion<T> const& t)
 		{ return *this = *this + DualQuaternion<S>{t.s, t.t, t.u, t.v, t.w, t.x, t.y, t.z}; }
+	template<class T, class ST = std::common_type_t<S,T>>
+	DualQuaternion<ST> operator+(Point<T> const& t) {
+		return {ST(s), ST(t), ST(u), ST(v),
+			ST(w), ST(x+t.x), ST(y+t.y), ST(z+t.z)};
+	}
+	template<class T>
+	DualQuaternion& operator+=(Point<T> const& t) {
+		x = S(x+t.x);
+		y = S(y+t.y);
+		z = S(z+t.z);
+		return *this;
+	}
 	template<class T>
 	DualQuaternion& operator-=(DualQuaternion<T> const& t)
 		{ return *this = *this - DualQuaternion<S>{t.s, t.t, t.u, t.v, t.w, t.x, t.y, t.z}; }
