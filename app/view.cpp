@@ -12,6 +12,7 @@
 */
 #include "timing.hpp"
 
+#include "quaternion.tpp"
 #include "dual.tpp"
 #include "point.hpp"
 #include "math.tpp"
@@ -52,10 +53,37 @@ struct Hnd: Presenter<Hnd> {
 		}
 		return total;
 	}
+	Hnd& update(void) {
+		if(!joysticks.size()) {
+			if(streams[e_out].tellp() > 0) streams[e_out] << std::endl;
+			streams[e_out] << "Skipped updating due to no joysticks";
+			return *this;
+		}
+		auto & first = joysticks.begin() -> second;
+		auto d = 1_e + transform.x*1_I + transform.y*1_J + transform.z*1_K;
+		if(first.axes.find(0) != first.axes.cend()) {
+			d = (1_e - (.1_I * first.axes[0]))*d;
+		}
+		if(first.axes.find(1) != first.axes.cend()) {
+			d = (1_e - (.1_K * first.axes[1]))*d;
+		}
+		if(first.axes.find(4) != first.axes.cend()) {
+			d = rotation(M_PI/8 * first.axes[4], -1, 0, 0) * d;
+		}
+		if(first.axes.find(3) != first.axes.cend()) {
+			d = rotation(M_PI/8 * first.axes[3], 0, 1, 0) * d;
+		}
+		transform = d;
+		/*if(streams[e_out].tellp() > 0) streams[e_out] << std::endl;
+		streams[e_out] << transform;*/
+		set_model(transform);
+		/*project(left, right, bottom, top, near, far);
+		project();*/
+		return *this;
+	}
 
 	using Handler::operator();
 	Events::Status operator()(SDL_JoyDeviceEvent const& jde) {
-		//auto found = joysticks.find(jde.which);
 		switch(jde.type) {
 			case SDL_JOYDEVICEADDED:
 			if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
@@ -79,7 +107,8 @@ struct Hnd: Presenter<Hnd> {
 		auto & joy = found -> second;
 		joy.axes[ja.axis] = ja.value/float(SDL_JOYSTICK_AXIS_MAX);
 		if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
-		streams[e_info] << "Joy axis " << int(ja.axis);
+		streams[e_info] << "Joy axis " << int(ja.axis) << " -> " << joy.axes[ja.axis];
+		update();
 		return { Events::StatusPass, ja.timestamp };
 	}
 	Events::Status operator()(SDL_JoyHatEvent const& jh) {
@@ -120,12 +149,8 @@ struct Hnd: Presenter<Hnd> {
 		using namespace gl;
 		using Streams::center;
 		using DQ = decltype(transform);
-		//locate("projection[0]", "projection[1]", "model[0]", "model[1]");
-		//locate("projection", "model[0]", "model[1]");
 		locate("model.u", "model.v");
-		GLint //proj[] = {locations["projection[0]"], locations["projection[1]"]},
-				//proj = locations["projection"],
-				mod[] = {locations["model.u"], locations["model.v"]};
+		GLint mod[] = {locations["model.u"], locations["model.v"]};
 		auto const& sym = k.keysym.sym;
 		if(sym == SDLK_ESCAPE || sym == SDLK_q)
 			return {Events::StatusQuit, k.timestamp};
@@ -145,9 +170,9 @@ struct Hnd: Presenter<Hnd> {
 			const char *pressed = "";
 			switch(k.keysym.sym) {
 				case SDLK_RETURN: pressed = "Return: "; transform = {1}; break;
-				case SDLK_1: pressed = "1: "; transform = (1_e + .1_I) * transform; break;
-				case SDLK_2: pressed = "2: "; transform = (1_e + .1_J) * transform; break;
-				case SDLK_3: pressed = "3: "; transform = (1_e + .1_k) * transform; break;
+				case SDLK_1: pressed = "1: "; transform = .1_x * transform; break;
+				case SDLK_2: pressed = "2: "; transform = .1_y * transform; break;
+				case SDLK_3: pressed = "3: "; transform = .1_z * transform; break;
 				case SDLK_8: pressed = "8: ";
 					transform = rotation(.1*M_PI, 0, 0, 1) * transform; break;
 				case SDLK_9: pressed = "9: ";
@@ -513,7 +538,8 @@ int main(int argc, const char *argv[]) {
 	}*/
 
 	hnd.project(left, right, bottom, top, near, far);
-	hnd.enable(Hnd::e_info);
+	hnd.enable(Hnd::e_out);
+	//hnd.enable(Hnd::e_info);
 
 
 	auto stopwatch = Timing::make_stopwatch();
@@ -536,10 +562,15 @@ int main(int argc, const char *argv[]) {
 			cout << /*"'" << */ hnd /* << "'" */ << endl;
 			hnd.clear();
 		}
+
+		double ms_elapsed = stopwatch.update().count()*1000;
+		//hnd.update(ms_elapsed);
+
 		// Render
 		hnd.frame.clear().draw(vao, GL_TRIANGLES, indicesSize, GL_UNSIGNED_INT, nullptr).flip();
-		double ms_elapsed = stopwatch.update().count()*1000,
-			ms_ideal = 1000/60.0, ms_diff = ms_ideal - ms_elapsed;
+		ms_elapsed = stopwatch.update().count()*1000;
+		static const double ms_ideal = 1000/60.0;
+		double ms_diff = ms_ideal - ms_elapsed;
 		if(ms_diff > 0) {
 			SDL_Delay(unsigned(ms_diff));
 		}
