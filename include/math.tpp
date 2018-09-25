@@ -24,5 +24,9 @@ std::string to_string(const S (&sn)[N], unsigned prec, DELIM delim) {
 	}
 	return out;
 }
+template<class S, class T, class ST>
+DualQuaternion<ST> operator*(Point<S> const& p, DualQuaternion<T> const& d) {
+	return DualQuaternion<ST>(p) * d;
+}
 
 #endif
