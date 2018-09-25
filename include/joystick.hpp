@@ -56,6 +56,8 @@ struct JoystickTable {
 	using Joysticks_t = std::map<unsigned, Joystick>;
 	Joysticks_t joysticks;
 	std::size_t size(void) const { return joysticks.size(); }
+	Joysticks_t::iterator begin(void) { return joysticks.begin(); }
+	Joysticks_t::const_iterator cbegin(void) const { return joysticks.cbegin(); }
 	Joysticks_t::iterator find(unsigned i) { return joysticks.find(i); }
 	Joysticks_t::const_iterator find(unsigned i) const { return joysticks.find(i); }
 	Joysticks_t::iterator end(void) { return joysticks.end(); }
