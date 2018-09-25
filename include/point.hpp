@@ -60,8 +60,14 @@ struct Point {
 
 	friend struct DualQuaternion<S>;
 	//operator DualQuaternion<S>(void) const { return {1, 0, 0, 0, 0, x, y, z}; }
+	/**
+	 * @brief Converts a point to a half-translation to be used in a sandwich product.
+	 * If the result were to be used as the object in a sandwich product and not the subject,
+	 * it would be half-scale.
+	 * TODO make conversion explicit or introduce intermediates like 'translation'/'position'?
+	 */
 	template<class T>
-	operator DualQuaternion<T>(void) const { return {1, 0, 0, 0, 0, T(x), T(y), T(z)}; }
+	operator DualQuaternion<T>(void) const { return {1, 0, 0, 0, 0, T(x/2), T(y/2), T(z/2)}; }
 	template<class T>
 	friend T& operator<<(T &t, Point const& p) { return t << to_string(p), t; }
 		//{ return t << (DualQuaternion<S>) p, t; }
