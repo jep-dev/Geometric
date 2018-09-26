@@ -29,7 +29,8 @@ struct Hnd: Presenter<Hnd> {
 	typedef enum {
 		e_out=0, e_info, n_streams
 	} e_stream;
-	DualQuaternion<float> transform = {1};
+	DualQuaternion<float> orientation = {1}, translation = {1},
+			transform = orientation * translation;
 	std::ostringstream streams[n_streams];
 	bool enabled[n_streams] = { false };
 	template<class... T>
@@ -60,23 +61,28 @@ struct Hnd: Presenter<Hnd> {
 			return *this;
 		}
 		auto & first = joysticks.begin() -> second;
-		auto d = 1_e + transform.x*1_I + transform.y*1_J + transform.z*1_K;
+		DualQuaternion<float> t = {1}, r = {1}; //orientation;
+		//auto d = 1_e + transform.x*1_I + transform.y*1_J + transform.z*1_K;
 		if(first.axes.find(0) != first.axes.cend()) {
-			d = (1_e - (.1_I * first.axes[0]))*d;
+			t = (1_e - (.1_I * first.axes[0])) * t;
 		}
 		if(first.axes.find(1) != first.axes.cend()) {
-			d = (1_e - (.1_K * first.axes[1]))*d;
-		}
-		if(first.axes.find(4) != first.axes.cend()) {
-			d = rotation(M_PI/8 * first.axes[4], -1, 0, 0) * d;
+			t = (1_e - (.1_K * first.axes[1])) * t;
 		}
 		if(first.axes.find(3) != first.axes.cend()) {
-			d = rotation(M_PI/8 * first.axes[3], 0, 1, 0) * d;
+			//r = rotation(M_PI/45 * first.axes[3], 0, 1, 0) * r;
+			r = r * rotation(M_PI/4 * first.axes[3], 0, 1, 0);
 		}
-		transform = d;
+		if(first.axes.find(4) != first.axes.cend()) {
+			//r = rotation(M_PI/45 * first.axes[4], -1, 0, 0) * r;
+			r = rotation(M_PI/4 * first.axes[4], -1, 0, 0) * r;
+		}
+		orientation = r;// * orientation;
+		translation = translation * (t ^ orientation);
+		//transform = d;
 		/*if(streams[e_out].tellp() > 0) streams[e_out] << std::endl;
 		streams[e_out] << transform;*/
-		set_model(transform);
+		set_model(transform = orientation * translation);
 		/*project(left, right, bottom, top, near, far);
 		project();*/
 		return *this;
