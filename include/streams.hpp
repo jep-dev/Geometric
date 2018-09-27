@@ -8,6 +8,10 @@
 
 #include "utility.hpp"
 
+#ifndef INDENT
+#define INDENT "\t"
+#endif
+
 namespace Streams {
 using std::string;
 using std::vector;
