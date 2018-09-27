@@ -1,6 +1,7 @@
 #ifndef STREAMS_HPP
 #define STREAMS_HPP
 
+#include <algorithm>
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -85,6 +86,21 @@ auto level(S& s, char fill = ' ')
 	}
 	return s;
 }
+
+struct OStringStream : std::ostringstream {
+	std::size_t size(void) const {
+		auto s = str();
+		return s.length();
+	}
+	std::size_t size(void) {
+		auto pos = tellp();
+		seekp(0, std::ios_base::end);
+		auto out = tellp();
+		seekp(pos);
+		return std::max(0, int(out));
+	}
+	virtual ~OStringStream(void) {}
+};
 
 }
 
