@@ -12,7 +12,14 @@
 #include "dual.hpp"
 #include "dual.tpp"
 
-void print_split(std::vector<std::string> const& in) {
+#include "utility.hpp"
+#include "geometric.hpp"
+
+#ifndef INDENT
+#define INDENT "\t"
+#endif
+
+/*void print_split(std::vector<std::string> const& in) {
 	bool met = false;
 	for(auto const& s : in) {
 		auto split = Streams::split_outer(s);
@@ -59,15 +66,42 @@ std::vector<std::string> split_sum(std::string const& line) {
 	}
 	if(cur != "") split.emplace_back(cur);
 	return split;
+}*/
+
+template<class T>
+constexpr bool has_quiet_NaN(void)
+	{ return std::is_arithmetic<T>::value && std::numeric_limits<T>::has_quiet_NaN; }
+template<class T>
+using QuietNaN = std::enable_if_t<has_quiet_NaN<T>(),
+	std::integral_constant<T, std::numeric_limits<T>::quiet_NaN()>>;
+
+template<class T>
+constexpr bool has_loud_NaN(void)
+	{ return std::is_arithmetic<T>::value && std::numeric_limits<T>::has_signaling_NaN; }
+template<class T>
+using LoudNaN = std::enable_if<has_loud_NaN<T>(),
+	std::integral_constant<T, std::numeric_limits<T>::signaling_NaN()>>;
+
+template<class S>
+std::enable_if<has_quiet_NaN<S>(),S>
+make_NaN(Detail::Tag<QuietNaN<S>> = {})
+	{ return QuietNaN<S>::value; }
+template<class S>
+std::enable_if<has_loud_NaN<S>() && !has_quiet_NaN<S>(),S>
+make_NaN(Detail::Tag<LoudNaN<S>> = {}) {
+	return LoudNaN<S>::value;
 }
+
 
 // Note - a0b.12cd3ef is parsed as 0.123, etc.
 // Actual number extraction is locale-defined, e.g. 3,142
 // Grouping characters are not supported, e.g. 3 000 000
 template<class T = float>
-auto parse_coefficient(std::string const& word)
+/*auto parse_coefficient(std::string const& word)
 		-> std::enable_if_t<std::is_arithmetic<T>::value
-			&& std::numeric_limits<T>::has_quiet_NaN, T> {
+			&& std::numeric_limits<T>::has_quiet_NaN, T> {*/
+std::enable_if_t<has_quiet_NaN<T>(), T>
+parse_coefficient(std::string const& word) {
 	T out;
 	std::string value;
 	for(auto c : word) {
@@ -80,7 +114,8 @@ auto parse_coefficient(std::string const& word)
 	std::istringstream iss(value);
 	iss >> out;
 	if(iss.fail())
-		return std::numeric_limits<T>::quiet_NaN();
+		return QuietNaN<T>::value;
+		//return std::numeric_limits<T>::quiet_NaN();
 	return out;
 }
 
@@ -101,7 +136,7 @@ std::string parse_units(std::string const& word) {
 
 
 // TODO figure out how to parse UTF8, etc.
-template<class T>
+/*template<class T>
 std::pair<bool, DualQuaternion<T>> parse_dual(std::string const& word) {
 	std::pair<bool, DualQuaternion<T>> out = { false, {1} };
 	if(!word.length()) return out;
@@ -112,7 +147,7 @@ std::pair<bool, DualQuaternion<T>> parse_dual(std::string const& word) {
 
 	auto units = parse_units(word);
 	static const DualQuaternion<T> Z = {0};
-	bool p = false, latin = false, greek = false;
+	bool p = false;
 	char prev = '\0';
 	for(auto const& c : units) {
 		if(p) {
@@ -126,32 +161,6 @@ std::pair<bool, DualQuaternion<T>> parse_dual(std::string const& word) {
 			}
 			return out; // Reject P/p otherwise
 		}
-		/*if(latin) {
-			latin = false;
-			// Accept Latin epsilon, upper and lower
-			if(((prev == 0x01) && (c == 0x90)) || ((prev == 0x02) && (c == 0x5B))) {
-				d *= 1_E;
-				prev = c;
-				continue;
-			}
-			return out; // Reject Latin otherwise
-		}
-		if(greek) {
-			greek = false;
-			// Accept literal pi
-			if(c == 0xC0) {
-				d *= T(M_PI);
-				prev = c;
-				continue;
-			}
-			// Accept Greek epsilon, upper and lower
-			if((c == 0x95) || (c == 0xB5)) {
-				d *= 1_E;
-				prev = c;
-				continue;
-			}
-			return out; // Reject Greek otherwise
-		}*/
 		switch(c) {
 			case 'e': break;
 			case 'I': d *= 1_E;
@@ -163,10 +172,6 @@ std::pair<bool, DualQuaternion<T>> parse_dual(std::string const& word) {
 			case 'E': d *= 1_E; break;
 			// Accept 'p' pending 'i' (as in pi)
 			case 'P': case 'p': p = true; break;
-			/*
-			case 0x01: case 0x02: latin = true; break;
-			case 0x03: greek = true; break;
-			*/
 			default: return out;
 		}
 		if(d == Z) return out.first = true, out;
@@ -192,7 +197,7 @@ std::pair<bool, DualQuaternion<T>> parse_dual(std::vector<std::string> const& wo
 		out += parsed.second;
 	}
 	return {valid, out};
-}
+}*/
 
 template<class S>
 S& help_dual(S& s) {
@@ -213,7 +218,7 @@ S& help(S& s) {
 			"or free (<expression>).\n", s;
 }
 
-template<class T>
+/*template<class T>
 void test_interactive(std::map<std::string, DualQuaternion<T>> &symbols) {
 	std::cout << "Enter an assignment or expression: ";
 
@@ -222,19 +227,17 @@ void test_interactive(std::map<std::string, DualQuaternion<T>> &symbols) {
 	std::getline(std::cin, line);
 	if(line == "") return;
 
-	/*
-	auto split = split_sum(line);
-	if(split.size()) {
-		std::cout << "{";
-		for(long n = split.size(), i = 0; i < n; i++) {
-			auto const& word = split[i];
-			if(i) std::cout << ", ";
-			std::cout << word << " = " << parse_coefficient(word)
-					<< " * " << parse_units(word);
-		}
-		std::cout << "}" << std::endl;
-	}
-	*/
+	//auto split = split_sum(line);
+	//if(split.size()) {
+		//std::cout << "{";
+		//for(long n = split.size(), i = 0; i < n; i++) {
+			//auto const& word = split[i];
+			//if(i) std::cout << ", ";
+			//std::cout << word << " = " << parse_coefficient(word)
+					//<< " * " << parse_units(word);
+		//}
+		//std::cout << "}" << std::endl;
+	//}
 
 	do {
 		auto assigned = Streams::split_assign(line);
@@ -260,30 +263,149 @@ void test_interactive(std::map<std::string, DualQuaternion<T>> &symbols) {
 		std::cout << value_dual.second << std::endl;
 	} while(0);
 
-	/*auto len0 = assigned.first.length(),
-			len1 = assigned.second.length();
-	if(len0)
-		std::cout << '[' << assigned.first << ']';
-	if(len0 && len1)
-		std::cout << " = ";
-	if(len1) {
-		std::cout << '`';
-		print_split(split_outer(assigned.second));
-		std::cout << '`';
-	}
-	test_interactive();
-	*/
+	//auto len0 = assigned.first.length(),
+			//len1 = assigned.second.length();
+	//if(len0)
+		//std::cout << '[' << assigned.first << ']';
+	//if(len0 && len1)
+		//std::cout << " = ";
+	//if(len1) {
+		//std::cout << '`';
+		//print_split(split_outer(assigned.second));
+		//std::cout << '`';
+	//}
+	//test_interactive();
 
 	test_interactive(symbols);
+}*/
+
+std::string trim(std::string const& s, bool leading = true, bool trailing = true) {
+	long size = s.length(), front = 0, back = size-1;
+	if(size == 0) return "";
+
+	auto match = [] (char c) -> bool {
+		switch(c) {
+			case ' ': case '\t':
+			case '\r': case '\n': return false;
+			default: return true;
+		}
+	};
+
+	if(leading) for(front = 0; front <= back; front++)
+		if(match(s[front])) break;
+	if(trailing) for(back = size-1; back >= front; back--)
+		if(match(s[back])) break;
+
+	return s.substr(front, back-front+1);
+}
+
+std::pair<std::string, std::string> parse_assign(std::string const& line) {
+	auto s = trim(line);
+	auto pos = s.find('=');
+	if(pos == std::string::npos) return {s, ""};
+	return { trim(s.substr(0, pos)), trim(s.substr(pos+1)) };
+}
+
+template<class K, class V>
+bool contains(std::map<K, V> const& m, K const& k)
+	{ return m.find(k) != m.cend(); }
+
+bool isvar(std::string const& line, bool trimmed = false) {
+	auto s = line;
+	if(!trimmed) s = trim(s);
+	if(!s.length() || !std::isalpha(s[0])) return false;
+	for(auto const& c : s) {
+		if(c == '_') continue;
+		if(std::isalnum(c)) continue;
+		return false;
+	}
+	return true;
+}
+bool isvar(std::string::const_iterator beg, std::string::const_iterator end,
+		bool trimmed = false) {
+	std::string s;
+	for(auto cur = beg; cur < end; cur++) {
+		s += *cur;
+	}
+	if(!trimmed) return isvar(trim(s), true);
+	return isvar(s, true);
 }
 
 int main(int argc, const char *argv[]) {
 	using namespace std;
 	typedef float T;
 	typedef DualQuaternion<T> DQ;
-	map<string, DQ> symbols;
+
+	map<string, T> scalars = {
+		{"pi", M_PI}, {"PI", M_PI}
+	};
+	map<string, DQ> cduals = {
+		{"e", 1_e}, {"i", 1_i}, {"j", 1_j}, {"k", 1_k},
+			{"ij", 1_k}, {"jk", 1_i}, {"ki", 1_j},
+		{"E", 1_E}, {"I", 1_I}, {"J", 1_J}, {"K", 1_K},
+			{"Ei", 1_I}, {"Ej", 1_J}, {"Ek", 1_K}
+	}, duals = {};
+
+	string line;
+	while(getline(cin, line)) {
+		if(!line.length()) break;
+		auto assign = parse_assign(line);
+		auto const& lhs = assign.first, rhs = assign.second;
+		if(rhs.length()) {
+			if(isvar(lhs)) {
+				if(!contains(cduals, lhs) && !contains(scalars, lhs)) {
+					if(isvar(rhs)) {
+						if(contains(cduals, rhs)) {
+							duals[lhs] = cduals[rhs];
+							cout << lhs << " := " << duals[lhs] << endl;
+						} else if(contains(duals, rhs)) {
+							duals[lhs] = duals[rhs];
+							cout << lhs << " := " << duals[lhs] << endl;
+						} else if(contains(scalars, rhs)) {
+							duals[lhs] = DQ{scalars[rhs]};
+							cout << lhs << " := " << duals[lhs];
+						} else {
+							cout << lhs << " := (evaluation of " << rhs << ")" << endl;
+						}
+					} else {
+						cout << lhs << " := (evaluation of " << rhs << ")" << endl;
+					}
+				} else if(contains(scalars, lhs)) {
+					cout << "Cannot assign " << lhs << " from " << scalars[lhs]
+							<< " to (evaluation of " << rhs << ")" << endl;
+				} else if(contains(cduals, lhs)) {
+					cout << "Cannot assign " << lhs << " from " << cduals[lhs]
+							<< " to (evaluation of " << rhs << ")" << endl;
+				} else {
+					if(isvar(rhs)) {
+						cout << lhs << " := ";
+						if(contains(scalars, rhs)) cout << scalars[rhs] << endl;
+						else if(contains(cduals, rhs)) cout << cduals[rhs] << endl;
+						else cout << "(evaluation of " << rhs << ")" << endl;
+					} else {
+						cout << lhs << " := (evaluation of " << rhs << ")" << endl;
+					}
+				}
+			} else {
+				cout << "The left hand side of assignment must be a variable name" << endl;
+			}
+		} else {
+			if(isvar(lhs)) {
+				cout << lhs << " = ";
+				if(contains(scalars, lhs)) cout << scalars[lhs];
+				else if(contains(cduals, lhs)) cout << cduals[lhs];
+				else if(contains(duals, lhs)) cout << duals[lhs];
+				else cout << "(unknown)";
+				cout << endl;
+			} else {
+				cout << "(evaluation of " << lhs << ")" << endl;
+			}
+		}
+	}
+
+	/*map<string, DQ> symbols;
 	test_interactive(symbols);
 	cout << "At exit, symbols are:" << endl;
 	for(auto const& s : symbols)
-		cout << "\t" << s.first << " = " << s.second << endl;
+		cout << "\t" << s.first << " = " << s.second << endl;*/
 }
