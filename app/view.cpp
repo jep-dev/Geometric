@@ -7,10 +7,6 @@
 #include "shader.hpp"
 #include "resource.hpp"
 #include "streams.tpp"
-/*
-#define USE_DEVIL
-#include "texture.hpp"
-*/
 #include "timing.hpp"
 
 #include "quaternion.tpp"
@@ -19,12 +15,27 @@
 #include "math.tpp"
 #include "surface.hpp"
 
-
-// Joystick, haptics, and gamecontroller cause udev error!
-// Audio, timer, and video are safe
-#define SUBSYSTEMS SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK
-
 #define USE_MODEL 2
+
+#ifndef SUBSYSTEMS
+#define SUBSYSTEMS SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK
+// Joystick, haptics, and gamecontroller cause udev error!
+// Audio, timer, and video are safe. Burn the error to recover.
+#endif
+
+/*#define USE_DEVIL
+#include "texture.hpp"
+Events::Status test_texture(void) {
+	string texPath = share + "link.png";
+	Texture tex(texPath.c_str());
+	// Currently breaks here, as in, GL will not create a texture.
+	// Maybe it doesn't identify it as a texture if it does?
+	if(!tex.created)
+		return { Events::StatusError };
+	if(!tex.sourced)
+		return { Events::StatusWarn };
+	return {};
+}*/
 
 struct Hnd;
 struct Hnd: Presenter<Hnd> {
@@ -33,7 +44,7 @@ struct Hnd: Presenter<Hnd> {
 	} e_stream;
 	DualQuaternion<float> orientation = {1}, translation = {1},
 			transform = orientation * translation;
-	std::ostringstream streams[n_streams];
+	Streams::OStringStream streams[n_streams];
 	bool enabled[n_streams] = { false };
 	template<class... T>
 	Hnd& enable(e_stream s, T... t) { return enabled[s] = true, enable(t...); }
@@ -43,13 +54,11 @@ struct Hnd: Presenter<Hnd> {
 	Hnd& disable(void) { return *this; }
 
 
-	//JoystickTable joysticks;
-
-	std::size_t size(void) /* cannot be const */ {
+	std::size_t size(void) const {
 		std::size_t total = 0;
 		for(auto i = 0; i < n_streams; i++) {
 			if(!enabled[i]) continue;
-			auto size = streams[i].tellp();
+			auto size = streams[i].size();
 			// Observe failure conditions resulting in size=-1
 			if(size > 0) total += size;
 		}
@@ -98,7 +107,10 @@ struct Hnd: Presenter<Hnd> {
 				case SDLK_MINUS:
 				case SDLK_KP_MINUS: project(-4, 4, -4, 4, 1, 10); break;
 				case SDLK_KP_PLUS:
-				case SDLK_EQUALS: project(-2.5, 2.5, -2.5, 2.5, 1, 10); break;
+				case SDLK_EQUALS:
+					set_model(transform = {1});
+					project(-2.5, 2.5, -2.5, 2.5, 1, 10);
+					break;
 				default: break;
 			}
 		} else {
@@ -269,19 +281,6 @@ int main(int argc, const char *argv[]) {
 	glEnable(GL_TEXTURE_2D);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	/*std::map<unsigned, Joystick> joys;
-	//std::map<Uint8, int> axes;
-	float dead = .25;
-	unsigned nJoysticks = SDL_NumJoysticks(), max_value = (1 << 15) - 1,
-			l1 = 0, l2 = 1, r1 = 3, r2 = 4; // TODO query/ask for axis ID's?
-	//axes[l1] = axes[l2] = axes[r1] = axes[r2] = 0;
-	for(unsigned i = 0; i < nJoysticks; i++) {
-		//SDL_Joystick *joy = SDL_JoystickOpen(i);
-		//if(joy) joys.emplace(i, joy);
-		Joystick joy = { i };
-		if(joy) joys.emplace(i, std::move(joy));
-	}*/
-
 	auto used = hnd.init(share + "dual.glsl", share + "vert.glsl",
 			gl::GL_FRAGMENT_SHADER, share + "frag.glsl");
 	if(!used.good()) {
@@ -290,15 +289,6 @@ int main(int argc, const char *argv[]) {
 		cout << endl;
 		return 1;
 	}
-	/*string texPath = share + "link.png";
-	Texture tex(texPath.c_str());
-	if(!tex.created) {
-		cout << "Not created" << endl;
-	} else if(!tex.sourced) {
-		cout << "Not sourced" << endl;
-	} else {
-		cout << "Texture... success?" << endl;
-	}*/
 	hnd.locate("l", "r", "b", "t", "n", "f", "model[0]", "model[1]")
 		.project(left, right, bottom, top, near, far);
 
@@ -361,7 +351,7 @@ int main(int argc, const char *argv[]) {
 		}
 
 		double ms_elapsed = stopwatch.update().count()*1000;
-		//hnd.update(ms_elapsed);
+		hnd.update();
 
 		// Render
 		hnd.frame.clear().draw(vao, GL_TRIANGLES, indicesSize, GL_UNSIGNED_INT, nullptr).flip();
