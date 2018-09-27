@@ -3,9 +3,12 @@
 
 ///@cond
 #include <utility>
+#include <map>
 ///@endcond
 
 #include <SDL.h>
+
+#include "joystick.hpp"
 
 namespace Events {
 
@@ -48,8 +51,59 @@ struct Status {
 
 template<class C>
 struct Handler {
+	JoystickTable joysticks;
+
 	template<class... T>
 	Status operator()(SDL_QuitEvent const& q, T &&...) { return {StatusQuit, q.timestamp}; }
+
+	template<class... T>
+	Status operator()(SDL_JoyDeviceEvent const& d, T &&...) {
+		return { joysticks.open(d.which) ? StatusPass : StatusWarn, d.timestamp };
+	}
+	template<class... T>
+	Status operator()(SDL_JoyAxisEvent const& a, T &&...) {
+		Status out = { Events::StatusPass, a.timestamp };
+		auto found = joysticks.find(a.which);
+		if(found == joysticks.end())
+			return out.code = Events::StatusWarn, out;
+		auto & joy = found -> second;
+		float axis = a.value/float(SDL_JOYSTICK_AXIS_MAX), axis2 = axis * axis,
+			dead = .1, dead2 = dead * dead;
+
+		if(axis2 < dead2)
+			return joy.axes[a.axis] = 0, out;
+
+		float r = sqrt(axis2);
+		joy.axes[a.axis] = (r - dead) * axis / (1 - dead);
+		return out;
+	}
+	template<class... T>
+	Status operator()(SDL_JoyHatEvent const& h, T &&...) {
+		Status out = { Events::StatusPass, h.timestamp };
+		auto found = joysticks.find(h.which);
+		if(found == joysticks.end())
+			return out.code = StatusWarn, out;
+		auto & joy = found -> second;
+		joy.hat.first = joy.hat.second;
+		joy.hat.second = h.value;
+		return out;
+	}
+	template<class... T>
+	Status operator()(SDL_JoyButtonEvent const& b, T &&...) {
+		Status out = { StatusPass, b.timestamp };
+		auto found = joysticks.find(b.which);
+		if(found == joysticks.end())
+			return out.code = StatusWarn, out;
+		auto & joy = found -> second;
+		auto button = joy.buttons.find(b.button);
+		if(button == joy.buttons.end()) {
+			joy.buttons.emplace(b.button, Joystick::History<>{b.state, b.state});
+		} else {
+			button -> second.first = button -> second.second;
+			button -> second.second = b.state;
+		}
+		return out;
+	}
 
 	template<class... T>
 	Status operator()(SDL_Event const& ev, T &&... t) {
