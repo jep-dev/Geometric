@@ -81,68 +81,7 @@ struct Hnd: Presenter<Hnd> {
 	}
 
 	using Handler::operator();
-	Events::Status operator()(SDL_JoyDeviceEvent const& jde) {
-		switch(jde.type) {
-			case SDL_JOYDEVICEADDED:
-			if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
-				if(joysticks.open(jde.which))
-					streams[e_info] << "Opened joystick " << jde.which;
-				else streams[e_out] << "Could not open joystick " << jde.which;
-				break;
-			case SDL_JOYDEVICEREMOVED:
-				joysticks.erase(jde.which);
-				if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
-				streams[e_info] << "Removed joystick " << jde.which;
-				break;
-			default: break;
-		}
-		return { Events::StatusPass, jde.timestamp };
-	}
-	Events::Status operator()(SDL_JoyAxisEvent const& ja) {
-		auto found = joysticks.find(ja.which);
-		if(found == joysticks.end())
-			return { Events::StatusWarn, ja.timestamp };
-		auto & joy = found -> second;
-		joy.axes[ja.axis] = ja.value/float(SDL_JOYSTICK_AXIS_MAX);
-		if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
-		streams[e_info] << "Joy axis " << int(ja.axis) << " -> " << joy.axes[ja.axis];
-		update();
-		return { Events::StatusPass, ja.timestamp };
-	}
-	Events::Status operator()(SDL_JoyHatEvent const& jh) {
-		auto found = joysticks.find(jh.which);
-		if(found == joysticks.end())
-			return { Events::StatusWarn, jh.timestamp };
-		auto & joy = found -> second;
-		joy.hat.first = joy.hat.second;
-		joy.hat.second = jh.value;
-		// jh.hat is another index somewhat like axes
-		// TODO redesign 'hat' as 'hats'
-		if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
-		streams[e_info] << "Joy hat " << int(jh.value);
-		return { Events::StatusPass, jh.timestamp };
-	}
-	Events::Status operator()(SDL_JoyButtonEvent const& jb) {
-		auto found = joysticks.find(jb.which);
-		if(found == joysticks.end())
-			return { Events::StatusWarn, jb.timestamp };
-		auto & joy = found -> second;
-		auto button = joy.buttons.find(jb.button);
-		if(button == joy.buttons.end()) {
-			joy.buttons.emplace(jb.button,
-					Joystick::History<>{jb.state, jb.state});
-			if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
-			streams[e_info] << "Button " << int(jb.button)
-				<< ": " << int(jb.state);
-		} else {
-			if(streams[e_info].tellp() > 0) streams[e_info] << '\n';
-			streams[e_info] << "Button " << int(jb.button) << ": "
-				<< int(joy.buttons[jb.button].first) << " -> " << int(jb.state);
-			button -> second.first = button -> second.second;
-			button -> second.second = jb.state;
-		}
-		return { Events::StatusPass, jb.timestamp };
-	}
+
 	Events::Status operator()(SDL_KeyboardEvent const& k) {
 		using namespace gl;
 		using Streams::center;
