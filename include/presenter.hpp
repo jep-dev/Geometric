@@ -8,6 +8,8 @@
 #include "model.hpp"
 #include "shader.hpp"
 
+#include "joystick.hpp"
+
 template<class S>
 struct Presenter;
 
@@ -23,6 +25,9 @@ struct Presenter: Events::Handler<S> {
 			near = 1, far = 10;
 
 	std::map<std::string, gl::GLint> locations;
+
+	JoystickTable joysticks;
+
 	S& locate(void) { return static_cast<S&>(*this); }
 	template<class U, class... V>
 	S& locate(U const& u, V const&... v) {
