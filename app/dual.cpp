@@ -57,16 +57,33 @@ std::vector<std::string> get_table(std::string const& title,
 	return out;
 }
 
+/* Testing the role of the non-dual component in sandwich products - e.g. position and normal
+ * stored as (n + E p) as the object of the sandwich product. Oddly enough, while the traditional
+ * cos(theta)+isin(theta) format did not work, 1+cos(theta)+isin(theta) appeared to.
+ * That is, 1_e + n + Ex = 1_e + n' + Ex' (the 1_e is preserved and would have to be removed.)
+ */
+/*void test_binary(void) {
+	using namespace std;
+	typedef float T;
+	typedef DualQuaternion<T> DQ;
+	DQ LHS[] = {1_i, 1_e + 5_J, 1_i + 5_J};
+	for(auto const& lhs : LHS) {
+		cout << "LHS = " << lhs << endl;
+		for(DQ rhs : {1_e + 0_E, 1_e + 1_i + 1_I, 1_e + 1_i + 1_J, 1_e + 1_i + 1_K}) {
+			cout << "  RHS = " << rhs << " -> " << (rhs ^ lhs) << endl;
+		}
+	}
+}*/
+
 int main(int argc, const char *argv[]) {
 	using namespace std;
 	using Streams::center;
-
-	cout << "Using dual quaternions as implemented in " << DUAL_IMPL << '.' << endl;
 
 	typedef float T;
 	typedef DualQuaternion<T> DQ;
 	typedef Point<T> PT;
 	typedef DQ (binary) (DQ const&, DQ const&);
+
 
 	/*DQ p1 = 1_e + 1_I, p2 = 1_e + 1_J, dp = p2 - p1;
 	// Line: p1 + dp * t
