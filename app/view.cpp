@@ -190,14 +190,12 @@ struct Hnd: Presenter<Hnd> {
 		return { Events::StatusPass, s.timestamp };
 	}
 	Hnd& clear(void) {
-		//return oss.str(""), *this;
 		for(auto & i : streams)
 			i.str("");
 		return *this;
 	}
 	template<class S>
 	friend S& operator<<(S& s, Hnd const& hnd) {
-		//return s << hnd.oss.str(), s;
 		std::ostringstream oss;
 		bool printed = false;
 		for(auto i = 0; i < n_streams; i++) {
