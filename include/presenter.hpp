@@ -26,8 +26,6 @@ struct Presenter: Events::Handler<S> {
 
 	std::map<std::string, gl::GLint> locations;
 
-	JoystickTable joysticks;
-
 	S& locate(void) { return static_cast<S&>(*this); }
 	template<class U, class... V>
 	S& locate(U const& u, V const&... v) {
@@ -35,6 +33,7 @@ struct Presenter: Events::Handler<S> {
 			locations.erase(u);
 		return locate(v...);
 	}
+
 
 	// Initializer given a path without a type; provide a type and recurse
 	template<class... T>
