@@ -15,10 +15,6 @@
 #include "utility.hpp"
 #include "geometric.hpp"
 
-#ifndef INDENT
-#define INDENT "\t"
-#endif
-
 /*void print_split(std::vector<std::string> const& in) {
 	bool met = false;
 	for(auto const& s : in) {
