@@ -331,56 +331,91 @@ bool isvar(std::string::const_iterator beg, std::string::const_iterator end,
 	return isvar(s, true);
 }
 
+template<class T = float> using Duals = std::map<std::string, DualQuaternion<T>>;
+
+template<class T = float>
+struct System {
+	const Duals<T> cvars = {};
+	Duals<T> vars = {};
+
+	bool parse(std::string const& lhs, std::string const& rhs) {
+		if(!lhs.length() || !rhs.length()) return false;
+		bool lhs_isvar = !lhs_empty && isvar(lhs),
+				rhs_isvar = !rhs_empty && isvar(rhs),
+				lhs_iscdef = lhs_isvar && contains(cvars, lhs),
+				rhs_iscdef = rhs_isvar && contains(cvars, rhs),
+				lhs_isdef = lhs_isvar && contains(vars, lhs),
+				rhs_isdef = rhs_isvar && contains(vars, rhs);
+		if(lhs_iscdef) return false;
+		if(rhs_iscdef) vars[lhs] = cvars[rhs];
+		else if(rhs_isdef) vars[lhs] = vars[rhs];
+		else { /* TODO Actually parse here */ }
+		return true;
+	}
+	bool parse(std::string const& s) {
+		if(!s.length()) return false;
+		auto assign = parse_assign(s);
+		auto const& k = assign.first, v = assign.second;
+		return parse(k, v);
+	}
+};
+
 int main(int argc, const char *argv[]) {
 	using namespace std;
 	typedef float T;
 	typedef DualQuaternion<T> DQ;
 
-	map<string, T> scalars = {
-		{"pi", M_PI}, {"PI", M_PI}
-	};
-	map<string, DQ> cduals = {
+	const Duals<T> cvars = {
+		{"pi", M_PI*1_e}, {"PI", M_PI*1_e},
 		{"e", 1_e}, {"i", 1_i}, {"j", 1_j}, {"k", 1_k},
 			{"ij", 1_k}, {"jk", 1_i}, {"ki", 1_j},
 		{"E", 1_E}, {"I", 1_I}, {"J", 1_J}, {"K", 1_K},
 			{"Ei", 1_I}, {"Ej", 1_J}, {"Ek", 1_K}
-	}, duals = {};
+	};
+	Duals<T> vars = {};
+	/*
+	 * a + b - c + d
+	 *   = sum { a, b, -c, d }
+	 * a + bi - cj + dk
+	 *   = sum { a, product { b, i }, - product { c, j } + product { d, k } }
+	 */
 
 	string line;
 	while(getline(cin, line)) {
 		if(!line.length()) break;
 		auto assign = parse_assign(line);
 		auto const& lhs = assign.first, rhs = assign.second;
+		bool lisvar = isvar(lhs),
+			lconst = lvar && contains(cvars, lhs),
+
+			rvar = isvar(rhs),
+			rconst = rvar && contains(cvars, rhs),
+		if(isvar(lhs) && rhs.length()) {
+		} else {
+		}
 		if(rhs.length()) {
 			if(isvar(lhs)) {
-				if(!contains(cduals, lhs) && !contains(scalars, lhs)) {
+				if(!contains(cvars, lhs)) {
 					if(isvar(rhs)) {
-						if(contains(cduals, rhs)) {
-							duals[lhs] = cduals[rhs];
-							cout << lhs << " := " << duals[lhs] << endl;
-						} else if(contains(duals, rhs)) {
-							duals[lhs] = duals[rhs];
-							cout << lhs << " := " << duals[lhs] << endl;
-						} else if(contains(scalars, rhs)) {
-							duals[lhs] = DQ{scalars[rhs]};
-							cout << lhs << " := " << duals[lhs];
+						if(contains(cvars, rhs)) {
+							vars[lhs] = cvars[rhs];
+							cout << lhs << " := " << vars[lhs] << endl;
+						} else if(contains(vars, rhs)) {
+							vars[lhs] = vars[rhs];
+							cout << lhs << " := " << vars[lhs] << endl;
 						} else {
 							cout << lhs << " := (evaluation of " << rhs << ")" << endl;
 						}
 					} else {
 						cout << lhs << " := (evaluation of " << rhs << ")" << endl;
 					}
-				} else if(contains(scalars, lhs)) {
-					cout << "Cannot assign " << lhs << " from " << scalars[lhs]
-							<< " to (evaluation of " << rhs << ")" << endl;
-				} else if(contains(cduals, lhs)) {
-					cout << "Cannot assign " << lhs << " from " << cduals[lhs]
+				} else if(contains(cvars, lhs)) {
+					cout << "Cannot assign " << lhs << " from " << cvars[lhs]
 							<< " to (evaluation of " << rhs << ")" << endl;
 				} else {
 					if(isvar(rhs)) {
 						cout << lhs << " := ";
-						if(contains(scalars, rhs)) cout << scalars[rhs] << endl;
-						else if(contains(cduals, rhs)) cout << cduals[rhs] << endl;
+						if(contains(cvars, rhs)) cout << cvars[rhs] << endl;
 						else cout << "(evaluation of " << rhs << ")" << endl;
 					} else {
 						cout << lhs << " := (evaluation of " << rhs << ")" << endl;
@@ -392,14 +427,10 @@ int main(int argc, const char *argv[]) {
 		} else {
 			if(isvar(lhs)) {
 				cout << lhs << " = ";
-				if(contains(scalars, lhs)) cout << scalars[lhs];
-				else if(contains(cduals, lhs)) cout << cduals[lhs];
-				else if(contains(duals, lhs)) cout << duals[lhs];
-				else cout << "(unknown)";
-				cout << endl;
-			} else {
-				cout << "(evaluation of " << lhs << ")" << endl;
-			}
+				if(contains(cvars, lhs)) cout << cvars[lhs] << endl;
+				else if(contains(vars, lhs)) cout << vars[lhs] << endl;
+				else cout << "(evaluation of " << lhs << ")" << endl;
+			} else cout << "(evaluation of " << lhs << ")" << endl;
 		}
 	}
 
