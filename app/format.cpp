@@ -7,7 +7,7 @@
 
 #include "pretty.tpp"
 #include "format.hpp"
-#include "streams.hpp"
+#include "streams.tpp"
 
 #include "quaternion.hpp"
 #include "quaternion.tpp"
