@@ -17,26 +17,6 @@ auto parse_positive(S const& s, T const& def)
 	return (value > 0) ? value : def;
 }
 
-std::string trim(std::string const& in) {
-	int p0 = 0, p1 = in.length()-1;
-	bool met = false;
-	for(int i = 0, n = in.length(); i < n; i++) {
-		if(in[i] != ' ') {
-			met = true;
-			p0 = i;
-			break;
-		}
-	}
-	if(!met) return "";
-	for(int i = in.length()-1; i >= p0; i--) {
-		if(in[i] != ' ') {
-			p1 = i;
-			break;
-		}
-	}
-	return in.substr(p0, p1-p0+1);
-}
-
 std::vector<std::string> split_outer(std::string const& in) {
 	std::vector<std::string> out;
 	unsigned level = 0, accum = 0;

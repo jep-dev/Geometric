@@ -24,6 +24,26 @@ template<class S>
 std::ostream& center(std::ostream& out, S const& s, unsigned N, bool leftish = true);
 std::string center(std::string const& out, unsigned N, char fill = ' ', bool leftish = true);
 
+std::string trim(std::string const& s, bool leading = true, bool trailing = true) {
+	long size = s.length(), front = 0, back = size-1;
+	if(size == 0) return "";
+
+	auto match = [] (char c) -> bool {
+		switch(c) {
+			case ' ': case '\t':
+			case '\r': case '\n': return false;
+			default: return true;
+		}
+	};
+
+	if(leading) for(front = 0; front <= back; front++)
+		if(match(s[front])) break;
+	if(trailing) for(back = size-1; back >= front; back--)
+		if(match(s[back])) break;
+
+	return s.substr(front, back-front+1);
+}
+
 /** Abstract minimax (pair with first=min and second=max) */
 template<class T>
 std::pair<long, long> minimax(T && t) {
