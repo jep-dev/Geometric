@@ -505,16 +505,23 @@ int main(int argc, const char *argv[]) {
 			continue;
 		}
 		DQ out = {0};
-		if(risempty) {
+		/*if(risempty) {
 			rhs = lhs; // TODO something else?
-		}
+		}*/
 		//if(lisvar) {
+			bool cont = true;
 			if(risempty) {
-				if(lconst) cout << lhs << " is constant" << endl;
+				cout << lhs << " = ";
+				if(lconst) cont = false, cout << cvars[lhs];
+				else if(lvar) cout << vars[lhs];
+				else rhs = lhs;
+			}
+			//if(!risempty) {
+				if(cont && lconst) cout << lhs << " is constant" << endl;
 				else if(rconst) vars[lhs] = cvars[rhs];
 				else if(contains(vars, rhs)) vars[lhs] = vars[rhs];
 				else {
-					cout << lhs << " = ";
+					//cout << lhs << " = ";
 					bool first_add = true;
 					for(auto term : parse_add(rhs)) {
 						if(!first_add) cout << " + ";
@@ -548,13 +555,6 @@ int main(int argc, const char *argv[]) {
 					//cout << "]" << endl;
 				}
 				//cout << lhs << " = " << vars[lhs] << endl;
-			} else  {
-				cout << lhs;
-				if(lconst) cout << " = " << cvars[lhs];
-				else if(contains(vars, lhs)) cout << " = " << vars[lhs];
-				else cout << " is undefined";
-				cout << endl;
-			}
 		//} else {
 			//cout << '"' << lhs << "\" is not a valid variable name" << endl;
 		//}
