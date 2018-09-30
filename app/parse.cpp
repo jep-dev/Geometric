@@ -275,31 +275,97 @@ void test_interactive(std::map<std::string, DualQuaternion<T>> &symbols) {
 	test_interactive(symbols);
 }*/
 
-std::string trim(std::string const& s, bool leading = true, bool trailing = true) {
-	long size = s.length(), front = 0, back = size-1;
-	if(size == 0) return "";
-
-	auto match = [] (char c) -> bool {
+std::vector<std::string> parse_add(std::string const& expr) {
+	using std::string;
+	std::vector<string> out;
+	string cur;
+	int parens = 0;
+	for(auto const& c : expr) {
 		switch(c) {
-			case ' ': case '\t':
-			case '\r': case '\n': return false;
-			default: return true;
+			case '+':
+				if(parens) cur += "+";
+				else if(cur.length())
+					out.emplace_back(cur), cur = "";
+				break;
+			case '-':
+				if(parens) cur += "-";
+				else if(cur.length())
+					out.emplace_back(cur), cur = "-";
+				break;
+			case '(':
+				parens++;
+				cur += "(";
+				break;
+			case ')':
+				parens--;
+				cur += ")";
+				break;
+			default:
+				cur += c;
+				break;
 		}
-	};
-
-	if(leading) for(front = 0; front <= back; front++)
-		if(match(s[front])) break;
-	if(trailing) for(back = size-1; back >= front; back--)
-		if(match(s[back])) break;
-
-	return s.substr(front, back-front+1);
+	}
+	if(cur.length())
+		out.emplace_back(cur);
+	return out;
+}
+std::vector<std::string> parse_mul(std::string const& expr) {
+	using std::string;
+	std::vector<string> out;
+	string cur;
+	int parens = 0;
+	bool num = false, alpha = false;
+	for(auto const& c : expr) {
+		if(std::isdigit(c) || c == '.') {
+			if(alpha && cur.length()) {
+				out.emplace_back(cur);
+				cur = "";
+			}
+			alpha = false;
+			num = true;
+			cur += c;
+		} else if(std::isalpha(c) || c == '_') {
+			if(num && cur.length()) {
+				out.emplace_back(cur);
+				cur = "";
+			}
+			alpha = true;
+			num = false;
+			cur += c;
+		} else {
+			switch(c) {
+			case '(':
+				if(parens == 0 && cur.length()) {
+					out.emplace_back(cur);
+					cur = "";
+				}
+				cur += '(';
+				parens++;
+				num = false;
+				alpha = false;
+				break;
+			case ')':
+				parens--;
+				cur += ')';
+				if(parens == 0) {
+					out.emplace_back(cur);
+					cur = "";
+				}
+				num = false;
+				alpha = false;
+				break;
+			}
+		}
+	}
+	if(cur.length()) out.emplace_back(cur);
+	return out;
 }
 
 std::pair<std::string, std::string> parse_assign(std::string const& line) {
-	auto s = trim(line);
+	auto s = Streams::trim(line);
 	auto pos = s.find('=');
-	if(pos == std::string::npos) return {s, ""};
-	return { trim(s.substr(0, pos)), trim(s.substr(pos+1)) };
+	if(pos == std::string::npos) return std::make_pair(s, "");
+	return std::make_pair(Streams::trim(s.substr(0, pos)), Streams::trim(s.substr(pos+1)));
 }
 
 template<class K, class V>
@@ -308,7 +374,7 @@ bool contains(std::map<K, V> const& m, K const& k)
 
 bool isvar(std::string const& line, bool trimmed = false) {
 	auto s = line;
-	if(!trimmed) s = trim(s);
+	if(!trimmed) s = Streams::trim(s);
 	if(!s.length() || !std::isalpha(s[0])) return false;
 	for(auto const& c : s) {
 		if(c == '_') continue;
@@ -323,21 +389,23 @@ bool isvar(std::string::const_iterator beg, std::string::const_iterator end,
 	for(auto cur = beg; cur < end; cur++) {
 		s += *cur;
 	}
-	if(!trimmed) return isvar(trim(s), true);
+	if(!trimmed) return isvar(Streams::trim(s), true);
 	return isvar(s, true);
 }
 
-template<class T = float> using Duals = std::map<std::string, DualQuaternion<T>>;
+template<class T = float>
+using Duals = std::map<std::string, DualQuaternion<T>>;
 
 template<class T = float>
 struct System {
-	const Duals<T> cvars = {};
-	Duals<T> vars = {};
+	Duals<T> vars = {}, cvars = {};
 
-	bool parse(std::string const& lhs, std::string const& rhs) {
+	bool assign(std::string const& s) {
+		if(!s.length()) return false;
+		auto assign = parse_assign(s);
+		std::string lhs = assign.first, rhs = assign.second;
 		if(!lhs.length() || !rhs.length()) return false;
-		bool lhs_isvar = !lhs_empty && isvar(lhs),
-				rhs_isvar = !rhs_empty && isvar(rhs),
+		bool lhs_isvar = isvar(lhs), rhs_isvar = isvar(rhs),
 				lhs_iscdef = lhs_isvar && contains(cvars, lhs),
 				rhs_iscdef = rhs_isvar && contains(cvars, rhs),
 				lhs_isdef = lhs_isvar && contains(vars, lhs),
@@ -348,12 +416,6 @@ struct System {
 		else { /* TODO Actually parse here */ }
 		return true;
 	}
-	bool parse(std::string const& s) {
-		if(!s.length()) return false;
-		auto assign = parse_assign(s);
-		auto const& k = assign.first, v = assign.second;
-		return parse(k, v);
-	}
 };
 
 int main(int argc, const char *argv[]) {
@@ -361,35 +423,69 @@ int main(int argc, const char *argv[]) {
 	typedef float T;
 	typedef DualQuaternion<T> DQ;
 
-	const Duals<T> cvars = {
-		{"pi", M_PI*1_e}, {"PI", M_PI*1_e},
+	Duals<T> vars = {}, cvars = {
+		{"pi", T(M_PI)*1_e}, {"PI", T(M_PI)*1_e},
 		{"e", 1_e}, {"i", 1_i}, {"j", 1_j}, {"k", 1_k},
 			{"ij", 1_k}, {"jk", 1_i}, {"ki", 1_j},
 		{"E", 1_E}, {"I", 1_I}, {"J", 1_J}, {"K", 1_K},
 			{"Ei", 1_I}, {"Ej", 1_J}, {"Ek", 1_K}
 	};
-	Duals<T> vars = {};
-	/*
-	 * a + b - c + d
-	 *   = sum { a, b, -c, d }
-	 * a + bi - cj + dk
-	 *   = sum { a, product { b, i }, - product { c, j } + product { d, k } }
-	 */
 
 	string line;
 	while(getline(cin, line)) {
 		if(!line.length()) break;
 		auto assign = parse_assign(line);
 		auto const& lhs = assign.first, rhs = assign.second;
-		bool lisvar = isvar(lhs),
-			lconst = lvar && contains(cvars, lhs),
-
-			rvar = isvar(rhs),
-			rconst = rvar && contains(cvars, rhs),
-		if(isvar(lhs) && rhs.length()) {
+		bool lisvar = isvar(lhs), lconst = lisvar && contains(cvars, lhs),
+			risvar = isvar(rhs), rconst = risvar && contains(cvars, rhs);
+		if(lisvar) {
+			if(rhs.length()) {
+				if(lconst) cout << lhs << " is constant" << endl;
+				else if(rconst) vars[lhs] = cvars[rhs];
+				else if(contains(vars, rhs)) vars[lhs] = vars[rhs];
+				else {
+					cout << lhs << " = ";
+					bool first_add = true;
+					for(auto term : parse_add(rhs)) {
+						if(!first_add) cout << " + ";
+						first_add = false;
+						//cout << '[';
+						auto factors = parse_mul(term);
+						if(factors.size() > 1) {
+							cout << "*[";
+							bool first_mul = true;
+							for(auto const& f : factors) {
+								if(!first_mul) cout << ", ";
+								first_mul = false;
+								cout << f;
+							}
+							cout << ']';
+						} else if(factors.size() == 1) {
+							cout << factors[0];
+						} else {
+							cout << "<?>";
+						}
+						//cout << ']';
+					}
+					cout << endl;
+					/*for(long i = 0, N = add.size(); i < N; i++) {
+						if(i) cout << ", ";
+						cout << add[i];
+					}*/
+					//cout << "]" << endl;
+				}
+				//cout << lhs << " = " << vars[lhs] << endl;
+			} else  {
+				cout << lhs;
+				if(lconst) cout << " = " << cvars[lhs];
+				else if(contains(vars, lhs)) cout << " = " << vars[lhs];
+				else cout << " is undefined";
+				cout << endl;
+			}
 		} else {
+			cout << '"' << lhs << "\" is not a valid variable name" << endl;
 		}
-		if(rhs.length()) {
+		/*if(rhs.length()) {
 			if(isvar(lhs)) {
 				if(!contains(cvars, lhs)) {
 					if(isvar(rhs)) {
@@ -427,7 +523,7 @@ int main(int argc, const char *argv[]) {
 				else if(contains(vars, lhs)) cout << vars[lhs] << endl;
 				else cout << "(evaluation of " << lhs << ")" << endl;
 			} else cout << "(evaluation of " << lhs << ")" << endl;
-		}
+		}*/
 	}
 
 	/*map<string, DQ> symbols;
