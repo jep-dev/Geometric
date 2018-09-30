@@ -17,9 +17,25 @@
 int main(int argc, const char *argv[]) {
 	using namespace std;
 
-
 	Quaternion<float> LHS[] = {{1}, {3,4}, {8,15}, {7,24}};
 	using OSS = ostringstream;
+
+{
+	using namespace Streams;
+
+	string astrs[] = {"1", "23"};
+	auto mm = minimax(astrs);
+	cout << mm.first << ", " << mm.second << endl;
+	vector<string> vstrs = {"45", "678"};
+	mm = minimax(vstrs);
+	cout << mm.first << ", " << mm.second << endl;
+	vector<OSS> voss(3);
+	voss[0] << "";
+	voss[1] << "81";
+	voss[2] << "729";
+	mm = minimax(voss);
+	cout << mm.first << ", " << mm.second << endl;
+}
 
 	static constexpr auto N = 4;
 	vector<string> rows = {
