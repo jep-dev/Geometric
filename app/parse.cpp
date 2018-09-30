@@ -87,34 +87,76 @@ std::enable_if<has_loud_NaN<S>() && !has_quiet_NaN<S>(),S>
 make_NaN(Detail::Tag<LoudNaN<S>> = {}) {
 	return LoudNaN<S>::value;
 }
+template<class K, class V>
+bool contains(std::map<K, V> const& m, K const& k)
+	{ return m.find(k) != m.cend(); }
+
+bool isvar(std::string const& line, bool trimmed = false) {
+	auto s = line;
+	if(!trimmed) s = Streams::trim(s);
+	if(!s.length() || !std::isalpha(s[0])) return false;
+	for(auto const& c : s) {
+		if(c == '_') continue;
+		if(std::isalnum(c)) continue;
+		return false;
+	}
+	return true;
+}
+bool isvar(std::string::const_iterator beg, std::string::const_iterator end,
+		bool trimmed = false) {
+	std::string s;
+	for(auto cur = beg; cur < end; cur++) {
+		s += *cur;
+	}
+	if(!trimmed) return isvar(Streams::trim(s), true);
+	return isvar(s, true);
+}
 
 
-// Note - a0b.12cd3ef is parsed as 0.123, etc.
-// Actual number extraction is locale-defined, e.g. 3,142
-// Grouping characters are not supported, e.g. 3 000 000
 template<class T = float>
-/*auto parse_coefficient(std::string const& word)
-		-> std::enable_if_t<std::is_arithmetic<T>::value
-			&& std::numeric_limits<T>::has_quiet_NaN, T> {*/
-std::enable_if_t<has_quiet_NaN<T>(), T>
-parse_coefficient(std::string const& word) {
-	T out;
+T parse_value(std::string const& word) {
+	T out = make_NaN<T>();
 	std::string value;
+	bool neg = false, major = false, minor = false, pt = false;
+	char prev = '\0';
 	for(auto c : word) {
 		// TODO better criteria for value characters?
-		if(std::isdigit(c) || std::ispunct(c))
+		if(std::isdigit(c)) {
+			// if(!major && c == '0') ??
+			if(pt) minor = true;
+			else major = true;
 			value += c;
+		} else if(c == '.') {
+			if(pt) return out;
+			pt = major = true;
+			value += c;
+		} else if(c == '-') {
+			if(major) return out;
+			neg = !neg;
+		} else break;
 	}
-	if(value == "")
-		return 1;
+	if(pt && !minor || value == "")
+		return make_NaN<T>();
+	if(neg && value == "") return -1;
 	std::istringstream iss(value);
 	iss >> out;
 	if(iss.fail())
-		return QuietNaN<T>::value;
-		//return std::numeric_limits<T>::quiet_NaN();
+		return make_NaN<T>();
+	return neg ? -out : out;
+}
+template<class T = float>
+std::pair<T, std::string> parse_coefficient(std::string const& word) {
+	std::pair<T, std::string> out;
+	out.first = parse_value(word);
+	// Should this function participate in name validation?
+	bool start = false;
+	for(auto const& c : word)
+		if(start || c == '(' || std::isalpha(c))
+			start = true, out.second += c;
 	return out;
 }
 
+/*
 // Same note as coefficient: a0b.12cd3ef is parsed as abcdef
 // Skips digits, punctuation, and spaces explicitly; accepts printable
 // e.g. unicode pi, epsilon, etc.
@@ -130,15 +172,14 @@ std::string parse_units(std::string const& word) {
 	return units;
 }
 
-
 // TODO figure out how to parse UTF8, etc.
-/*template<class T>
+template<class T>
 std::pair<bool, DualQuaternion<T>> parse_dual(std::string const& word) {
 	std::pair<bool, DualQuaternion<T>> out = { false, {1} };
 	if(!word.length()) return out;
 	auto & d = out.second;
 
-	T coefficient = parse_coefficient<T>(word);
+	T coefficient = parse_value<T>(word);
 	d *= coefficient;
 
 	auto units = parse_units(word);
@@ -229,7 +270,7 @@ void test_interactive(std::map<std::string, DualQuaternion<T>> &symbols) {
 		//for(long n = split.size(), i = 0; i < n; i++) {
 			//auto const& word = split[i];
 			//if(i) std::cout << ", ";
-			//std::cout << word << " = " << parse_coefficient(word)
+			//std::cout << word << " = " << parse_value(word)
 					//<< " * " << parse_units(word);
 		//}
 		//std::cout << "}" << std::endl;
@@ -309,6 +350,8 @@ std::vector<std::string> parse_add(std::string const& expr) {
 		out.emplace_back(cur);
 	return out;
 }
+
+
 std::vector<std::string> parse_mul(std::string const& expr) {
 	using std::string;
 	std::vector<string> out;
@@ -361,36 +404,49 @@ std::vector<std::string> parse_mul(std::string const& expr) {
 	return out;
 }
 
+/*  Operators in parse order (reverse order of ops)
+ *            A  S  M  U  P
+ *  Addition     1  2  3  4
+ *  Sandwich        1  2  3
+ *  Mult.     1        2  3
+ *  Unary              1  2
+ *  Parens    1  2  3  4
+ *  This places '^' (sandwich) much later in the oerder of ops, but informally,
+ *  people write and read e^3pi/4 as 'e^(3pi/4)' and not '(e^3)pi/4'.
+ */
+
+template<class T, class C = std::map<std::string, T>, class V = C>
+T eval_add(C & constants, V & variables, std::string const& expr) {
+	auto terms = parse_add(expr);
+	T out = {};
+	if(!terms.size())
+		return out;
+	for(auto const& term : terms) {
+		if(contains(constants, term)) out += constants[term];
+		else if(contains(variables, term)) out += variables[term];
+		else {
+			T termval = {1};
+			auto factors = parse_mul(term);
+			for(auto const& factor : factors) {
+				auto copair = parse_coefficient(factor);
+				if(contains(constants, copair.second))
+					termval *= copair.first * constants[copair.second];
+				else if(contains(variables, copair.second))
+					termval *= copair.second * variables[term];
+				else {
+					/* TODO iron out NaN handling (and var name equiv) */
+					termval *= copair.first;
+				}
+			}
+		}
+	}
+}
+
 std::pair<std::string, std::string> parse_assign(std::string const& line) {
 	auto s = Streams::trim(line);
 	auto pos = s.find('=');
 	if(pos == std::string::npos) return std::make_pair(s, "");
 	return std::make_pair(Streams::trim(s.substr(0, pos)), Streams::trim(s.substr(pos+1)));
-}
-
-template<class K, class V>
-bool contains(std::map<K, V> const& m, K const& k)
-	{ return m.find(k) != m.cend(); }
-
-bool isvar(std::string const& line, bool trimmed = false) {
-	auto s = line;
-	if(!trimmed) s = Streams::trim(s);
-	if(!s.length() || !std::isalpha(s[0])) return false;
-	for(auto const& c : s) {
-		if(c == '_') continue;
-		if(std::isalnum(c)) continue;
-		return false;
-	}
-	return true;
-}
-bool isvar(std::string::const_iterator beg, std::string::const_iterator end,
-		bool trimmed = false) {
-	std::string s;
-	for(auto cur = beg; cur < end; cur++) {
-		s += *cur;
-	}
-	if(!trimmed) return isvar(Streams::trim(s), true);
-	return isvar(s, true);
 }
 
 template<class T = float>
@@ -435,11 +491,25 @@ int main(int argc, const char *argv[]) {
 	while(getline(cin, line)) {
 		if(!line.length()) break;
 		auto assign = parse_assign(line);
-		auto const& lhs = assign.first, rhs = assign.second;
-		bool lisvar = isvar(lhs), lconst = lisvar && contains(cvars, lhs),
-			risvar = isvar(rhs), rconst = risvar && contains(cvars, rhs);
-		if(lisvar) {
-			if(rhs.length()) {
+		auto lhs = assign.first, rhs = assign.second;
+		bool lisempty = !lhs.length(),
+				lisvar = !lisempty && isvar(lhs),
+				lvar = lisvar && contains(vars, lhs),
+				lconst = lisvar && !lvar && contains(cvars, lhs),
+			risempty = !rhs.length(),
+				risvar = !risempty && isvar(rhs),
+				rvar = risvar && contains(vars, rhs),
+				rconst = risvar && contains(cvars, rhs);
+		if(lisempty) {
+			cout << "There was some kind of error parsing " << line << "." << endl;
+			continue;
+		}
+		DQ out = {0};
+		if(risempty) {
+			rhs = lhs; // TODO something else?
+		}
+		//if(lisvar) {
+			if(risempty) {
 				if(lconst) cout << lhs << " is constant" << endl;
 				else if(rconst) vars[lhs] = cvars[rhs];
 				else if(contains(vars, rhs)) vars[lhs] = vars[rhs];
@@ -468,6 +538,9 @@ int main(int argc, const char *argv[]) {
 						//cout << ']';
 					}
 					cout << endl;
+
+					/* TODO evaluate and set vars[lhs] */
+
 					/*for(long i = 0, N = add.size(); i < N; i++) {
 						if(i) cout << ", ";
 						cout << add[i];
@@ -482,10 +555,10 @@ int main(int argc, const char *argv[]) {
 				else cout << " is undefined";
 				cout << endl;
 			}
-		} else {
-			cout << '"' << lhs << "\" is not a valid variable name" << endl;
-		}
-		/*if(rhs.length()) {
+		//} else {
+			//cout << '"' << lhs << "\" is not a valid variable name" << endl;
+		//}
+		/*if(risempty) {
 			if(isvar(lhs)) {
 				if(!contains(cvars, lhs)) {
 					if(isvar(rhs)) {
