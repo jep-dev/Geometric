@@ -8,6 +8,8 @@
 #include "quaternion.hpp"
 #include "point.hpp"
 
+#include "pretty.tpp"
+
 #include "math.tpp"
 
 #ifndef DUAL_IMPL
@@ -62,18 +64,74 @@ std::vector<std::string> get_table(std::string const& title,
  * cos(theta)+isin(theta) format did not work, 1+cos(theta)+isin(theta) appeared to.
  * That is, 1_e + n + Ex = 1_e + n' + Ex' (the 1_e is preserved and would have to be removed.)
  */
-/*void test_binary(void) {
+void test_binary(void) {
 	using namespace std;
 	typedef float T;
 	typedef DualQuaternion<T> DQ;
-	DQ LHS[] = {1_i, 1_e + 5_J, 1_i + 5_J};
-	for(auto const& lhs : LHS) {
-		cout << "LHS = " << lhs << endl;
-		for(DQ rhs : {1_e + 0_E, 1_e + 1_i + 1_I, 1_e + 1_i + 1_J, 1_e + 1_i + 1_K}) {
-			cout << "  RHS = " << rhs << " -> " << (rhs ^ lhs) << endl;
+	DQ a1 = 1_e + 1_E,
+		A[] = {1_i, 1_j, 1_k},
+		B[]{1_e + .5_I, 10_E, 1_e + .5_I + 10_E};
+	unsigned prec = 2;
+	for(auto const& rhs : A) {
+		for(auto const& lhs : B) {
+			cout << "(" << to_string(lhs, prec) << ")"
+				"^(" << to_string(rhs, prec) << ") "
+				"= " << to_string(lhs ^ rhs, prec) << endl;
+		}
+		cout << endl;
+	}
+}
+void test_points(void) {
+	using namespace std;
+	DualQuaternion<float> transforms[] = {
+			rotation(float(M_PI/2), 1, 0, 0),
+			rotation(float(M_PI/2), 0, 1, 0),
+			rotation(float(M_PI/2), 0, 0, 1),
+			1_e + 0.5_I, 1_e + 0.5_J, 1_e + 0.5_K
+	};
+	Point<float> pts[] = {{}, {1}, 1_e + 1_J, 1_e + 1_K};
+	for(auto const& pt : pts) {
+		cout << "Point: " << pt << endl;
+		for(auto const& t : transforms) {
+			cout << "  ^(" << string(t) << ") = " << to_string(pt ^ t, 1) << endl;
 		}
 	}
-}*/
+}
+
+void test_heterogeneous(void) {
+	using namespace std;
+	typedef float T;
+	typedef Quaternion<T> Q;
+	typedef DualQuaternion<T> D;
+	vector<Q> qs = {1_e, 1_i, 1_j, 1_k};
+	vector<D> ds = {1_e, 1_i, 1_j, 1_k, 1_E, 1_I, 1_J, 1_K};
+	vector<string> dqRows(ds.size()), qdRows(qs.size());
+
+	for(auto const& d : ds) {
+		auto beg = qdRows.begin();
+		for(auto const& q : qs) {
+			// Use an odd width so evens (positives) are padded where signs would be
+			*beg += Streams::center(to_string(q*d), 3, ' ', false);
+			beg++;
+		}
+	}
+	cout << "Quaternion * dual:\n";
+	for(auto const& row : qdRows)
+		cout << row << "\n";
+	cout << endl;
+
+	for(auto const& q : qs) {
+		auto beg = dqRows.begin();
+		for(auto const& d : ds) {
+			*beg += Streams::center(to_string(d*q), 3, ' ', false);
+			beg++;
+		}
+	}
+	cout << "Dual * quaternion:\n";
+	for(auto const& row : dqRows)
+		cout << row << "\n";
+	cout << endl;
+}
 
 int main(int argc, const char *argv[]) {
 	using namespace std;
@@ -84,129 +142,37 @@ int main(int argc, const char *argv[]) {
 	typedef Point<T> PT;
 	typedef DQ (binary) (DQ const&, DQ const&);
 
+	//scratch();
+	//test_binary();
+	//test_heterogeneous();
 
-	/*DQ p1 = 1_e + 1_I, p2 = 1_e + 1_J, dp = p2 - p1;
-	// Line: p1 + dp * t
-	DQ x = 1_e + 1_I + 1_J + 1_k, dxp = x - p1,
-		projection = p1 + dp * dot(dxp, dp),
-		rejection = dxp - projection;
-	cout << "Line l from " << p1 << " to " << p2 << " is given by l(t) = "
-			<< p1 << " + (" << dp << ")t" << endl;
-	cout << "Point x = " << x << " is " << dxp << " from " << p1 << endl;
-	cout << "  Projection = " << projection << "\n"
-			"  Rejection = " << rejection << endl;
+	DQ ds[] = {1_e, 1_i, 1_j, 1_k, 1_E, 1_I, 1_J, 1_K};
 
-	return 0;*/
-
-	DQ LHS[] = {1_e, 1_i, 1_j, 1_k, 1_E, 1_I, 1_J, 1_K},
-		RHS[] = {1_i, 1_i + 1_J /* (1_i + 1_j)*T(sqrtf(2)/2) */ };
-
-	map<string, binary*> functions = {
-		{"W(u, v) = uv", [] (DQ const& l, DQ const& r) -> DQ { return l * r; }},
+	vector<pair<string, binary*>> functions = {
 		{"W(u, v) = u v *u", [] (DQ const& l, DQ const& r) -> DQ { return l ^ r; }},
-		{"W(u, v) = v u *v", [] (DQ const& l, DQ const& r) -> DQ { return r ^ l; }}
+		{"W(u, v) = v u *v", [] (DQ const& l, DQ const& r) -> DQ { return r ^ l; }},
+		{"W(u, v) = uv", [] (DQ const& l, DQ const& r) -> DQ { return l * r; }},
 	};
-	/*auto ntables = functions.size();
-	vector<ostringstream> oss;
-	vector<istringstream> iss;
-	for(auto i = 0; i < ntables; i++) {
-		oss.emplace_back();
-		print_table(oss[i], LHS, LHS, functions[i]);
-		iss.emplace_back(oss[i].str());
-	}*/
 
-	cout << "Sandwich operators: " << endl;
+	cout << "Operators: " << endl;
 	vector<vector<std::string>> lines;
 	for(auto const& fn : functions)
-		lines.emplace_back(get_table(fn.first, LHS, LHS, fn.second));
+		lines.emplace_back(get_table(fn.first, ds, ds, fn.second));
 	for(long k = 0, dk = 2, n = lines.size(); k < n; k += dk) {
 		for(long j = 0, m = lines[0].size(); j < m; j++) {
-			for(long i = k; i < k+dk && i < n; i++) {
+			for(long i = k; i < k+dk && i < n; i++)
 				cout << lines[i][j] << "  ";
-			}
 			cout << endl;
 		}
-	}
-		/*string line;
-		bool cont = true;
-		for(unsigned i = 0; i < ntables; i++) {
-			if(i) cout << "  ";
-			if(!std::getline(iss[i], line)) {
-				cont = false;
-				break;
-			}
-			cout << line;
-		}
-		cout << endl;
-		if(!cont) break;
-	}*/
-
-/*std::vector<std::vector<std::string>> cols = {
-	{"u"}, {"v"}, {"uv"}, {"uvu*"},
-	{"v"}, {"u"}, {"vu"}, {"vuv*"}
-};
-for(auto const& lhs : LHS) {
-	for(auto const& rhs : LHS) {
-		cols[0].emplace_back(to_string(lhs, 3));
-		cols[1].emplace_back(to_string(rhs, 3));
-		cols[2].emplace_back(to_string(rhs * lhs, 3));
-		cols[3].emplace_back(to_string(lhs ^ rhs, 3));
-		cols[4].emplace_back(to_string(rhs, 3));
-		cols[5].emplace_back(to_string(lhs, 3));
-		cols[6].emplace_back(to_string(lhs * rhs, 3));
-		cols[7].emplace_back(to_string(rhs ^ lhs, 3));
-	}
-}
-std::vector<long> maxes;
-for(long j = 0, m = cols.size(); j < m; j++)
-	maxes.emplace_back(minimax(cols[j]).second);
-for(long i = 0, n = cols[0].size(); i < n; i++) {
-	for(long j = 0, m = cols.size(); j < m; j++) {
-		cout << Streams::center(cols[j][i], maxes[j]);
-		if(j == 3) cout << "##";
-		else cout << "   ";
-	}
-	if(!i) {
-		cout << " |  ";
-		for(long j = 0, m = cols.size(); j < m; j++)
-			cout << Streams::center(cols[j][i], maxes[j]) << "   ";
-	}
-	long k = i-1;
-	if(k & 1) endl(cout);
-	//if(i && !(i&1)) endl(cout);
-	else cout << " |  ";
-}*/
-
-	/*cout << setw(3) << "" << " | ";
-	for(auto const& rhs : LHS)
-		cout << setw(3) << rhs << " ";
-	cout << endl;
-	for(auto const& lhs : LHS) {
-		cout << setw(3) << lhs << " | ";
-		for(auto const& rhs : LHS) {
-			cout << setw(3) << (lhs ^ rhs) << " ";
-		}
-		cout << endl;
-	}*/
-	/*DQ LHS[] = {{1}, {0,1}, {0,0,1}, {0,0,0,1},
-			{0,0,0,0,1}, {0,0,0,0,0,1}, {0,0,0,0,0,0,1}, {0,0,0,0,0,0,0,1}};*/
-	for(auto const& lhs : LHS) {
-		for(auto const& rhs : LHS) {
-			cout << setw(3) << (lhs * rhs) << " ";
-		}
-		endl(cout);
 	}
 
 	cout << "\nSclerp:\n";
 	{
-		auto u = LHS[1], v = LHS[2] + 10 * LHS[6];
-		//cout << "  For u = " << u << ", v = " << v << "...\n";
+		DualQuaternion<T> u = 1_i, v = 1_j + 10 * 1_J;
 
-		// TODO proper ranging, this is sloppy
-		for(T i = 0, di = .1, dj = di/10;
-				i < 1 + di - std::numeric_limits<T>::epsilon(); i += di) {
+		for(auto k = 0, N = 10; k < N; k++) {
+			T i = T(k)/N, dj = T(1)/N;
 			auto s = sclerp(u, v, i);
-			// TODO this too
 			for(auto j = 0; j < 8; j++)
 				if(s[j]*s[j] < dj*dj) s[j] = 0;
 			cout << "  sclerp(" << u << ", " << v << ", " << i << ") = "
@@ -225,7 +191,6 @@ for(long i = 0, n = cols[0].size(); i < n; i++) {
 				u = (u1 + u2)/2, v = (v1 + v2)/2;
 			return {u, v};
 		};
-		//DQ l1 = {1}, r1 = {0,1}, l2 = {0,0,1}, r2 = {0,0,0,1};
 		DQ l1 = {1},
 				r1 = {0,1,0,0,0,0,0,0},
 				l2 = {0,0,0,0,0,0,0,1},
@@ -243,9 +208,6 @@ for(long i = 0, n = cols[0].size(); i < n; i++) {
 				bk.emplace_back();
 				auto uv = get_uv(i, j);
 				auto const& u = uv.first, v = uv.second;
-				/*cell << sclerp(l1, r1, l2, r2, u, v);
-				auto str = cell.str();
-				cell.str("");*/
 				std::string str = sclerp(l1, r1, l2, r2, u, v);
 				widths[j] = std::max(std::size_t(widths[j]), str.length());
 				bk[j] = std::move(str);
@@ -260,22 +222,4 @@ for(long i = 0, n = cols[0].size(); i < n; i++) {
 		}
 	}
 
-	{
-		/*DQ transforms[] = {1_i, 1_j, 1_k, 1_e + 1_I, 1_e + 1_J, 1_e + 1_K};
-		Quaternion<T> transforms[] = { 1_e, rotation(float(M_PI/4), 1, 0, 0),
-			rotation(float(M_PI/4), 0, 1, 0), rotation(float(M_PI/4), 0, 0, 1)};*/
-		DQ transforms[] = {
-				rotation(float(M_PI/2), 1, 0, 0),
-				rotation(float(M_PI/2), 0, 1, 0),
-				rotation(float(M_PI/2), 0, 0, 1),
-				1_e + 0.5_I, 1_e + 0.5_J, 1_e + 0.5_K
-		};
-		PT pts[] = {{}, {1}, 1_e + 1_J, 1_e + 1_K};
-		for(auto const& pt : pts) {
-			cout << "Point: " << pt << endl;
-			for(auto const& t : transforms) {
-				cout << "  ^(" << std::string(t) << ") = " << to_string(pt ^ t, 1) << endl;
-			}
-		}
-	}
 }
