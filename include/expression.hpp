@@ -148,15 +148,20 @@ struct Negative : Symbol<T>, std::enable_shared_from_this<Negative<T>> {
 	}
 	using Symbol<T>::operator==;
 	bool operator==(Negative<T> const& n) const {
-		return !value && !n.value || value && n.value && *value == *n.value;
+		if(value ^ n.value) return false;
+		if(value) return *value == *n.value;
+		return true;
 	}
-	/*template<class S>
-	Negative(SharedSymbol<T> const& s): value(s) {}*/
-	//template<class S, class E = std::enable_if_t<!std::is_same<S, Symbol<T>>::value, S>>
 	template<class S>
 	Negative(std::shared_ptr<S> const& s): value((SharedSymbol<T>)s) {}
-		//Negative((SharedSymbol<T>)(s)) {}
+	template<class U, class... V>
+	Negative(std::shared_ptr<U> const& u, char c, V &&... v):
+		Negative(c, u, std::forward<V>(v)...) {}
+	template<class U, class... V>
+	Negative(char c, std::shared_ptr<U> const& u, V &&... v):
+		Negative(make_product<T>(make_variable<T>(c), u), std::forward<V>(v)...) {}
 	Negative(char c): Negative(make_variable<T>(c)) {}
+
 	virtual ~Negative(void) {}
 };
 
