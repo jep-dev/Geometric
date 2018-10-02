@@ -33,6 +33,11 @@ template<class S> struct Quaternion {
 	template<class T> bool operator==(Quaternion<T> const& rhs) const
 		{ return w == rhs.w && x == rhs.x && y == rhs.y && z == rhs.z; }
 
+	template<class T>
+	operator DualQuaternion<T>(void) const {
+		return {w, x, y, z};
+	}
+
 	/** Square, as in product with itself. */
 	S square(void) const { return w*w - x*x - y*y - z*z; }
 	/** Square of the norm, as in sum of squared elements. */
@@ -43,11 +48,6 @@ template<class S> struct Quaternion {
 
 	/** Complex conjugate. */
 	Quaternion operator*(void) const { return {w, -x, -y, -z}; }
-
-	/** (Right) scalar multiplication. */
-	template<class T>
-	Quaternion<std::common_type_t<S,T>> operator*(T const& t) const
-		{ return {w*t, x*t, y*t, z*t}; }
 
 	/** Negation operator. */
 	Quaternion operator-(void) const { return {-w, -x, -y, -z}; }
@@ -60,15 +60,6 @@ template<class S> struct Quaternion {
 	template<class T, class ST = std::common_type_t<S,T>>
 	Quaternion<ST> operator+(Quaternion<T> const& r) const
 		{ return { w+r.w, x+r.x, y+r.y, z+r.z }; }
-
-	/** Product. */
-	template<class T, class ST = std::common_type_t<S,T>>
-	Quaternion<ST> operator*(Quaternion<T> const& r) const {
-		return {
-			w*r.w - x*r.x - y*r.y - z*r.z,  w*r.x + x*r.w + y*r.z - z*r.y,
-			w*r.y + y*r.w - x*r.z + z*r.x,  w*r.z + z*r.w + x*r.y - y*r.x
-		};
-	}
 
 	Quaternion normalize(void) const {
 		auto len = length();
@@ -91,10 +82,6 @@ template<class S> struct Quaternion {
 		return { r * c1, normed.x * scale, normed.y * scale, normed.z * scale };
 	}
 
-	template<class U, class US = std::common_type_t<U,S>>
-	friend Quaternion<US> operator*(U && u, Quaternion const& q)
-		{ return {u * q.w, u * q.x, u * q.y, u * q.z}; }
-
 	template<class U, class US = std::common_type_t<S,U>>
 	Quaternion<US> operator/(U const& u) const
 		{ return {w / u, x / u, y / u, z / u}; }
@@ -108,7 +95,6 @@ template<class S> struct Quaternion {
 		-> decltype(lhs*rhs) { return lhs * *rhs / rhs.lengthSquared(); }
 
 	operator std::string(void) const;
-
 };
 
 template<class S, unsigned M, class T = S>
@@ -116,15 +102,28 @@ Quaternion<T>& operator>>(const S (&s)[M], Quaternion<T> &q) {
 	static_assert(M >= 4, "The source array must (at least) 4 elements long");
 	return q.w = s[0], q.x = s[1], q.y = s[2], q.z = s[3], q;
 }
+template<class S, class T, class ST = std::common_type_t<S,T>>
+Quaternion<ST> operator*(Quaternion<S> const& l, T const& r)
+	{ return {l.w*r, l.x*r, l.y*r, l.z*r}; }
+template<class S, class T, class ST = std::common_type_t<S,T>>
+Quaternion<ST> operator*(Quaternion<S> const& l, Quaternion<T> const& r) {
+	return {
+		l.w*r.w - l.x*r.x - l.y*r.y - l.z*r.z,  l.w*r.x + l.x*r.w + l.y*r.z - l.z*r.y,
+		l.w*r.y + l.y*r.w - l.x*r.z + l.z*r.x,  l.w*r.z + l.z*r.w + l.x*r.y - l.y*r.x
+	};
+}
+template<class S, class T, class ST = std::common_type_t<S,T>>
+Quaternion<ST> operator*(S && l, Quaternion<T> const& r)
+	{ return {l * r.w, l * r.x, l * r.y, l * r.z}; }
 
 template<class L, class R>
 std::common_type_t<L,R> dot(Quaternion<L> const& l, Quaternion<R> const& r)
 	{ return l.w*r.w + l.x*r.x + l.y*r.y + l.z*r.z; }
 
-template<class W, class X, class Y, class Z>
-Quaternion<std::common_type_t<W,X,Y,Z>> rotation(W theta, X x, Y y, Z z) {
+template<class W, class X, class Y, class Z, class S = std::common_type_t<W,X,Y,Z>>
+Quaternion<S> rotation(W theta, X x, Y y, Z z) {
 	auto c = cos(theta/2), s = sin(theta/2);
-	return {c, s*x, s*y, s*z};
+	return {S(c), S(s*x), S(s*y), S(s*z)};
 }
 
 template<class L, class R, class T, class LRT = std::common_type_t<L,R,T>>
