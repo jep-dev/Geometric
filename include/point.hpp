@@ -58,8 +58,6 @@ struct Point {
 		};
 	}
 
-	friend struct DualQuaternion<S>;
-	//operator DualQuaternion<S>(void) const { return {1, 0, 0, 0, 0, x, y, z}; }
 	/**
 	 * @brief Converts a point to a half-translation to be used in a sandwich product.
 	 * If the result were to be used as the object in a sandwich product and not the subject,
@@ -68,9 +66,9 @@ struct Point {
 	 */
 	template<class T>
 	operator DualQuaternion<T>(void) const { return {1, 0, 0, 0, 0, T(x/2), T(y/2), T(z/2)}; }
+	//operator DualQuaternion<S>(void) const { return {1, 0, 0, 0, 0, x, y, z}; }
 	template<class T>
 	friend T& operator<<(T &t, Point const& p) { return t << to_string(p), t; }
-		//{ return t << (DualQuaternion<S>) p, t; }
 	operator std::string(void) const { return std::string((DualQuaternion<S>) *this); }
 };
 template<class S, class T, class ST = std::common_type_t<S,T>>
@@ -80,9 +78,6 @@ template<class S, class T, class ST = std::common_type_t<S,T>>
 Point<ST> cross(Point<S> const& s, Point<T> const& t)
 	{ return {s.y*t.z-s.z*t.y, s.z*t.x-s.x*t.z, s.x*t.y-s.y*t.x}; }
 
-/*template<class S>
-std::string to_string(Point<S> const& p)
-	{ return "<" + to_string(p.x) + ", " + to_string(p.y) + ", " + to_string(p.z) + ">"; }*/
 template<class S, class DELIM>
 std::string to_string(Point<S> const& p, unsigned prec, DELIM delim) {
 	return "(" + to_string(p.x, prec, delim) + ", " + to_string(p.y, prec, delim)
