@@ -8,14 +8,14 @@
 
 namespace View {
 
-Frame::Frame(void) {
+Frame::Frame(int w, int h, int x, int y, int flags): flags(flags) {
 	using std::ostringstream;
 	using std::ostream;
 	ostringstream oss;
 
 	do {
 		ctx.set();
-		win = SDL_CreateWindow("Title", center, center, 720, 540, flags);
+		win = SDL_CreateWindow("Title", x, y, w, h, flags);
 		if(!win) {
 			oss << "Unable to create window.\n";
 			break;

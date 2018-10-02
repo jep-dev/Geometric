@@ -30,7 +30,8 @@ public:
 	operator SDL_GLContext(void) const { return ctx; }
 	operator SDL_Window *const (void) const { return win; }
 	/** Constructor; currently initializes and sets a handful of hard-coded GL attributes */
-	Frame(void);
+	Frame(int w = 720, int h = 540, int x = center, int y = center,
+			int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
 	/** Destructor; destroys the stored window. */
 	virtual ~Frame(void) {
 		if(win)
