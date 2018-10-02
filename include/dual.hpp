@@ -77,14 +77,6 @@ template<class S> struct DualQuaternion {
 	DualQuaternion<SC> operator-(DualQuaternion<C> const& r) const
 		{ return {s - r.s, t - r.t, u - r.u, v - r.v, w - r.w, x - r.x, y - r.y, z - r.z}; }
 
-	/** (Right) scalar product. */
-	template<class C, class SC = std::common_type_t<S,C>>
-	DualQuaternion<SC> operator*(C const& c) const
-		{ return {s*c, t*c, u*c, v*c, w*c, x*c, y*c, z*c}; }
-	/** (Left) scalar product. */
-	template<class C, class SC = std::common_type_t<S,C>>
-	friend DualQuaternion<SC> operator*(C const& c, DualQuaternion const& d)
-		{ return {c*d.s, c*d.t, c*d.u, c*d.v, c*d.w, c*d.x, c*d.y, c*d.z}; }
 	template<class C, class SC = std::common_type_t<S,C>>
 	DualQuaternion<SC> operator/(Quaternion<C> const& c)
 		{ return *this * *c / c.lengthSquared(); }
@@ -134,12 +126,6 @@ template<class S> struct DualQuaternion {
 	DualQuaternion& operator/=(Quaternion<T> const& q)
 		{ return *this = *this / Quaternion<S>{q.w, q.x, q.y, q.z}; }
 
-	/*template<class T, class ST = std::common_type_t<S,T>>
-	std::enable_if_t<std::is_arithmetic<T>::value, DualQuaternion<ST>>
-	operator^(T const& r) const {
-		return {}; // TODO
-		//return (DualQuaternion<ST>)*this;
-	}*/
 	template<class T, class V = typename T::value_type, class SV = std::common_type_t<S,V>>
 	DualQuaternion<SV> operator^(T const& r) const { return r * *this * *r; }
 
@@ -200,35 +186,44 @@ DualQuaternion<LRST> sclerp(DualQuaternion<L1> const& l1, DualQuaternion<R1> con
 
 template<class S, class C, class SC = std::common_type_t<S,C>>
 DualQuaternion<SC> operator*(DualQuaternion<S> const& l, Quaternion<C> const& r) {
-	auto u = Quaternion<SC>{l.s, l.t, l.u, l.v} * r,
-		v = Quaternion<SC>{l.w, l.x, l.y, l.z} * r;
-	return {u.w, u.x, u.y, u.z, v.w, v.x, v.y, v.z};
+	return {
+		l.s*r.w - l.t*r.x - l.u*r.y - l.v*r.z, l.s*r.x + l.t*r.w + l.u*r.z - l.v*r.y,
+		l.s*r.y - l.t*r.z + l.u*r.w + l.v*r.x, l.s*r.z + l.t*r.y - l.u*r.x + l.v*r.w,
+		l.w*r.w - l.x*r.x - l.y*r.y - l.z*r.z, l.w*r.x + l.x*r.w + l.y*r.z - l.z*r.y,
+		l.w*r.y - l.x*r.z + l.y*r.w + l.z*r.x, l.w*r.z + l.x*r.y - l.y*r.x + l.z*r.w
+	};
 }
 
 template<class S, class C, class SC = std::common_type_t<S,C>>
 DualQuaternion<SC> operator*(Quaternion<S> const& l, DualQuaternion<C> const& r) {
 	return {
-		l.w*r.s - l.x*r.t - l.y*r.u - l.z*r.v,
-		l.w*r.t + l.x*r.s + l.y*r.v - l.z*r.u,
-		l.w*r.u + l.y*r.s - l.x*r.v + l.z*r.t,
-		l.w*r.v + l.z*r.s + l.x*r.u - l.y*r.t,
-		l.w*r.w - l.x*r.x - l.y*r.y - l.z*r.z,
-		l.w*r.x + l.x*r.w + l.y*r.z - l.z*r.y,
-		l.w*r.y - l.x*r.z + l.y*r.w + l.z*r.x,
-		l.w*r.z + l.x*r.y - l.y*r.x + l.z*r.w
+		l.w*r.s - l.x*r.t - l.y*r.u - l.z*r.v, l.w*r.t + l.x*r.s + l.y*r.v - l.z*r.u,
+		l.w*r.u + l.y*r.s - l.x*r.v + l.z*r.t, l.w*r.v + l.z*r.s + l.x*r.u - l.y*r.t,
+		l.w*r.w - l.x*r.x - l.y*r.y - l.z*r.z, l.w*r.x + l.x*r.w + l.y*r.z - l.z*r.y,
+		l.w*r.y - l.x*r.z + l.y*r.w + l.z*r.x, l.w*r.z + l.x*r.y - l.y*r.x + l.z*r.w
+	};
+}
+
+template<class S, class C, class SC = std::common_type_t<S,C>>
+DualQuaternion<SC> operator*(DualQuaternion<S> const& l, DualQuaternion<C> const& r) {
+	return {
+		l.s*r.s - l.t*r.t - l.u*r.u - l.v*r.v,  l.s*r.t + l.t*r.s + l.u*r.v - l.v*r.u,
+		l.s*r.u + l.u*r.s - l.t*r.v + l.v*r.t,  l.s*r.v + l.v*r.s + l.t*r.u - l.u*r.t,
+		l.s*r.w - l.t*r.x - l.u*r.y - l.v*r.z + l.w*r.s - l.x*r.t - l.y*r.u - l.z*r.v,
+		l.s*r.x + l.t*r.w + l.u*r.z - l.v*r.y + l.w*r.t + l.x*r.s + l.y*r.v - l.z*r.u,
+		l.s*r.y - l.t*r.z + l.u*r.w + l.v*r.x + l.w*r.u - l.x*r.v + l.y*r.s + l.z*r.t,
+		l.s*r.z + l.t*r.y - l.u*r.x + l.v*r.w + l.w*r.v + l.x*r.u - l.y*r.t + l.z*r.s
 	};
 }
 template<class S, class C, class SC = std::common_type_t<S,C>>
-DualQuaternion<SC> operator*(DualQuaternion<S> const& l, DualQuaternion<C> const& r) {
-		return {
-			l.s*r.s - l.t*r.t - l.u*r.u - l.v*r.v,  l.s*r.t + l.t*r.s + l.u*r.v - l.v*r.u,
-			l.s*r.u + l.u*r.s - l.t*r.v + l.v*r.t,  l.s*r.v + l.v*r.s + l.t*r.u - l.u*r.t,
-			l.s*r.w - l.t*r.x - l.u*r.y - l.v*r.z + l.w*r.s - l.x*r.t - l.y*r.u - l.z*r.v,
-			l.s*r.x + l.t*r.w + l.u*r.z - l.v*r.y + l.w*r.t + l.x*r.s + l.y*r.v - l.z*r.u,
-			l.s*r.y - l.t*r.z + l.u*r.w + l.v*r.x + l.w*r.u - l.x*r.v + l.y*r.s + l.z*r.t,
-			l.s*r.z + l.t*r.y - l.u*r.x + l.v*r.w + l.w*r.v + l.x*r.u - l.y*r.t + l.z*r.s
-		};
+DualQuaternion<SC> operator*(DualQuaternion<S> const& l, C const& r) {
+	return {l.s*r, l.t*r, l.u*r, l.v*r, l.w*r, l.x*r, l.y*r, l.z*r};
 }
+template<class S, class C, class SC = std::common_type_t<S,C>>
+DualQuaternion<SC> operator*(C const& l, DualQuaternion<S> const& r) {
+	return {l*r.s, l*r.t, l*r.u, l*r.v, l*r.w, l*r.x, l*r.y, l*r.z};
+}
+
 template<class S, class T, class ST = std::common_type_t<S,T>>
 DualQuaternion<ST> operator+(Quaternion<S> const& q, DualQuaternion<T> const& r)
 	{ return {q.w+r.s, q.x+r.t, q.y+r.u, q.z+r.v, r.w, r.x, r.y, r.z}; }
@@ -238,9 +233,8 @@ DualQuaternion<ST> operator+(DualQuaternion<S> const& q, Quaternion<T> const& r)
 
 template<class S, class C, class SC = std::common_type_t<S,C>>
 std::enable_if_t<!std::is_same<S,C>::value, DualQuaternion<SC>>
-operator+(DualQuaternion<S> const& lhs, DualQuaternion<C> const& rhs) {
-	DualQuaternion<SC> l = lhs, r = rhs;
-	return l + r;
+operator+(DualQuaternion<S> const& l, DualQuaternion<C> const& r) {
+	return {l.s+r.s, l.t+r.t, l.u+r.u, l.v+r.v, l.w+r.w, l.x+r.x, l.y+r.y, l.z+r.z};
 }
 
 // Gosh, it sure would be nice to have templates right about now.
