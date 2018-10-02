@@ -3,14 +3,23 @@
 
 #include <vector>
 #include <glbinding/gl/gl.h>
-#include <glbinding/Binding.h>
+//#include <glbinding/Binding.h>
 
+#include "quaternion.hpp" // Quaternion
+#include "dual.hpp" // Dual
+#include "point.hpp" // Point
+#include "math.tpp" // Point*Dual
+//#include "streams.tpp"
+
+#ifdef ENABLE_PRINTING
 #include "quaternion.tpp"
 #include "dual.tpp"
-#include "point.hpp"
 #include "math.tpp"
-#include "streams.tpp"
+#define PRINT_STRING(X, N) do { std::cout << to_string(X, N) << std::endl; } while(0)
+#endif
 
+//Point<gl::GLfloat> pt = {vertices[i], vertices[i+1], vertices[i+2]};
+//cout << to_string(pt, 2) << endl;
 
 template<class S, class T, class RAD = T>
 void sphere(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
@@ -73,6 +82,7 @@ void cube(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
 			vertices.emplace_back(S(px));
 	}
 	{
+#ifdef ENABLE_PRINTING
 		cout << std::right;
 		auto verticesSize = vertices.size();
 		for(unsigned i = 0; i < verticesSize; i+=3) {
@@ -80,6 +90,7 @@ void cube(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
 			cout << to_string(pt, 2) << endl;
 		}
 		cout << std::left;
+#endif
 	}
 }
 template<class S, class T>
@@ -100,10 +111,8 @@ void cube(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
 		vertices.emplace_back(T(tp.x));
 		vertices.emplace_back(T(tp.y));
 		vertices.emplace_back(T(tp.z));
-		//if(lim > 0) {
-			std::cout << tp.x << "  " << tp.y << "  " << tp.z << std::endl;
-			//lim--;
-		//}
+		PRINT_STRING(tp, 2);
+		//std::cout << tp.x << "  " << tp.y << "  " << tp.z << std::endl;
 	}
 	for(gl::GLuint i : {
 			tse, tsw, bsw, tse, bsw, bse, // south/front
@@ -139,5 +148,78 @@ void sheet(std::vector<S> & vertices, std::vector<T> & indices,
 	}
 }
 
+
+template<class S, class T, class U, class R>
+void cylinder(std::vector<S> & vertices, std::vector<T> & indices,
+	Point<U> const& p0, Point<U> const& p1, R && radius = 1,
+	unsigned M = 100, unsigned N = 100, unsigned offset = 0) {
+	Point<U> p01 = p1 - p0;
+	U l01 = p01.length();
+	auto perp = perpendicular(p01);
+	auto const& u = perp.first, v = perp.second;
+	for(unsigned i = 0; i < M; i++) {
+		U dist = U(i)/M;
+		auto disp = p0 + dist * p01;
+		for(unsigned j = 0; j < N; j++) {
+			U angle = M_PI*2*j/N;
+			Point<S> w = disp + cos(angle)*radius*u + sin(angle)*radius*v;
+			vertices.emplace_back(w.x);
+			vertices.emplace_back(w.y);
+			vertices.emplace_back(w.z);
+#ifdef ENABLE_PRINTING
+			std::cout << w << std::endl;
+#endif
+		}
+#ifdef ENABLE_PRINTING
+		endl(std::cout);
+#endif
+		if(!i) continue;
+		for(unsigned j = 0, J = 1, I = offset + i * N; j <= N; j++, J = (j+1) % N) {
+			indices.emplace_back(I+j);
+			indices.emplace_back(I+J);
+			indices.emplace_back(I-N+J);
+			indices.emplace_back(I-N+J);
+			indices.emplace_back(I-N);
+			indices.emplace_back(I+j);
+		}
+	}
+}
+
+/*template<class S, class T, class U>
+void surface(std::vector<S> & vertices, std::vector<T> & indices,
+		DualQuaternion<U> const& nw, DualQuaternion<U> const& ne,
+		DualQuaternion<U> const& sw, DualQuaternion<U> const& se,
+		Point<U> const& p, Point<U> const& center,
+		unsigned M = 100, unsigned N = 100) {
+	typedef DualQuaternion<U> Dq;
+	typedef Point<U> Pt;
+	for(unsigned i = 0; i < M; i++) {
+		U s = U(i)/(M-1);
+		for(unsigned j = 0; j < N; j++) {
+			U t = U(j)/(N-1);
+			Dq xform = sclerp(nw, ne, sw, se, s, t);
+			auto x = center + (
+		}
+	}
+}*/
+template<class S, class T, class U, class R>
+void rope(std::vector<S> & vertices, std::vector<T> & indices,
+		DualQuaternion<U> const& u, DualQuaternion<U> const& v,
+		Point<U> const& p, Point<U> const& center,
+		R && radius = 1, unsigned M = 100, unsigned N = 100) {
+	typedef DualQuaternion<U> Dq;
+	typedef Point<U> Pt;
+	Pt prev_pt = center + (p ^ u), next_pt = center + (p ^ v);
+	cylinder(vertices, indices, prev_pt, next_pt, radius, M, N);
+
+	/*Dq prev;
+	for(unsigned i = 0, M2 = 10; i < M2; i++) {
+		Dq cur = sclerp(u, v, U(i)/(M2-1));
+		//Dq cur = u + (v-u) * U(i)/(M2-1);
+
+		Pt x = center + (p ^ cur); //w = (prev_pt - x).normalize();
+		cylinder(vertices, indices, prev_pt, x, radius, M/M2, N, indices.size());
+	}*/
+}
 
 #endif
