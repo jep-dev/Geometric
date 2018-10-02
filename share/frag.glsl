@@ -28,7 +28,7 @@ void main(){
 			t = atan2(rxz, ay)*16,
 			//t = (atan(rxz, ay)*4)*8,
 			t2 = t + M_PI*2/3, t3 = t + M_PI*4/3;
-	color = vec4(nsin(t), nsin(t2), nsin(t3), 1);
+	color = vec4(nsin(t), nsin(t2), nsin(t3), exp(-z*z));
 	//color = vec4(nsin(s*64), nsin(s*64+M_PI*2/3), nsin(s*64+M_PI*4/3), 1);
 
 
