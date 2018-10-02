@@ -80,11 +80,4 @@ template<class S>
 DualQuaternion<S>::operator std::string(void) const
 	{ return to_string(*this, 3, "+"); }
 
-/*template<class S>
-std::string to_string(DualQuaternion<S> const& s) {
-	std::ostringstream oss;
-	print(oss, s);
-	return oss.str();
-}*/
-
 #endif
