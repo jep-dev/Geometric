@@ -77,39 +77,13 @@ struct MiniMax<T, V, Detail::Void_t<decltype(&V::length)>> {
 };
 template<class T, class V>
 struct MiniMax<T, V, Detail::Void_t<decltype(&V::tellp)>> {
-	std::pair<long, long> operator()(T& t) const; /*{
-		std::pair<long, long> out(std::numeric_limits<long>::max(), 0);
-		for(auto& i : t) {
-			auto pos = i.tellp();
-			if(pos < 0) continue;
-			i.seekp(0, std::ios_base::end);
-			auto len = i.tellp();
-			i.seekp(pos);
-			if(len < 0) continue;
-			if(len < out.first) out.first = len;
-			if(len > out.second) out.second = len;
-		}
-		return out;
-	}*/
+	std::pair<long, long> operator()(T& t) const;
 };
 template<class T>
 std::pair<long, long> minimax(T& t) {
 	return MiniMax<T, First_t<T>>()(t);
 }
-/*template<class T, class V = First_t<T>, class F = void>
-std::pair<long, long> minimax(T const& t);
 
-template<class T>
-std::pair<long, long> minimax<T, First_t<T>, decltype(&First_t<T>::length)>(T const& t) {
-	long m0 = std::numeric_limits<long>::max(), m1 = 0;
-	for(auto &it : t) {
-		long len = it.length();
-		m0 = std::min(len, m0);
-		m1 = std::max(len, m1);
-	}
-	if(m0 > m1) m0 = m1;
-	return {m0, m1};
-}*/
 template<class S, class = void>
 struct HasInsert : false_type {};
 template<class S, class T, class = void>
@@ -142,17 +116,7 @@ constexpr bool has_tellp_seekp(Detail::Tag<S> && s = {}) { return HasTellpSeekp<
 
 template<class S, class SV = typename S::value_type>
 auto level(S& s, char fill = ' ')
-		-> std::enable_if_t<HasInsert<SV>::value && HasTellpSeekp<SV>::value, S>&; /*{
-	auto mm = minimax(s);
-	for(auto& it : s) {
-		auto cur = it.tellp();
-		it.seekp(0, std::ios_base::end);
-		auto len = mm.second - it.tellp();
-		it.seekp(cur);
-		if(len > 0) it += std::string(len, fill);
-	}
-	return s;
-}*/
+		-> std::enable_if_t<HasInsert<SV>::value && HasTellpSeekp<SV>::value, S>&;
 template<class S, class SV = typename S::value_type>
 auto level(S& s, char fill = ' ')
 		-> std::enable_if_t<HasAdd<SV, std::string>::value && HasLength<SV>::value, S>& {
