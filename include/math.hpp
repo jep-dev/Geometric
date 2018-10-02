@@ -30,6 +30,8 @@ std::string to_string(DualQuaternion<S> const& d, unsigned prec = 0, DELIM delim
 
 template<class S, class T, class ST = std::common_type_t<S,T>>
 DualQuaternion<ST> operator*(Point<S> const& p, DualQuaternion<T> const& d);
+template<class S, class T, class ST = std::common_type_t<S,T>>
+DualQuaternion<ST> operator*(DualQuaternion<S> const& l, Point<T> const& p);
 
 template<class S, class DELIM = const char*>
 std::enable_if_t<std::is_arithmetic<S>::value, std::string>
