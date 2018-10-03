@@ -2,6 +2,7 @@
 #define POINT_HPP
 
 #include "math.hpp"
+#include "quaternion.hpp"
 
 template<class S>
 struct Point {
@@ -11,12 +12,12 @@ struct Point {
 	template<class T>
 	Point<S>& operator+=(Point<T> const& p)
 		{ return x += S(p.x), y += S(p.y), z += S(p.z), *this; }
+	Point<S> operator-(void) const { return {-x, -y, -z}; }
 	template<class T, class ST = std::common_type_t<S,T>>
 	friend Point<ST> operator*(T const& t, Point<S> const& p)
 		{ return {t*p.x, t*p.y, t*p.z}; }
 	template<class T, class ST = std::common_type_t<S,T>>
-	Point<ST> operator*(T const& t)
-		{ return {x*t, y*t, z*t}; }
+	Point<ST> operator*(T const& t) const { return {x*t, y*t, z*t}; }
 
 	template<class T, class ST = std::common_type_t<S,T>>
 	Point<ST> operator-(Point<T> const& p) const { return {x-p.x, y-p.y, z-p.z}; }
@@ -78,10 +79,27 @@ template<class S, class T, class ST = std::common_type_t<S,T>>
 Point<ST> cross(Point<S> const& s, Point<T> const& t)
 	{ return {s.y*t.z-s.z*t.y, s.z*t.x-s.x*t.z, s.x*t.y-s.y*t.x}; }
 
+template<class U>
+std::pair<Point<U>, Point<U>> perpendicular(Point<U> const& p) {
+	typedef Point<U> Pt;
+	Pt u = {1, 0, 0}, v = {0, 1, 0};
+	auto w = p;//.normalize();
+	auto wu = dot(w, u), vw = dot(v, w);
+	if(wu*wu > vw*vw)
+		u = v, wu = vw;
+	v = normalize(cross(w, u));
+	u = cross(v, w);
+	auto uvw = /*w.length()*/ 1/dot(cross(u, v), w);
+	return std::make_pair(u*uvw, v*uvw);
+}
+
+template<class S>
+Point<S> normalize(Point<S> const& p) { return p.normalize(); }
+
 template<class S, class DELIM>
 std::string to_string(Point<S> const& p, unsigned prec, DELIM delim) {
-	return "(" + to_string(p.x, prec, delim) + ", " + to_string(p.y, prec, delim)
-			+ ", " + to_string(p.z, prec, delim) + ")";
+	return "(" + to_string(p.x, prec, delim) + "," + to_string(p.y, prec, delim)
+			+ "," + to_string(p.z, prec, delim) + ")";
 }
 
 #define USERDEF_TEMPLATE(CLASS,PARAM,UD,X,Y,Z) \
