@@ -15,7 +15,7 @@
 #include "math.tpp"
 #include "surface.hpp"
 
-#define USE_MODEL 2
+#define USE_MODEL 3
 
 #ifndef SUBSYSTEMS
 #define SUBSYSTEMS SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK
@@ -66,8 +66,9 @@ struct Hnd: Presenter<Hnd> {
 	}
 	Hnd& update(void) {
 		if(!joysticks.size()) {
-			if(streams[e_out].tellp() > 0) streams[e_out] << std::endl;
+			/*if(streams[e_out].tellp() > 0) streams[e_out] << std::endl;
 			streams[e_out] << "Skipped updating due to no joysticks";
+			return *this;*/
 			return *this;
 		}
 		auto & first = joysticks.begin() -> second;
@@ -210,6 +211,7 @@ struct Hnd: Presenter<Hnd> {
 		}
 		return s;
 	}
+	using Presenter<Hnd>::Presenter;
 };
 
 int main(int argc, const char *argv[]) {
@@ -243,6 +245,10 @@ int main(int argc, const char *argv[]) {
 		cube(points, indices, p, right);
 #elif USE_MODEL == 2
 		sphere(points, indices, p, right, wmesh, hmesh);
+#elif USE_MODEL == 3
+		cylinder(points, indices, p - right*1.0_y, p + right*1.0_y, right/2, wmesh, hmesh);
+#elif USE_MODEL == 4
+		rope(points, indices, 1_e - right * 1_K, 1_e + right * 1_K, {0, 1, 0}, p, 1, wmesh, hmesh);
 #else
 		sheet(points, indices, {-1, -1, -mid}, {1, -1, -mid},
 				{1, 1, -mid}, {-1, 1, -mid}, wmesh, hmesh);
@@ -271,7 +277,7 @@ int main(int argc, const char *argv[]) {
 		return 1;
 	}
 
-	Hnd hnd;
+	Hnd hnd(1024, 540);
 	cout << hnd.frame << endl;
 	glEnable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
