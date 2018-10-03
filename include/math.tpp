@@ -10,7 +10,13 @@ to_string(S const& s, unsigned prec, DELIM delim) {
 	std::ostringstream oss;
 	if(prec) oss << std::setprecision(prec) << std::fixed;
 	oss << s;
-	return oss.str();
+	auto out = oss.str(), zeroes = std::string(prec, '0');
+	if(out == ("-0." + zeroes))
+		out = out.substr(1);
+	if(s >= 0) return " " + out;
+	return out;
+	//if(s > 0) oss << ' ';
+	//return oss.str();
 }
 template<class S, unsigned N, class DELIM>
 std::string to_string(const S (&sn)[N], unsigned prec, DELIM delim) {
