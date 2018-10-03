@@ -12,9 +12,32 @@
 #include "geometric.hpp"
 #include "pretty.tpp"
 
+void test_perp(unsigned prec = 0) {
+	using namespace std;
+	using namespace Streams;
+	typedef Point<float> Pt;
+	Pt ws[] = {{2,0,0}, {0,2,0}, {0,0,2}};
+	for(Pt const& pt : ws) {
+		for(Pt w : {pt, -pt}) {
+			auto perp = perpendicular(w);
+			auto const& u = perp.first, v = perp.second;
+			auto uv = cross(u, v), vw = cross(v, w), wu = cross(w, u);
+			cout << "    w = " << to_string(w, prec) << "; "
+					"    u = " << to_string(u, prec) << "; "
+					"    v = " << to_string(v, prec) << ";\n"
+					"u x v = " << to_string(uv, prec) << ";\n"
+					"v x w = " << to_string(vw, prec) << ";\n"
+					"w x u = " << to_string(wu, prec) << ";\n";
+		}
+		cout << endl;
+	}
+}
+
 int main(int argc, const char *argv[]) {
 	using namespace std;
 	using namespace Streams;
+	test_perp();
+	return 0;
 
 	using T = float;
 	using PT = Point<T>;
