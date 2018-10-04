@@ -2,32 +2,47 @@
 
 #include "model.hpp"
 #include "dual.tpp"
+#include "streams.tpp"
+
+template<class S, class T, class... I>
+S& print_model(S &s, Model<T, I...> const& m, unsigned level = 0);
+template<class S, class T, class... I>
+S& print_structure(S &s, Model<T, I...> const& m);
+
+template<class S, class T, class... I>
+S& print_structure(S &s, Model<T, I...> const& m) {
+	using namespace Streams;
+	s << to_string(m.accumulated, 2) << " { ";
+	for(auto const& c : m.children)
+		print_structure(s, c);
+	return s << " }", s;
+}
+
+template<class S, class T, class... I>
+S& print_model(S &s, Model<T, I...> const& m, unsigned level) {
+	using namespace Streams;
+	s << string(level*2, ' ') << to_string(m.accumulated, 2) << "\n";
+	for(auto & c : m.children)
+		print_model(s, c, level+1);
+	return s;
+}
 
 int main(int argc, const char *argv[]) {
+	using namespace Streams;
+	using std::cout;
+	using std::endl;
 	typedef float T;
 	typedef DualQuaternion<T> DQ;
 
-	Model<T> parent;
-	parent.transform = {1, 0, 0, 0, 0, 1, 0, 0};
-	Model<T>& child = parent.add_child();
-	child.transform = {0, 1};
-	Model<T>& leaf = child.add_child();
-
-	child.transform = {1, 0, 0, 0, 0, 1, 0, 0};
-	parent.transform = {0, 0, 1, 0, 0, 0, 0, 0};
-	auto print = [] (std::ostream &os, Model<T> const& b) -> std::ostream& {
-		return os << "transform = " << b.transform
-				<< ", accumulated = " << b.accumulated, os;
-	};
-	std::cout << "Before accumulation:" << std::endl;
-	print(std::cout << "  Parent: ", parent) << std::endl;
-	print(std::cout << "  Child: ", child) << std::endl;
-	parent.accumulate(DQ{1});
-	std::cout << "After:" << std::endl;
-	print(std::cout << "  Parent: ", parent) << std::endl;
-	print(std::cout << "  Child: ", child) << std::endl;
-
-	leaf.add_vertices(1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1)
-			.add_indices(0, 1, 2);
-
+	Model<T> root;
+	// This creates two nodes, but replaces the first with the second
+	// auto lhs = &root.emplace_back(...);
+	//      lhs = &lhs -> emplace_back(...);
+	auto rhs = &root.emplace_back({1_e + 1_K});
+	auto lhs = &root.emplace_back({1_e + 1_I});
+	lhs = &lhs -> emplace_back({1_e + 10_I});
+	rhs = &rhs -> emplace_back({1_e + 1_K});
+	print_model(cout, root);
+	root.accumulate(1_e + 1_I);
+	print_model(cout, root);
 }
