@@ -4,45 +4,54 @@
 #include "dual.hpp"
 #include <vector>
 
-
-template<class T>
+template<class T, class I = unsigned>
 struct Model;
-template<class T>
+
+template<class T, class I>
 struct Model {
-	std::vector<Model<T>> children;
-	std::vector<T> vertices;
-	std::vector<unsigned> indices;
 	DualQuaternion<T> transform = {1}, accumulated = transform;
-	void accumulate(void) {
-		//accumulated = transform;
+	std::vector<Model> children;
+	std::vector<T> vertices;
+	std::vector<I> indices;
+	unsigned size(void) const { return children.size(); }
+	DualQuaternion<T>& accumulate(DualQuaternion<T> d = {1}) {
+		accumulated = transform * d;
 		for(auto & c : children)
 			c.accumulate(accumulated);
+		return accumulated;
 	}
-	void accumulate(DualQuaternion<T> const& d) {
-		accumulated = d * transform;
-		accumulate();
+	Model& emplace_back(DualQuaternion<T> d = {1}) {
+		children.emplace_back(std::move(Model{d, d*transform}));
+		return back();
 	}
-	Model<T>& add_child(Model<T> && m = {}) {
-		children.emplace_back(std::move(m));
-		return children.back();
-	}
-	Model<T>& add_vertices(void) {
+	typename std::vector<Model>::iterator begin(void) { return children.begin(); }
+	typename std::vector<Model>::const_iterator cbegin(void) const { return children.cbegin(); }
+	typename std::vector<Model>::iterator end(void) { return children.end(); }
+	typename std::vector<Model>::const_iterator cend(void) const { return children.cend(); }
+
+	Model& back(void) { return children.back(); }
+	Model& front(void) { return children.front(); }
+
+	Model& add_vertices(void) {
 		return *this;
 	}
 	template<class U, class... V>
-	Model<T>& add_vertices(U && u, V &&... v) {
+	Model& add_vertices(U && u, V &&... v) {
 		vertices.emplace_back(std::forward<U>(u));
 		return add_vertices(std::forward<V>(v)...);
 	}
-	Model<T> add_indices(void) {
+	Model& add_indices(void) {
 		return *this;
 	}
 	template<class... V>
-	Model<T> add_indices(unsigned u, V &&... v) {
+	Model& add_indices(unsigned u, V &&... v) {
 		indices.emplace_back(u);
 		return add_indices(std::forward<V>(v)...);
 	}
+	Model(DualQuaternion<T> transform = {1}):
+		transform(transform), accumulated(transform) {}
+	Model(DualQuaternion<T> transform, DualQuaternion<T> accumulated):
+		transform(transform), accumulated(transform * accumulated) {}
 };
-
 
 #endif
