@@ -164,6 +164,20 @@ DualQuaternion<Y> rot_translation(X && t, X && u, X && v, X && w, X && x, X && y
 	auto pt = rot * Point<Y>{x/2, y/2, z/2};
 	return {rot.w, rot.x, rot.y, rot.z, pt.w, pt.x, pt.y, pt.z};
 }
+
+template<class X, class Y = X, class Z = std::common_type_t<X,Y>>
+DualQuaternion<Z> operator*(Point<X> const& l, Quaternion<Y> const& r) {
+	return {r.w, r.x, r.y, r.z,
+			-l.x*r.x-l.y*r.y-l.z*r.z, l.x*r.w+l.y*r.z-l.z*r.y,
+			-l.x*r.z+l.y*r.w+l.z*r.x, l.x*r.y-l.y*r.x+l.z*r.w};
+}
+template<class X, class Y = X, class Z = std::common_type_t<X,Y>>
+DualQuaternion<Z> operator*(Quaternion<X> const& l, Point<Y> const& r) {
+	return {l.w, l.x, l.y, l.z,
+		-l.x*r.x-l.y*r.y-l.z*r.z, l.w*r.x+l.y*r.z-l.z*r.y,
+		l.w*r.y-l.x*r.z+l.z*r.x, l.w*r.z+l.x*r.y-l.y*r.z};
+}
+
 template<class X, class Y = X>
 DualQuaternion<Y> pivot(X && t, X && u, X && v, X && w, X && x, X && y, X && z) {
 	auto rot = rotation<Y>(t, u, v, w);
