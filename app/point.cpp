@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <functional>
+#include <sstream>
 
 #include "point.hpp"
 #include "quaternion.tpp"
@@ -12,37 +13,52 @@
 #include "geometric.hpp"
 #include "pretty.tpp"
 
-void test_perp(unsigned prec = 0) {
+void test_ops(void) {
 	using namespace std;
 	using namespace Streams;
 	typedef Point<float> Pt;
-	Pt ws[] = {{2,0,0}, {0,2,0}, {0,0,2}};
-	for(Pt const& pt : ws) {
-		for(Pt w : {pt, -pt}) {
-			auto perp = perpendicular(w);
-			auto const& u = perp.first, v = perp.second;
-			auto uv = cross(u, v), vw = cross(v, w), wu = cross(w, u);
-			cout << "    w = " << to_string(w, prec) << "; "
-					"    u = " << to_string(u, prec) << "; "
-					"    v = " << to_string(v, prec) << ";\n"
-					"u x v = " << to_string(uv, prec) << ";\n"
-					"v x w = " << to_string(vw, prec) << ";\n"
-					"w x u = " << to_string(wu, prec) << ";\n";
-		}
-		cout << endl;
-	}
-}
+	vector<Pt> points = {1_x, 1_y, 1_z, -1_x, -1_y, -1_z, 2_x, 1_y + 1_z};
+	auto N = points.size();
+	vector<string> rows(N+1);
 
+	auto pad = "  ";
+	auto buff = [&] (void) {
+		level(rows);
+		rows[0] += pad;
+		level(rows);
+	};
+	rows[0] += "Point";
+	for(unsigned i = 0; i < N; i++)
+		rows[i+1] += string(points[i]);
+	buff();
+	rows[0] += "Length";
+	for(unsigned i = 0; i < N; i++)
+		rows[i+1] += to_string(points[i].length(), 1);
+	buff();
+	rows[0] += " Normal";
+	for(unsigned i = 0; i < N; i++)
+		rows[i+1] += to_string(points[i].normalize(), 1);
+	buff();
+	rows[0] += " Perpendicular";
+	for(unsigned i = 0; i < N; i++) {
+		auto perp = perpendicular(points[i], true);
+		rows[i+1] += to_string(perp.first, 1) + ", " + to_string(perp.second, 1);
+	}
+	buff();
+	for(auto const& row : rows)
+		cout << row << endl;
+}
 int main(int argc, const char *argv[]) {
 	using namespace std;
 	using namespace Streams;
-	test_perp();
-	return 0;
 
 	using T = float;
 	using PT = Point<T>;
 	using Q = Quaternion<T>;
 	using DQ = DualQuaternion<T>;
+
+	test_ops();
+	cout << endl;
 
 	vector<Q> qs = {
 		rotation(float(M_PI/2), 1, 0, 0),
@@ -60,7 +76,6 @@ int main(int argc, const char *argv[]) {
 	vector<string> qRows(pts.size()+1, ""), dqRows(pts.size()+1,"");
 	unsigned qPrec = 3, dqPrec = qPrec;
 
-	// Using "to_string<Q>" causes very strange issues
 	transform(pts.begin(), pts.end(), qRows.begin(),
 			[=](PT & pt) { return to_string(pt) + bord; });
 	level(qRows);
@@ -69,7 +84,6 @@ int main(int argc, const char *argv[]) {
 			[=](PT & pt) { return to_string(pt) + bord; });
 	level(dqRows);
 	dqRows.insert(dqRows.begin(), string(minimax(dqRows).second, ' '));
-	//copy(qRows.begin(), qRows.begin(), dqRows.begin());
 
 	for(long i = 0, M = qs.size(); i < M; i++) {
 		for(long j = 0, N = pts.size(); j < N; j++) {
@@ -94,38 +108,4 @@ int main(int argc, const char *argv[]) {
 	}
 	for(auto const& row : dqRows)
 		cout << row << endl;
-
-
-	/*bool met = false;
-	for(auto const& col : qCols) {
-		if(met) cout << delim;
-		met = true;
-		cout << col;
-	}
-	cout << endl;
-	met = false;
-	for(auto const& col : qCols) {
-		if(met) cout << delim;
-		met = true;
-		cout << col;
-	}
-	cout << endl;*/
-
-	/*auto fmt_sandwich = [] (ostream &os, auto const& sub, auto const& sup,
-			auto const& rhs, unsigned prec = 0) -> ostream& {
-		return os << to_string(sub, prec) << "^(" << to_string(sup, prec) << ")"
-				" = " << to_string(rhs, prec);
-	};
-	for(PT pt : {{}, {1}, 1_e + 1_J, 1_e + 1_K}) {
-		cout << "Point: " << pt << endl;
-		for(Q t : {
-			rotation(float(M_PI/2), 1, 0, 0),
-			rotation(float(M_PI/2), 0, 1, 0),
-			rotation(float(M_PI/2), 0, 0, 1),
-		}) cout << "  " << t << "^(" << to_string(t,3) << ") "
-				"= " << to_string(pt ^ t, 1) << endl;
-		for(DQ t : {1_e + 0.5_I, 1_e + 0.5_J, 1_e + 0.5_K})
-			cout << "  " << t << "^(" << to_string(t,3) << ") "
-				"= " << to_string(pt ^ t, 1) << endl;
-	}*/
 }
