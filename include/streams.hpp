@@ -30,6 +30,7 @@ struct OStringStream;
 template<class S>
 ostream& center(ostream& out, S const& s, unsigned N, bool leftish = true);
 string center(string const& out, unsigned N, char fill = ' ', bool leftish = true);
+vector<string> center(vector<string> const& out, unsigned N, char fill = ' ', bool leftish = true);
 
 string trim(string const& s, bool leading = true, bool trailing = true) {
 	long size = s.length(), front = 0, back = size-1;
@@ -84,28 +85,29 @@ std::pair<long, long> minimax(T& t) {
 	return MiniMax<T, First_t<T>>()(t);
 }
 
-template<class S, class = void>
-struct HasInsert : false_type {};
 template<class S, class T, class = void>
+struct HasInsert : false_type {};
+template<class S, class T = S, class = void>
 struct HasAdd : false_type {};
 template<class S, class = void>
 struct HasLength : false_type {};
 template<class S, class = void, class = void>
 struct HasTellpSeekp : false_type {};
 
-template<class S>
-struct HasInsert<S, Detail::Void_t<decltype(&S::operator<<)>> : true_type {};
 template<class S, class T>
-struct HasAdd<S, T, Detail::Void_t<decltype(declval<S>()+=declval<T>())>> : true_type {};
+struct HasInsert<S, T, Detail::Void_t<decltype(declval<S>() << declval<T>())>> : true_type {};
+template<class S, class T>
+struct HasAdd<S, T, Detail::Void_t<decltype(declval<S>() += declval<T>())>> : true_type {};
 template<class S>
-struct HasLength<S, Detail::Void_t<decltype(&S::length)>> : true_type {};
+struct HasLength<S, Detail::Void_t<decltype(declval<S>().length())>> : true_type {};
 template<class S>
-struct HasTellpSeekp<S, Detail::Void_t<decltype(&S::tellp)>,
+struct HasTellpSeekp<S, Detail::Void_t<decltype(declval<S>().tellp())>,
 		Detail::Void_t<decltype(&S::seekp)>> : true_type {};
 
-template<class S>
-constexpr bool has_insert(Detail::Tag<S> && s = {}) { return HasInsert<S>::value; }
 template<class S, class T>
+constexpr bool has_insert(Detail::Tag<S> && s = {}, Detail::Tag<T> && t = {})
+	{ return HasInsert<S,T>::value; }
+template<class S, class T = S>
 constexpr bool has_add(Detail::Tag<S> && s = {}, Detail::Tag<T> && t = {})
 	{ return HasAdd<S, T>::value; }
 
@@ -116,10 +118,10 @@ constexpr bool has_tellp_seekp(Detail::Tag<S> && s = {}) { return HasTellpSeekp<
 
 template<class S, class SV = typename S::value_type>
 auto level(S& s, char fill = ' ')
-		-> std::enable_if_t<HasInsert<SV>::value && HasTellpSeekp<SV>::value, S>&;
+		-> std::enable_if_t<HasInsert<SV, string>::value && HasTellpSeekp<SV>::value, S>&;
 template<class S, class SV = typename S::value_type>
 auto level(S& s, char fill = ' ')
-		-> std::enable_if_t<HasAdd<SV, std::string>::value && HasLength<SV>::value, S>& {
+		-> std::enable_if_t<HasAdd<SV, string>::value && HasLength<SV>::value, S>& {
 	auto mm = minimax(s);
 	for(auto& it : s) {
 		auto len = mm.second - it.length();
@@ -127,6 +129,36 @@ auto level(S& s, char fill = ' ')
 	}
 	return s;
 }
+
+template<template<class...> class O, class S, class... SN,
+		template<class...> class I, class T, class... TN,
+		class E = std::enable_if_t<HasAdd<S,T>::value && HasLength<S>::value, S>>
+auto level_insert_each(O<S, SN...> & ss, I<T, TN...> & ts,
+		char fill = ' ', bool leveled = false) -> decltype(ss) {
+	if(!leveled) level(ss, fill);
+	auto beg = std::begin(ss);
+	for(auto const& t : ts)
+		*beg += t, beg++;
+	level(ss, fill);
+	return ss;
+}
+template<template<class...> class O, class S, class... SN, class T>
+std::enable_if_t<HasAdd<S,T>::value && HasLength<S>::value, O<S,SN...>&>
+level_insert(O<S, SN...> & ss, T const& t, char fill = ' ', bool leveled = false) {
+	if(!leveled) level(ss, fill);
+	for(auto & s : ss)
+		s += t;
+	return ss;
+}
+template<template<class...> class O, class S, class... SN, class T>
+std::enable_if_t<HasInsert<S,T>::value && HasTellpSeekp<S>::value, O<S,SN...>&>
+level_insert(O<S, SN...> & ss, T const& t, char fill = ' ', bool leveled = false) {
+	if(!leveled) level(ss, fill);
+	for(auto & s : ss)
+		s += t;
+	return ss;
+}
+
 
 }
 
