@@ -29,8 +29,7 @@ struct Presenter: Events::Handler<S> {
 	S& locate(void) { return static_cast<S&>(*this); }
 	template<class U, class... V>
 	S& locate(U const& u, V const&... v) {
-		if((locations[u] = program.locate(u)) < 0)
-			locations.erase(u);
+		locations[u] = program.locate(u);
 		return locate(v...);
 	}
 

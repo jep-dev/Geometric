@@ -90,7 +90,7 @@ struct Hnd: Presenter<Hnd> {
 		translation = ((1_e - .1_I * xz.first - .1_K * xz.second) ^ *orientation) * translation;
 		/*if(streams[e_out].tellp() > 0) streams[e_out] << std::endl;
 		streams[e_out] << transform;*/
-		set_view(transform = orientation * translation);
+		set_model(transform = orientation * translation);
 		return *this;
 	}
 
@@ -114,7 +114,7 @@ struct Hnd: Presenter<Hnd> {
 				case SDLK_KP_MINUS: project(-4, 4, -4, 4, 1, 10); break;
 				case SDLK_KP_PLUS:
 				case SDLK_EQUALS:
-					set_view(transform = {1});
+					set_model(transform = {1});
 					project(-2.5, 2.5, -2.5, 2.5, 1, 10);
 					break;
 				default: break;
@@ -126,20 +126,12 @@ struct Hnd: Presenter<Hnd> {
 			const char *pressed = "";
 			switch(k.keysym.sym) {
 				case SDLK_RETURN: //pressed = "Return: "; transform = {1};
+					pressed = "<Return>";
 					print_view = print_model = true;
 					break;
-				/*case SDLK_1: pressed = "1: "; transform = .1_x * transform; break;
-				case SDLK_2: pressed = "2: "; transform = .1_y * transform; break;
-				case SDLK_3: pressed = "3: "; transform = .1_z * transform; break;
-				case SDLK_8: pressed = "8: ";
-					transform = rotation(.1*M_PI, 0, 0, 1) * transform; break;
-				case SDLK_9: pressed = "9: ";
-					transform = rotation(.1*M_PI, 0, 1, 0) * transform; break;
-				case SDLK_0: pressed = "0: ";
-					transform = rotation(.1*M_PI, 1, 0, 0) * transform; break;*/
-				default: break; //print_model = false;
+				default: break;
 			}
-			set_view(transform);
+			set_model(transform);
 
 			switch(k.keysym.sym) {
 				case SDLK_l: print_location = true; break;
@@ -176,15 +168,18 @@ struct Hnd: Presenter<Hnd> {
 
 				DualQuaternion<float> d = {u[0], u[1], u[2], u[3], v[0], v[1], v[2], v[3]};
 				if(streams[e_out].tellp() > 0) streams[e_out] << '\n';
-				streams[e_out] << pressed << "Model = " << std::string(d) << std::endl;
+				streams[e_out] << "{" << uv_model[0] << ", " << uv_model[1] << "}: "
+					"Model = " << std::string(d) << std::endl;
 			}
+
 			if(print_view && uv_view[0] >= 0 && uv_view[1] >= 0) {
 				GLfloat u[4] = {0}, v[4] = {0};
 				glGetUniformfv(program, uv_view[0], u);
 				glGetUniformfv(program, uv_view[1], v);
 				DualQuaternion<float> d = {u[0], u[1], u[2], u[3], v[0], v[1], v[2], v[3]};
 				if(streams[e_out].tellp() > 0) streams[e_out] << '\n';
-				streams[e_out] << "View = " << std::string(d) << std::endl;
+				streams[e_out] << "{" << uv_view[0] << ", " << uv_view[1] << "}: "
+					"View = " << std::string(d) << std::endl;
 			}
 		}
 		return { Events::StatusPass, k.timestamp };
