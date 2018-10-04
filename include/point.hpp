@@ -30,9 +30,8 @@ struct Point {
 
 	Point normalize(void) const {
 		auto len = length();
-		if(near_zero(len)) return {0}; // TODO
-		if(near(len, 1)) return *this;
-		return *this * (1/len);
+		if(len == 0) return {0}; // TODO
+		return *this * (1 / len);
 	}
 
 	template<class T, class ST = std::common_type_t<S,T>>
@@ -58,6 +57,10 @@ struct Point {
 				+ 2*(-t.w*z + t.z*t.s)
 		};
 	}
+	template<class T, class ST = std::common_type_t<S,T>>
+	Point<ST> operator/(T const& t) const {
+		return {x/t, y/t, z/t};
+	}
 
 	/**
 	 * @brief Converts a point to a half-translation to be used in a sandwich product.
@@ -66,11 +69,11 @@ struct Point {
 	 * TODO make conversion explicit or introduce intermediates like 'translation'/'position'?
 	 */
 	template<class T>
-	operator DualQuaternion<T>(void) const { return {1, 0, 0, 0, 0, T(x/2), T(y/2), T(z/2)}; }
-	//operator DualQuaternion<S>(void) const { return {1, 0, 0, 0, 0, x, y, z}; }
+	//operator DualQuaternion<T>(void) const { return {1, 0, 0, 0, 0, T(x/2), T(y/2), T(z/2)}; }
+	operator DualQuaternion<T>(void) const { return {1, 0, 0, 0, 0, x, y, z}; }
 	template<class T>
 	friend T& operator<<(T &t, Point const& p) { return t << to_string(p), t; }
-	operator std::string(void) const { return std::string((DualQuaternion<S>) *this); }
+	operator std::string(void) const { return to_string((DualQuaternion<S>) *this); }
 };
 template<class S, class T, class ST = std::common_type_t<S,T>>
 ST dot(Point<S> const& s, Point<T> const& t)
@@ -78,19 +81,28 @@ ST dot(Point<S> const& s, Point<T> const& t)
 template<class S, class T, class ST = std::common_type_t<S,T>>
 Point<ST> cross(Point<S> const& s, Point<T> const& t)
 	{ return {s.y*t.z-s.z*t.y, s.z*t.x-s.x*t.z, s.x*t.y-s.y*t.x}; }
+/*template<class S, class T, class ST = std::common_type_t<S,T>>
+Point<ST> operator*(Point<S> const& s, Point<T> const& t) {
+	return cross(s, t);
+}*/
 
 template<class U>
-std::pair<Point<U>, Point<U>> perpendicular(Point<U> const& p) {
+std::pair<Point<U>, Point<U>> perpendicular(Point<U> const& p, bool norm = false) {
 	typedef Point<U> Pt;
-	Pt u = {1, 0, 0}, v = {0, 1, 0};
-	auto w = p;//.normalize();
-	auto wu = dot(w, u), vw = dot(v, w);
-	if(wu*wu > vw*vw)
-		u = v, wu = vw;
+	Pt i = {1, 0, 0}, j = {0, 1, 0}, k = {0, 0, 1},
+		u = i, w = norm ? p.normalize() : p, v = j;
+	auto wi = dot(w, i), wi2 = wi*wi, wu = wi,
+		wj = dot(w, j), wj2 = wj*wj,
+		wk = dot(w, k), wk2 = wk*wk;
+	if(wi2 > wj2) {
+		if(wj2 > wk2) u = k, wu = wk;
+		else u = j, wu = wj;
+	} else if(wi2 > wk2) u = k, wu = wk;
 	v = normalize(cross(w, u));
 	u = cross(v, w);
-	auto uvw = /*w.length()*/ 1/dot(cross(u, v), w);
-	return std::make_pair(u*uvw, v*uvw);
+	auto uvw = dot(cross(u, v), w);
+	//return std::make_pair(u/uvw, v/uvw);
+	return std::make_pair(u, v);
 }
 
 template<class S>
@@ -98,8 +110,8 @@ Point<S> normalize(Point<S> const& p) { return p.normalize(); }
 
 template<class S, class DELIM>
 std::string to_string(Point<S> const& p, unsigned prec, DELIM delim) {
-	return "(" + to_string(p.x, prec, delim) + "," + to_string(p.y, prec, delim)
-			+ "," + to_string(p.z, prec, delim) + ")";
+	return "(" + to_string(p.x, prec) + delim + to_string(p.y, prec)
+			+ delim + to_string(p.z, prec) + ")";
 }
 
 #define USERDEF_TEMPLATE(CLASS,PARAM,UD,X,Y,Z) \
