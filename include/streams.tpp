@@ -21,10 +21,17 @@ ostream& center(ostream& out, S const& s, unsigned N, bool leftish) {
 	if(dlen1 > 0) out << setw(dlen1) << "";
 	return out;
 }
-std::string center(std::string const& s, unsigned N, char fill, bool leftish) {
+string center(string const& s, unsigned N, char fill, bool leftish) {
 	int len = s.length(), len2 = N - len, llen = len2/2, rlen = len2 - llen;
 	if(leftish) std::swap(llen, rlen);
-	return std::string(std::max(llen, 0), fill) + s + std::string(std::max(rlen, 0), fill);
+	return string(std::max(llen, 0), fill) + s + string(std::max(rlen, 0), fill);
+}
+
+vector<string> center(vector<string> const& v, unsigned N, char fill, bool leftish) {
+	vector<string> out;
+	for(auto const& s : v)
+		out.emplace_back(center(s, N, fill, leftish));
+	return out;
 }
 
 template<class T, class V>
@@ -45,7 +52,7 @@ std::pair<long, long> MiniMax<T, V, Detail::Void_t<decltype(&V::tellp)>>::operat
 
 template<class S, class SV>
 auto level(S& s, char fill)
-		-> std::enable_if_t<HasInsert<SV>::value && HasTellpSeekp<SV>::value, S>& {
+		-> std::enable_if_t<HasInsert<SV, string>::value && HasTellpSeekp<SV>::value, S>& {
 	auto mm = minimax(s);
 	for(auto& it : s) {
 		auto cur = it.tellp();
@@ -58,10 +65,7 @@ auto level(S& s, char fill)
 }
 
 struct OStringStream : std::ostringstream {
-	std::size_t size(void) const {
-		auto s = str();
-		return s.length();
-	}
+	std::size_t size(void) const { return str().length(); }
 	std::size_t size(void) {
 		auto pos = tellp();
 		seekp(0, std::ios_base::end);
