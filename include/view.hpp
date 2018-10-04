@@ -18,9 +18,22 @@ void bufferData(GLenum target, GLuint vbo, const T (& data) [N], GLenum usage) {
 	glBufferData(target, sizeof(data), data, usage);
 }
 template<class T>
-void bufferData(GLenum target, GLuint vbo, std::vector<T> const& data, GLenum usage) {
+void bufferData(GLenum target, GLuint vbo, T const& data,
+		GLenum usage, GLintptr offset = 0) {
 	glBindBuffer(target, vbo);
 	glBufferData(target, data.size()*sizeof(data[0]), &data[0], usage);
+}
+template<class T, unsigned N>
+void rebufferData(GLenum target, GLuint vbo, const T (&data) [N],
+		GLenum usage, GLintptr offset = 0) {
+	glBindBuffer(target, vbo);
+	glBufferSubData(target, offset, sizeof(data), data, usage);
+}
+template<class T>
+void rebufferData(GLenum target, GLuint vbo, std::vector<T> const& data,
+		GLenum usage, GLintptr offset = 0) {
+	glBindBuffer(target, vbo);
+	glBufferSubData(target, offset, data.size()*sizeof(data[0]), &data[0], usage);
 }
 
 /** Directly draws an array of vertices */
