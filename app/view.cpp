@@ -15,7 +15,7 @@
 #include "math.tpp"
 #include "surface.hpp"
 
-#define USE_MODEL sphere
+#define USE_MODEL 0
 
 #ifndef SUBSYSTEMS
 #define SUBSYSTEMS SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK
@@ -83,14 +83,14 @@ struct Hnd: Presenter<Hnd> {
 			theta = first.axes[3];
 		if(first.axes.find(4) != first.axes.cend())
 			phi = first.axes[4];
-		auto dead = .1;
-		auto xz = deadzone(x, z, dead), pt = deadzone(theta, phi, dead);
+		auto dead1 = .25, dead2 = .1;
+		auto xz = deadzone(x, z, dead1), pt = deadzone(theta, phi, dead2);
 		orientation = rotation<float>(pt.first * M_PI/4, 0, 1, 0)
 				* rotation<float>(pt.second * M_PI/4, -1, 0, 0);
 		translation = ((1_e - .1_I * xz.first - .1_K * xz.second) ^ *orientation) * translation;
 		/*if(streams[e_out].tellp() > 0) streams[e_out] << std::endl;
 		streams[e_out] << transform;*/
-		set_model(transform = orientation * translation);
+		set_view(transform = orientation * translation);
 		return *this;
 	}
 
@@ -100,8 +100,9 @@ struct Hnd: Presenter<Hnd> {
 		using namespace gl;
 		using Streams::center;
 		using DQ = decltype(transform);
-		locate("model.u", "model.v");
-		GLint mod[] = {locations["model.u"], locations["model.v"]};
+		locate("model.u", "model.v", "view.u", "view.v");
+		GLint uv_model[] = {locations["model.u"], locations["model.v"]},
+			uv_view[] = {locations["view.u"], locations["view.v"]};
 		auto const& sym = k.keysym.sym;
 		if(sym == SDLK_ESCAPE || sym == SDLK_q)
 			return {Events::StatusQuit, k.timestamp};
@@ -113,18 +114,21 @@ struct Hnd: Presenter<Hnd> {
 				case SDLK_KP_MINUS: project(-4, 4, -4, 4, 1, 10); break;
 				case SDLK_KP_PLUS:
 				case SDLK_EQUALS:
-					set_model(transform = {1});
+					set_view(transform = {1});
 					project(-2.5, 2.5, -2.5, 2.5, 1, 10);
 					break;
 				default: break;
 			}
 		} else {
-			bool print_location = false, print_projection = false, print_model = true;
+			bool print_location = false, print_projection = false,
+				print_model = true, print_view = false;
 			auto old_transform = transform;
 			const char *pressed = "";
 			switch(k.keysym.sym) {
-				case SDLK_RETURN: pressed = "Return: "; transform = {1}; break;
-				case SDLK_1: pressed = "1: "; transform = .1_x * transform; break;
+				case SDLK_RETURN: //pressed = "Return: "; transform = {1};
+					print_view = print_model = true;
+					break;
+				/*case SDLK_1: pressed = "1: "; transform = .1_x * transform; break;
 				case SDLK_2: pressed = "2: "; transform = .1_y * transform; break;
 				case SDLK_3: pressed = "3: "; transform = .1_z * transform; break;
 				case SDLK_8: pressed = "8: ";
@@ -132,10 +136,10 @@ struct Hnd: Presenter<Hnd> {
 				case SDLK_9: pressed = "9: ";
 					transform = rotation(.1*M_PI, 0, 1, 0) * transform; break;
 				case SDLK_0: pressed = "0: ";
-					transform = rotation(.1*M_PI, 1, 0, 0) * transform; break;
-				default: print_model = false;
+					transform = rotation(.1*M_PI, 1, 0, 0) * transform; break;*/
+				default: break; //print_model = false;
 			}
-			set_model(transform);
+			set_view(transform);
 
 			switch(k.keysym.sym) {
 				case SDLK_l: print_location = true; break;
@@ -165,14 +169,22 @@ struct Hnd: Presenter<Hnd> {
 				for(auto const& l : locations)
 					streams[e_out] << "\t[" << l.first << "] => " << l.second << "\n";
 			}
-			if(print_model && mod[0] >= 0 && mod[1] >= 0) {
+			if(print_model && uv_model[0] >= 0 && uv_model[1] >= 0) {
 				GLfloat u[4] = {0}, v[4] = {0};
-				glGetUniformfv(program, mod[0], u);
-				glGetUniformfv(program, mod[1], v);
+				glGetUniformfv(program, uv_model[0], u);
+				glGetUniformfv(program, uv_model[1], v);
 
 				DualQuaternion<float> d = {u[0], u[1], u[2], u[3], v[0], v[1], v[2], v[3]};
 				if(streams[e_out].tellp() > 0) streams[e_out] << '\n';
 				streams[e_out] << pressed << "Model = " << std::string(d) << std::endl;
+			}
+			if(print_view && uv_view[0] >= 0 && uv_view[1] >= 0) {
+				GLfloat u[4] = {0}, v[4] = {0};
+				glGetUniformfv(program, uv_view[0], u);
+				glGetUniformfv(program, uv_view[1], v);
+				DualQuaternion<float> d = {u[0], u[1], u[2], u[3], v[0], v[1], v[2], v[3]};
+				if(streams[e_out].tellp() > 0) streams[e_out] << '\n';
+				streams[e_out] << "View = " << std::string(d) << std::endl;
 			}
 		}
 		return { Events::StatusPass, k.timestamp };
@@ -223,15 +235,31 @@ int main(int argc, const char *argv[]) {
 	using namespace View;
 	using namespace glbinding;
 
-	// Get/set number of iterations, using -1 as unlimited
-	int N = -1;
-	if(argc > 1) {
-		stringstream ss;
-		ss << argv[1];
-		ss >> N;
-		if(ss.fail()) N = -1;
+	map<string, bool> models = {
+		{"sanity", false},
+		{"cube", false},
+		{"sheet", false},
+		{"sphere", false},
+		{"cylinder", false},
+		{"rope", false},
+	};
+	string nos[] = {"--no-", "-n"};
+	for(auto i = 1; i < argc; i++) {
+		string arg = argv[i];
+		bool met = false;
+		for(auto const& no : nos) {
+			auto pos = arg.find(no);
+			if(pos != 0) continue;
+			arg = arg.substr(no.length());
+			models[arg] = false;
+			met = true;
+			break;
+		}
+		if(!met) models[arg] = true;
 	}
-
+	for(auto const& it : models) {
+		cout << "models[" << it.first << "] = " << boolalpha << it.second << endl;
+	}
 
 	// Initialize projection matrix values and vertices
 	float width = 5, height = 5, depth = 10,
@@ -244,22 +272,25 @@ int main(int argc, const char *argv[]) {
 
 	std::vector<GLfloat> points;
 	std::vector<GLuint> indices;
-	for(Point<float> p : {Point<float>{0, 0, -mid}}) {
-#if USE_MODEL == cube
+	unsigned indicesSize = 0;
+	Point<float> p = {0, 0, -mid};
+	if(models["cube"])
 		cube(points, indices, p);
-#elif USE_MODEL == sphere
-		sphere(points, indices, p, scale, wmesh, hmesh);
-#elif USE_MODEL == cylinder
-		cylinder(points, indices, p - scale*1.0_y, p + scale*1.0_y, scale, wmesh, hmesh);
-#elif USE_MODEL == rope
-		rope(points, indices, 1_e - scale * (.5_J+1_K),
-			1_e + scale * (.5_J+1_K), {0, 1, 0}, p, scale, wmesh, hmesh);
-#else
-		sheet(points, indices, {-1, -1, -mid}, {1, -1, -mid},
-				{1, 1, -mid}, {-1, 1, -mid}, wmesh, hmesh);
-#endif
-	}
-	auto indicesSize = indices.size(), pointsSize = points.size();
+	indicesSize = indices.size();
+	if(models["sphere"])
+		sphere(points, indices, p, scale, wmesh, hmesh, indicesSize);
+	indicesSize = indices.size();
+	if(models["sheet"])
+		sheet(points, indices, p+scale*(-1_x-1_y), p+scale*(1_x-1_y),
+				p+scale*(-1_x+1_y), p+scale*(1_x+1_y), wmesh, hmesh, indicesSize);
+	indicesSize = indices.size();
+	if(models["rope"])
+		rope(points, indices, 1_e - scale*1_J, 1_e + scale*1_J,
+			Point<float>{0, 0, 0}, p, scale, wmesh, hmesh, indicesSize);
+	indicesSize = indices.size();
+	if(models["sanity"])
+		sanity(points, indices, p, scale, wmesh, hmesh, indicesSize);
+	indicesSize = indices.size();
 
 	// Locate shaders from execution path
 	string self = argv[0], delim = "/", share = "share" + delim;
@@ -370,7 +401,6 @@ int main(int argc, const char *argv[]) {
 		if(ms_diff > 0) {
 			SDL_Delay(unsigned(ms_diff));
 		}
-		if((N >= 0) && (i >= N)) break;
 	}
 
 	if(hnd.size())
