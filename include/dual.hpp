@@ -148,16 +148,36 @@ DualQuaternion<ST> to_dual(const S (&s)[SN], const T (&t)[TN]) {
 }
 template<class X, class Y = X, class Z = X, class XYZ = std::common_type_t<X,Y,Z>>
 DualQuaternion<XYZ> point(X && x, Y && y, Z && z)
-	{ return {(XYZ)1, (XYZ)0, (XYZ)0, (XYZ)0, (XYZ)0, (XYZ)x, (XYZ)y, (XYZ)z}; }
+	{ return {1, 0, 0, 0, 0, x, y, z}; }
 template<class X, class Y = X, class Z = X, class XYZ = std::common_type_t<X,Y,Z>>
 DualQuaternion<XYZ> translation(X && x, Y && y, Z && z)
 	{ return point<X,Y,Z,XYZ>(x/2, y/2, z/2); }
 
-// TODO interpretation of dot product? Mind the dual*dual components?
+template<class X, class Y = X>
+DualQuaternion<Y> trans_rotation(X && x, X && y, X && z, X && t, X && u, X && v, X && w) {
+	auto rot = rotation<Y>(t, u, v, w);
+	return {rot.w, rot.x, rot.y, rot.z, 0, x, y, z};
+}
+template<class X, class Y = X>
+DualQuaternion<Y> rot_translation(X && t, X && u, X && v, X && w, X && x, X && y, X && z) {
+	auto rot = rotation<Y>(t, u, v, w);
+	auto pt = rot * Point<Y>{x/2, y/2, z/2};
+	return {rot.w, rot.x, rot.y, rot.z, pt.w, pt.x, pt.y, pt.z};
+}
+template<class X, class Y = X>
+DualQuaternion<Y> pivot(X && t, X && u, X && v, X && w, X && x, X && y, X && z) {
+	auto rot = rotation<Y>(t, u, v, w);
+	auto pt = Point<Y>{x/2, y/2, z/2};
+	auto rpt = rot * pt, ptr = pt * rot, rptr = rpt - ptr;
+	return {rot.w, rot.x, rot.y, rot.z, rptr.w, rptr.x, rptr.y, rptr.z};
+}
+
+// // TODO Should dot be non-dual dot (rotations), dual dot (translations), or both?
 template<class S, class T>
 std::common_type_t<S,T> dot(DualQuaternion<S> const& l, DualQuaternion<T> const& r) {
-	return l.s*r.s + l.t*r.t + l.u*r.u + l.v*r.v
-			+ l.w*r.w + l.x*r.x + l.y*r.y + l.z*r.z;
+	/*return l.s*r.s + l.t*r.t + l.u*r.u + l.v*r.v
+			+ l.w*r.w + l.x*r.x + l.y*r.y + l.z*r.z;*/
+	return l.s*r.s + l.t*r.t + l.u*r.u + l.v*r.v;
 }
 
 template<class L, class R, class T, class LRT = std::common_type_t<L,R,T>>
