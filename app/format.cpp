@@ -35,6 +35,12 @@ int main(int argc, const char *argv[]) {
 	voss[2] << "729";
 	mm = minimax(voss);
 	cout << mm.first << ", " << mm.second << endl;
+
+	level_insert(vstrs, " | ");
+	level_insert_each(vstrs, vstrs);
+	for(auto const& vstr : vstrs) {
+		cout << vstr << endl;
+	}
 }
 
 	static constexpr auto N = 4;
