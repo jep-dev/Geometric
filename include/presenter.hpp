@@ -56,14 +56,21 @@ struct Presenter: Events::Handler<S> {
 	}
 
 	/** Default initializer - links and uses the program as-is */
-	Events::Status init(const gl::GLenum type = gl::GL_VERTEX_SHADER) {
+	Events::Status init(gl::GLenum type = gl::GL_VERTEX_SHADER) {
 		if(!program.link()) return program.status;
-		use(program);
+		use();
 		return {};
 	}
 
-	S& use(gl::GLuint program) {
+	S& use(void) {
 		gl::glUseProgram(program);
+		return static_cast<S&>(*this);
+	}
+	template<class T>
+	S& set_view(DualQuaternion<T> const& v) {
+		locate("view.u", "view.v");
+		gl::glUniform4f(locations["view.u"], v.s, v.t, v.u, v.v);
+		gl::glUniform4f(locations["view.v"], v.w, v.x, v.y, v.z);
 		return static_cast<S&>(*this);
 	}
 	template<class T>
@@ -73,7 +80,6 @@ struct Presenter: Events::Handler<S> {
 		gl::glUniform4f(locations["model.v"], m.w, m.x, m.y, m.z);
 		return static_cast<S&>(*this);
 	}
-	//gl::GLfloat projection[16] = {0};
 	S& project(void) {
 		using namespace View;
 		float a = 1;
