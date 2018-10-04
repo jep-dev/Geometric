@@ -59,6 +59,41 @@ std::vector<std::string> get_table(std::string const& title,
 	return out;
 }
 
+void test_transformations(void) {
+	using namespace std;
+	using namespace Streams;
+	typedef float T;
+	typedef DualQuaternion<T> DQ;
+	vector<DQ> xs = {1_e, 1_e + 1_I, 1_e + 1_J, 1_e - 1_I, 1_e - 1_J};
+	vector<pair<string,DQ>> ts = {
+		{"pi k @ 0", pivot<T>(M_PI,0,0,1, 0,0,0)},
+		{"pi k @ I", pivot<T>(M_PI,0,0,1, 1,0,0)},
+		{"pi k @ -I", pivot<T>(M_PI,0,0,1, -1,0,0)}};
+	auto xlen = xs.size(), tlen = ts.size();
+	vector<string> lines(xlen+2);
+	// e+X.XXi+Y.YYj+Z.ZZk
+	// units in {1..4}
+	//  (units-1) operators
+	//  (units-1)*{0,1,4} digits/decimals
+	//  max = 4*3+3+4=19
+	unsigned w1 = 8, w2 = 19;
+	vector<string> col1 = {"", align("Point", w1, -1, true)};
+	for(auto const& x : xs)
+		col1.emplace_back(align(to_string(x, 2), w1, -1, true));
+	for(auto const& t : ts) {
+		vector<string> col2 = {align(t.first, w2, 1, true),
+			align(to_string(t.second, 2), w2, 1, true)};
+		for(auto const& x : xs)
+			col2.emplace_back(align(to_string(x ^ t.second, 2), w2, 1, true));
+		level_insert_each(lines, col1);
+		level_insert(lines, "   ");
+		level_insert_each(lines, col2);
+		level_insert(lines, " | ");
+	}
+	for(auto const& line : lines)
+		cout << line << endl;
+}
+
 /* Testing the role of the non-dual component in sandwich products - e.g. position and normal
  * stored as (n + E p) as the object of the sandwich product. Oddly enough, while the traditional
  * cos(theta)+isin(theta) format did not work, 1+cos(theta)+isin(theta) appeared to.
@@ -145,6 +180,7 @@ int main(int argc, const char *argv[]) {
 	//scratch();
 	//test_binary();
 	//test_heterogeneous();
+	test_transformations();
 
 	DQ ds[] = {1_e, 1_i, 1_j, 1_k, 1_E, 1_I, 1_J, 1_K};
 
