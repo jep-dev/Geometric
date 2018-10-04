@@ -67,14 +67,7 @@ struct Handler {
 		if(found == joysticks.end())
 			return out.code = Events::StatusWarn, out;
 		auto & joy = found -> second;
-		float axis = a.value/float(SDL_JOYSTICK_AXIS_MAX), axis2 = axis * axis,
-			dead = .1, dead2 = dead * dead;
-
-		if(axis2 < dead2)
-			return joy.axes[a.axis] = 0, out;
-
-		float r = sqrt(axis2);
-		joy.axes[a.axis] = (r - dead) * axis / (1 - dead);
+		joy.axes[a.axis] = a.value / float(SDL_JOYSTICK_AXIS_MAX);
 		return out;
 	}
 	template<class... T>
