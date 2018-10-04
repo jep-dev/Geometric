@@ -15,7 +15,7 @@
 #include "math.tpp"
 #include "surface.hpp"
 
-#define USE_MODEL 3
+#define USE_MODEL sphere
 
 #ifndef SUBSYSTEMS
 #define SUBSYSTEMS SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK
@@ -72,18 +72,22 @@ struct Hnd: Presenter<Hnd> {
 			return *this;
 		}
 		auto & first = joysticks.begin() -> second;
-		DualQuaternion<float> t = {1}, r = {1}; //orientation;
+		DualQuaternion<float> t = 1_e, r = 1_e; //orientation;
 		//auto d = 1_e + transform.x*1_I + transform.y*1_J + transform.z*1_K;
+		float theta = 0, phi = 0, x = 0, z = 0;
 		if(first.axes.find(0) != first.axes.cend())
-			t = (1_e - (.1_I * first.axes[0])) * t;
+			x = first.axes[0];
 		if(first.axes.find(1) != first.axes.cend())
-			t = (1_e - (.1_K * first.axes[1])) * t;
+			z = first.axes[1];
 		if(first.axes.find(3) != first.axes.cend())
-			r = r * rotation(M_PI/4 * first.axes[3], 0, 1, 0);
+			theta = first.axes[3];
 		if(first.axes.find(4) != first.axes.cend())
-			r = rotation(M_PI/4 * first.axes[4], -1, 0, 0) * r;
-		orientation = r;
-		translation = translation * (t ^ orientation);
+			phi = first.axes[4];
+		auto dead = .1;
+		auto xz = deadzone(x, z, dead), pt = deadzone(theta, phi, dead);
+		orientation = rotation<float>(pt.first * M_PI/4, 0, 1, 0)
+				* rotation<float>(pt.second * M_PI/4, -1, 0, 0);
+		translation = ((1_e - .1_I * xz.first - .1_K * xz.second) ^ *orientation) * translation;
 		/*if(streams[e_out].tellp() > 0) streams[e_out] << std::endl;
 		streams[e_out] << transform;*/
 		set_model(transform = orientation * translation);
@@ -235,20 +239,21 @@ int main(int argc, const char *argv[]) {
 			mid = (near + far)/2,
 			right = width/2, left = -right,
 			top = height/2, bottom = -top;
-	int wmesh = 126, hmesh = wmesh;
-	auto scale = right * 0.25f;
+	int wmesh = 4, hmesh = wmesh;
+	auto scale = right;
 
 	std::vector<GLfloat> points;
 	std::vector<GLuint> indices;
 	for(Point<float> p : {Point<float>{0, 0, -mid}}) {
-#if USE_MODEL == 1
-		cube(points, indices, p, right);
-#elif USE_MODEL == 2
-		sphere(points, indices, p, right, wmesh, hmesh);
-#elif USE_MODEL == 3
-		cylinder(points, indices, p - right*1.0_y, p + right*1.0_y, right/2, wmesh, hmesh);
-#elif USE_MODEL == 4
-		rope(points, indices, 1_e - right * 1_K, 1_e + right * 1_K, {0, 1, 0}, p, 1, wmesh, hmesh);
+#if USE_MODEL == cube
+		cube(points, indices, p);
+#elif USE_MODEL == sphere
+		sphere(points, indices, p, scale, wmesh, hmesh);
+#elif USE_MODEL == cylinder
+		cylinder(points, indices, p - scale*1.0_y, p + scale*1.0_y, scale, wmesh, hmesh);
+#elif USE_MODEL == rope
+		rope(points, indices, 1_e - scale * (.5_J+1_K),
+			1_e + scale * (.5_J+1_K), {0, 1, 0}, p, scale, wmesh, hmesh);
 #else
 		sheet(points, indices, {-1, -1, -mid}, {1, -1, -mid},
 				{1, 1, -mid}, {-1, 1, -mid}, wmesh, hmesh);
@@ -277,7 +282,7 @@ int main(int argc, const char *argv[]) {
 		return 1;
 	}
 
-	Hnd hnd(1024, 540);
+	Hnd hnd(640, 480);
 	cout << hnd.frame << endl;
 	glEnable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
