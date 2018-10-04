@@ -2,14 +2,11 @@
 #define SURFACE_HPP
 
 #include <vector>
-#include <glbinding/gl/gl.h>
-//#include <glbinding/Binding.h>
 
 #include "quaternion.hpp" // Quaternion
 #include "dual.hpp" // Dual
 #include "point.hpp" // Point
 #include "math.tpp" // Point*Dual
-//#include "streams.tpp"
 
 #ifdef ENABLE_PRINTING
 #include "quaternion.tpp"
@@ -18,21 +15,19 @@
 #define PRINT_STRING(X, N) do { std::cout << to_string(X, N) << std::endl; } while(0)
 #endif
 
-//Point<gl::GLfloat> pt = {vertices[i], vertices[i+1], vertices[i+2]};
-//cout << to_string(pt, 2) << endl;
-
-template<class S, class T, class RAD = T>
-void sphere(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
-		Point<T> center = {}, RAD radius = 1, unsigned M = 100, unsigned N = 100) {
-	auto get_angle = [] (unsigned i, unsigned I, T t0, T t1)
-			-> T { return t0 + (t1-t0)*i/(I-1); };
-	auto get_theta = [=] (unsigned j) -> T { return get_angle(j, N, 0, T(M_PI*2)); };
-	auto get_phi = [=] (unsigned i) -> T { return get_angle(i, M, -T(M_PI/2), T(M_PI/2)); };
+template<class S, class T, class U, class R = U,
+		template<class...> class C = std::vector, class... CT>
+void sphere(C<S,CT...> &vertices, C<T,CT...> &indices, Point<U> center = {},
+		R radius = 1, unsigned M = 100, unsigned N = 100) {
+	auto get_angle = [] (unsigned i, unsigned I, U u0, U u1)
+			-> U { return u0 + (u1-u0)*i/(I-1); };
+	auto get_theta = [=] (unsigned j) -> U { return get_angle(j, N, 0, M_PI*2); };
+	auto get_phi = [=] (unsigned i) -> U { return get_angle(i, M, -M_PI/2, M_PI/2); };
 
 	for(unsigned j = 0, N2 = N+1; j <= N; j++) {
 		auto phi = get_phi(j), cp = cos(phi), sp = sin(phi);
 		for(unsigned i = 0, M2 = M+1; i <= M; i++) {
-			S theta = get_theta(i), ct = cos(theta), st = sin(theta);
+			U theta = get_theta(i), ct = cos(theta), st = sin(theta);
 			vertices.emplace_back(center.x + radius * ct * cp);
 			vertices.emplace_back(center.y + radius * sp);
 			vertices.emplace_back(center.z + radius * st * cp);
@@ -50,21 +45,23 @@ void sphere(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
 	}
 
 }
-template<class S, class T, class U = T, class W = std::common_type_t<S,T,U>>
-void cube(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
-		Point<T> center = {0, 0, 0}, U width = 1, bool print = true) {
+template<class S, class T, class U = S, class W = U,
+		template<class...> class VERT, class... VERTN,
+		template<class...> class IND, class... INDN>
+void cube(VERT<S, VERTN...> &vertices, IND<T, INDN...> &indices,
+		Point<U> center = {0, 0, 0}, W width = 1, bool print = true) {
 	using std::cout;
 	using std::endl;
 
 	enum { tne=0, tse, tsw, tnw, bne, bse, bsw, bnw, nDirs };
-	W scale = width / W(2);
-	Point<W> e = {scale, 0, 0},  w = {-scale, 0, 0},
+	S scale = S(width)/2;
+	Point<S> e = {scale, 0, 0},  w = {-scale, 0, 0},
 			n = {0, 0, -scale}, s = {0, 0, scale},
 			t = {0, scale, 0},  b = {0, -scale, 0},
-			c = {W(center.x), W(center.y), W(center.z)},
+			c = {center.x, center.y, center.z},
 			points[] = {c, c, c, c, c, c, c, c};
 	using Streams::center;
-	auto face = [&] (unsigned tr, unsigned tl, unsigned bl, unsigned br, Point<W> const& p) {
+	auto face = [&] (unsigned tr, unsigned tl, unsigned bl, unsigned br, Point<S> const& p) {
 		for(auto i : {tr, tl, bl, br}) {
 			points[i] += p;
 		}
@@ -79,22 +76,22 @@ void cube(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
 	face(tsw, tnw, bnw, bsw, w); // West
 	for(auto const& p : points) {
 		for(auto const& px : {p.x, p.y, p.z})
-			vertices.emplace_back(S(px));
+			vertices.emplace_back(px);
 	}
 	{
 #ifdef ENABLE_PRINTING
 		cout << std::right;
 		auto verticesSize = vertices.size();
 		for(unsigned i = 0; i < verticesSize; i+=3) {
-			Point<gl::GLfloat> pt = {vertices[i], vertices[i+1], vertices[i+2]};
+			Point<S> pt = {vertices[i], vertices[i+1], vertices[i+2]};
 			cout << to_string(pt, 2) << endl;
 		}
 		cout << std::left;
 #endif
 	}
 }
-template<class S, class T>
-void cube(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
+template<class S, class IND, class T>
+void cube(S &vertices, IND &indices,
 		DualQuaternion<T> const& transform, T scale = 1) {
 	enum { tne=0, tse, tsw, tnw, bne, bse, bsw, bnw };
 
@@ -112,7 +109,6 @@ void cube(std::vector<S> &vertices, std::vector<gl::GLuint> &indices,
 		vertices.emplace_back(T(tp.y));
 		vertices.emplace_back(T(tp.z));
 		PRINT_STRING(tp, 2);
-		//std::cout << tp.x << "  " << tp.y << "  " << tp.z << std::endl;
 	}
 	for(gl::GLuint i : {
 			tse, tsw, bsw, tse, bsw, bse, // south/front
@@ -153,35 +149,39 @@ template<class S, class T, class U, class R>
 void cylinder(std::vector<S> & vertices, std::vector<T> & indices,
 	Point<U> const& p0, Point<U> const& p1, R && radius = 1,
 	unsigned M = 100, unsigned N = 100, unsigned offset = 0) {
-	Point<U> p01 = p1 - p0;
-	U l01 = p01.length();
-	auto perp = perpendicular(p01);
-	auto const& u = perp.first, v = perp.second;
-	for(unsigned i = 0; i < M; i++) {
-		U dist = U(i)/M;
-		auto disp = p0 + dist * p01;
-		for(unsigned j = 0; j < N; j++) {
-			U angle = M_PI*2*j/N;
-			Point<S> w = disp + cos(angle)*radius*u + sin(angle)*radius*v;
+	typedef Point<U> Pt;
+	for(unsigned i = 0, I = offset; i < M; i++, I += N) {
+		U s = U(i)/(M-1);
+		for(unsigned j = 0, J = 1; j < N; j++, J = j+1 /*(j+1) % N*/) {
+			U t = U(j)/(N-1);
+			Pt p10 = p1-p0, n10 = p10.normalize();
+			std::pair<Pt, Pt> uv = perpendicular(-p10, false);
+			Pt p2 = uv.first ^ rotation<U>(M_PI*2*t, n10.x, n10.y, n10.z);
+			//Pt w = p0 + s * p1 - s * p0 + radius * t * uv.first;
+			//Pt w = p0 + s * p10 + U(cos(t*M_PI*2)) * uv.first + U(sin(t*M_PI*2)) * uv.second;
+			Pt w = p0 + s * p10 + p2 * radius;
 			vertices.emplace_back(w.x);
 			vertices.emplace_back(w.y);
 			vertices.emplace_back(w.z);
+
 #ifdef ENABLE_PRINTING
-			std::cout << w << std::endl;
+			std::cout << '[' << i << ',' << j << "]=" << to_string(w, 1) << " ";
 #endif
+
+			if(i) {
+				if(J < N) {
+					indices.emplace_back(I+J);
+					indices.emplace_back(I+j);
+					indices.emplace_back(I-N+j);
+					indices.emplace_back(I-N+j);
+					indices.emplace_back(I-N+J);
+					indices.emplace_back(I+J);
+				}
+			}
 		}
 #ifdef ENABLE_PRINTING
-		endl(std::cout);
+		std::cout << std::endl;
 #endif
-		if(!i) continue;
-		for(unsigned j = 0, J = 1, I = offset + i * N; j <= N; j++, J = (j+1) % N) {
-			indices.emplace_back(I+j);
-			indices.emplace_back(I+J);
-			indices.emplace_back(I-N+J);
-			indices.emplace_back(I-N+J);
-			indices.emplace_back(I-N);
-			indices.emplace_back(I+j);
-		}
 	}
 }
 
