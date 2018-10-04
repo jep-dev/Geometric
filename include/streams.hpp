@@ -30,6 +30,8 @@ struct OStringStream;
 template<class S>
 ostream& center(ostream& out, S const& s, unsigned N, bool leftish = true);
 string center(string const& out, unsigned N, char fill = ' ', bool leftish = true);
+string align(string const& out, unsigned N, int dir = 1,
+		bool truncate = false, char fill = ' ', bool leftish = true);
 vector<string> center(vector<string> const& out, unsigned N, char fill = ' ', bool leftish = true);
 
 string trim(string const& s, bool leading = true, bool trailing = true) {

@@ -34,6 +34,23 @@ vector<string> center(vector<string> const& v, unsigned N, char fill, bool lefti
 	return out;
 }
 
+string align(string const& out, unsigned N, int dir, bool truncate, char fill, bool leftish) {
+	int dlen = N - out.length();
+	if(dlen < 0) {
+		dlen = -dlen;
+		if(!truncate) return out;
+		if(dir > 0) return out.substr(0, N);
+		if(dir < 0) return out.substr(dlen);
+		if(leftish) return out.substr(dlen/2, N);
+		return out.substr(dlen-dlen/2, N);
+	}
+	if(!truncate) return out;
+	if(dir > 0) return out + std::string(dlen, fill);
+	if(dir < 0) return std::string(dlen, fill) + out;
+	return center(out, N, fill, leftish);
+
+}
+
 template<class T, class V>
 std::pair<long, long> MiniMax<T, V, Detail::Void_t<decltype(&V::tellp)>>::operator()(T& t) const {
 	std::pair<long, long> out(std::numeric_limits<long>::max(), 0);
