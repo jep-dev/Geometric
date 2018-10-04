@@ -6,17 +6,17 @@
 
 template<class S, class DELIM>
 std::enable_if_t<std::is_arithmetic<S>::value, std::string>
-to_string(S const& s, unsigned prec, DELIM delim) {
+to_string(S const& s, unsigned prec) {
 	std::ostringstream oss;
 	if(prec) oss << std::setprecision(prec) << std::fixed;
-	oss << s;
-	auto out = oss.str(), zeroes = std::string(prec, '0');
-	if(out == ("-0." + zeroes))
-		out = out.substr(1);
-	if(s >= 0) return " " + out;
-	return out;
-	//if(s > 0) oss << ' ';
-	//return oss.str();
+	char sgn = ' ';
+	S t = s;
+	if(t < 0) sgn = '-';
+	oss << std::abs(t);
+	auto out = oss.str();
+	if(out.find_first_not_of("0.") == std::string::npos)
+		sgn = ' ';
+	return sgn + out;
 }
 template<class S, unsigned N, class DELIM>
 std::string to_string(const S (&sn)[N], unsigned prec, DELIM delim) {
