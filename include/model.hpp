@@ -15,13 +15,15 @@ struct Model {
 	std::vector<I> indices;
 	unsigned size(void) const { return children.size(); }
 	DualQuaternion<T>& accumulate(DualQuaternion<T> d = {1}) {
-		accumulated = transform * d;
+		accumulated = d * transform;
+		//accumulated = transform * d;
 		for(auto & c : children)
 			c.accumulate(accumulated);
 		return accumulated;
 	}
 	Model& emplace_back(DualQuaternion<T> d = {1}) {
 		children.emplace_back(std::move(Model{d, d*transform}));
+		//children.emplace_back(std::move(Model{d, transform*d}));
 		return back();
 	}
 	typename std::vector<Model>::iterator begin(void) { return children.begin(); }
@@ -49,9 +51,9 @@ struct Model {
 		return add_indices(std::forward<V>(v)...);
 	}
 	Model(DualQuaternion<T> transform = {1}):
-		transform(transform), accumulated(transform) {}
+		Model(transform, transform) {}
 	Model(DualQuaternion<T> transform, DualQuaternion<T> accumulated):
-		transform(transform), accumulated(transform * accumulated) {}
+		transform(transform), accumulated(accumulated) {}
 };
 
 #endif
