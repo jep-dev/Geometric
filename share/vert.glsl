@@ -15,7 +15,7 @@ uniform float a=1,
 	n = 1, f = 10;
 
 const vec4 u0 = vec4(1,0,0,0), v0 = vec4(0,0,0,0);
-uniform Dual model = Dual(u0, v0); //view = Dual(u0, v0);
+uniform Dual model = Dual(u0, v0), view = Dual(u0, v0);
 
 in vec4 pos_in;
 out vec4 pos_out;
@@ -31,8 +31,7 @@ vec4 project(vec4 A) {
 
 void main(){
 	Dual x0 = Dual(u0, vec4(0, pos_in.xyz)),
-		s = sandwich(model, x0);
-		//s = sandwich(mul(view, model), x0);
+		s = sandwich(mul(view, model), x0);
 	float aspect = sqrt(a);
 	gl_Position = project(vec4(s.v.yzw, pos_in.w));
 	pos_out = project(vec4(x0.v.yzw, pos_in.w));
