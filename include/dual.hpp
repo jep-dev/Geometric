@@ -146,12 +146,12 @@ DualQuaternion<ST> to_dual(const S (&s)[SN], const T (&t)[TN]) {
 	static_assert(SN >= 4 && TN >= 4, "Components must contain (at least) 4 elements");
 	return {s[0], s[1], s[2], s[3], t[0], t[1], t[2], t[3]};
 }
-template<class X, class Y = X, class Z = X, class XYZ = std::common_type_t<X,Y,Z>>
+template<class XYZ, class X = XYZ, class Y = X, class Z = X>
 DualQuaternion<XYZ> point(X && x, Y && y, Z && z)
-	{ return {1, 0, 0, 0, 0, x, y, z}; }
-template<class X, class Y = X, class Z = X, class XYZ = std::common_type_t<X,Y,Z>>
+	{ return {1.f, 0.f, 0.f, 0.f, 0.f, XYZ(x), XYZ(y), XYZ(z)}; }
+template<class XYZ, class X = XYZ, class Y = X, class Z = X>
 DualQuaternion<XYZ> translation(X && x, Y && y, Z && z)
-	{ return point<X,Y,Z,XYZ>(x/2, y/2, z/2); }
+	{ return point<XYZ>(XYZ(x)/2, XYZ(y)/2, XYZ(z)/2); }
 
 template<class X, class Y = X>
 DualQuaternion<Y> trans_rotation(X && x, X && y, X && z, X && t, X && u, X && v, X && w) {
