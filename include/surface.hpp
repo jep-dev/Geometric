@@ -247,18 +247,20 @@ unsigned surface(V<S,VT...> & vertices, W<T,WT...> & indices,
 	typedef Point<U> Pt;
 	for(unsigned i = 0, I = offset; i < M; i++, I += N) {
 		U s = U(i)/(M-1);
-		Dq north = sclerp(nw, ne, s), south = sclerp(sw, se, s);
 		for(unsigned j = 0; j < N; j++) {
 			U t = U(j)/(N-1);
-			Dq nesw = sclerp(south, north, t);
 			Dq xform = sclerp(nw, ne, sw, se, s, t);
+			auto p2 = (p ^ xform) + center;
+			vertices.emplace_back(p2.x);
+			vertices.emplace_back(p2.y);
+			vertices.emplace_back(p2.z);
 			if(i && j) {
 				indices.emplace_back(I+j);
+				indices.emplace_back(I-N+j-1);
 				indices.emplace_back(I+j-1);
 				indices.emplace_back(I-N+j-1);
-				indices.emplace_back(I-N+j-1);
-				indices.emplace_back(I-N+j);
 				indices.emplace_back(I+j);
+				indices.emplace_back(I-N+j);
 			}
 		}
 	}
