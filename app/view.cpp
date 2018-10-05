@@ -232,7 +232,6 @@ int main(int argc, const char *argv[]) {
 	map<string, bool> models = {
 		{"sanity", false},
 		{"cube", false},
-		{"sheet", false},
 		{"sphere", false},
 		{"cylinder", false},
 		{"rope", false},
@@ -274,10 +273,6 @@ int main(int argc, const char *argv[]) {
 	indicesSize = indices.size();
 	if(models["sphere"])
 		sphere(points, indices, p, scale, wmesh, hmesh, indicesSize);
-	indicesSize = indices.size();
-	if(models["sheet"])
-		sheet(points, indices, p+scale*(-1_x-1_y), p+scale*(1_x-1_y),
-				p+scale*(-1_x+1_y), p+scale*(1_x+1_y), wmesh, hmesh, indicesSize);
 	indicesSize = indices.size();
 	if(models["rope"])
 		rope(points, indices, 1_e - scale*1_J, 1_e + scale*1_J,

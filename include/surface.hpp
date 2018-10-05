@@ -165,36 +165,6 @@ unsigned cube(S &vertices, IND &indices, DualQuaternion<T> const& transform,
 	return indices.size();
 }
 
-template<class S, class T, class U>
-unsigned sheet(std::vector<S> & vertices, std::vector<T> & indices,
-		Point<U> a, Point<U> b, Point<U> c, Point<U> d,
-		unsigned M = 100, unsigned N = 100, unsigned offset = 0) {
-	for(auto i = 0; i < M; i++) {
-		U s = U(i)/(M-1);
-		Point<U> ab = (1-s)*a + s*b, cd = (1-s)*c + s*d;
-		for(auto j = 0; j < N; j++) {
-			U t = U(j)/(N-1);
-			auto u = (1-t)*ab + t*cd;
-			//auto u = (1-t)*(1-s)*a + (1-t)*(s)*b + t*(1-s)*c + t*s*d;
-			//auto u = (1-t)*((1-s)*a+s*b) + t*((1-s)*c+s*d);
-			vertices.emplace_back(S(u.x));
-			vertices.emplace_back(S(u.y));
-			vertices.emplace_back(S(u.z));
-			if(i && j) {
-				auto index = offset+(i-1)*(N+1)+j-1;
-				indices.emplace_back(index);
-				indices.emplace_back(index+1);
-				indices.emplace_back(index-N+2);
-				indices.emplace_back(index-N+2);
-				indices.emplace_back(index-N+1);
-				indices.emplace_back(index);
-			}
-		}
-	}
-	return indices.size();
-}
-
-
 template<class S, class T, class U, class R>
 unsigned cylinder(std::vector<S> & vertices, std::vector<T> & indices,
 	Point<U> const& p0, Point<U> const& p1, R && radius = 1,
