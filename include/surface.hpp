@@ -236,11 +236,13 @@ unsigned cylinder(std::vector<S> & vertices, std::vector<T> & indices,
 	return indices.size();
 }
 
-template<class S, class T, class U, class PT = Point<U>, class DQ = DualQuaternion<U>,
-template<class...> class V, class... VT, template<class...> class W, class... WT>
+template<class S, class T, class U,
+	template<class...> class V, class... VT, template<class...> class W, class... WT>
 unsigned surface(V<S,VT...> & vertices, W<T,WT...> & indices,
-		DQ const& nw, DQ const& ne, DQ const& sw, DQ const& se,
-		PT const& p, PT const& center, unsigned M = 100, unsigned N = 100, unsigned offset = 0) {
+		DualQuaternion<U> const& nw, DualQuaternion<U> const& ne,
+		DualQuaternion<U> const& sw, DualQuaternion<U> const& se,
+		Point<U> const& p, Point<U> const& center,
+		unsigned M = 100, unsigned N = 100, unsigned offset = 0) {
 	typedef DualQuaternion<U> Dq;
 	typedef Point<U> Pt;
 	for(unsigned i = 0, I = offset; i < M; i++, I += N) {
