@@ -29,7 +29,8 @@ void main(){
 			//t = (atan(rxz, ay)*4)*8,
 			t2 = t + M_PI*2/3, t3 = t + M_PI*4/3;
 	color = vec4(nsin(t), nsin(t2), nsin(t3), exp(-z*z));
-	//color = vec4(nsin(s*64), nsin(s*64+M_PI*2/3), nsin(s*64+M_PI*4/3), 1);
+	float hue = M_PI*cos(x*M_PI*2)*cos(y*M_PI*2)*cos(z*M_PI*2)*ncos(x*x+y*y+z*z);
+	color = vec4(ncos(hue), ncos(hue+M_PI*2/3), ncos(hue+M_PI*4/3), 1);
 
 
 	//color = vec4(ax/axyz, ay/axyz, az/axyz, 1);
