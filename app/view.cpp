@@ -90,7 +90,7 @@ struct Hnd: Presenter<Hnd> {
 		translation = ((1_e - .1_I * xz.first - .1_K * xz.second) ^ *orientation) * translation;
 		/*if(streams[e_out].tellp() > 0) streams[e_out] << std::endl;
 		streams[e_out] << transform;*/
-		set_model(transform = orientation * translation);
+		set_view(transform = orientation * translation);
 		return *this;
 	}
 
@@ -114,7 +114,7 @@ struct Hnd: Presenter<Hnd> {
 				case SDLK_KP_MINUS: project(-4, 4, -4, 4, 1, 10); break;
 				case SDLK_KP_PLUS:
 				case SDLK_EQUALS:
-					set_model(transform = {1});
+					set_view(transform = {1});
 					project(-2.5, 2.5, -2.5, 2.5, 1, 10);
 					break;
 				default: break;
@@ -125,13 +125,12 @@ struct Hnd: Presenter<Hnd> {
 			auto old_transform = transform;
 			const char *pressed = "";
 			switch(k.keysym.sym) {
-				case SDLK_RETURN: //pressed = "Return: "; transform = {1};
-					pressed = "<Return>";
+				case SDLK_RETURN:
 					print_view = print_model = true;
 					break;
 				default: break;
 			}
-			set_model(transform);
+			set_view(transform);
 
 			switch(k.keysym.sym) {
 				case SDLK_l: print_location = true; break;
@@ -237,6 +236,7 @@ int main(int argc, const char *argv[]) {
 		{"sphere", false},
 		{"cylinder", false},
 		{"rope", false},
+		{"surface", false}
 	};
 	string nos[] = {"--no-", "-n"};
 	for(auto i = 1; i < argc; i++) {
@@ -262,7 +262,7 @@ int main(int argc, const char *argv[]) {
 			mid = (near + far)/2,
 			right = width/2, left = -right,
 			top = height/2, bottom = -top;
-	int wmesh = 4, hmesh = wmesh;
+	int wmesh = 16, hmesh = wmesh;
 	auto scale = right;
 
 	std::vector<GLfloat> points;
@@ -281,10 +281,19 @@ int main(int argc, const char *argv[]) {
 	indicesSize = indices.size();
 	if(models["rope"])
 		rope(points, indices, 1_e - scale*1_J, 1_e + scale*1_J,
-			Point<float>{0, 0, 0}, p, scale, wmesh, hmesh, indicesSize);
+			0_x, p, scale, wmesh, hmesh, indicesSize);
 	indicesSize = indices.size();
 	if(models["sanity"])
 		sanity(points, indices, p, scale, wmesh, hmesh, indicesSize);
+	indicesSize = indices.size();
+	if(models["surface"])
+		surface(points, indices,
+		//rot_translation(t,u,v,w,x,y,z)
+			rotation<float>(M_PI/5,scale,0,0)*rotation<float>(-M_PI/5,0,scale,0)+1_I+1_J,
+			rotation<float>(M_PI/5,scale,0,0)*rotation<float>(M_PI/5,0,scale,0)-1_I+1_J,
+			rotation<float>(-M_PI/5,scale,0,0)*rotation<float>(-M_PI/5,0,scale,0)+1_I-1_J,
+			rotation<float>(-M_PI/5,scale,0,0)*rotation<float>(M_PI/5,0,scale,0)-1_I-1_J,
+			-scale/2*1_z, p, wmesh, hmesh, indicesSize);
 	indicesSize = indices.size();
 
 	// Locate shaders from execution path
