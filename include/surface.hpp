@@ -1,19 +1,33 @@
 #ifndef SURFACE_HPP
 #define SURFACE_HPP
 
+///@cond
 #include <vector>
+///@endcond
 
 #include "quaternion.hpp" // Quaternion
 #include "dual.hpp" // Dual
 #include "point.hpp" // Point
 #include "math.tpp" // Point*Dual
 
-#ifdef ENABLE_PRINTING
-#include "quaternion.tpp"
-#include "dual.tpp"
-#include "math.tpp"
-#define PRINT_STRING(X, N) do { std::cout << to_string(X, N) << std::endl; } while(0)
-#endif
+template<class R>
+R& emplace_vertices(R &vertices) { return vertices; }
+
+template<class R, class S, class... T>
+R& emplace_vertices(R & vertices, S const& s, T &&... t) {
+	typedef typename R::value_type V;
+	vertices.emplace_back(V(s.x));
+	vertices.emplace_back(V(s.y));
+	vertices.emplace_back(V(s.z));
+	return emplace_vertices(vertices, std::forward<T>(t)...);
+}
+template<class R, class S, class... T>
+R& emplace_indices(R & indices) { return indices; }
+template<class R, class S, class... T>
+R& emplace_indices(R & indices, S const& s, T &&... t) {
+	indices.emplace_back(s);
+	return emplace_indices(indices, std::forward<T>(t)...);
+}
 
 template<class S, class T, class U>
 unsigned sanity(std::vector<S> & vertices, std::vector<T> & indices,
@@ -36,15 +50,6 @@ unsigned sanity(std::vector<S> & vertices, std::vector<T> & indices,
 				indices.emplace_back(I+j);
 			}
 		}
-#ifdef ENABLE_PRINTING
-		for(auto it = indices.cbegin(), et = indices.cend(); it < et;) {
-			auto i1 = 3*(*it++), i2 = 3*(*it++), i3 = 3*(*it++);
-			std::cout << to_string(Point<U>{vertices[i1++], vertices[i1++], vertices[i1++]}, 2)
-				<< "  " << to_string(Point<U>{vertices[i2++], vertices[i2++], vertices[i2++]}, 2)
-				<< "  " << to_string(Point<U>{vertices[i3++], vertices[i3++], vertices[i3++]}, 2)
-				<< std::endl;
-		}
-#endif
 	}
 	return indices.size();
 }
@@ -70,11 +75,8 @@ unsigned sphere(V<S,VT...> &vertices, W<T,WT...> &indices, Point<U> center = {},
 			vertices.emplace_back(x);
 			vertices.emplace_back(y);
 			vertices.emplace_back(z);
-#ifdef ENABLE_PRINTING
-			cout << to_string(Point<U>{x,y,z}, 2) << "  ";
-#endif
 			if(i && j) {
-				auto index = offset + i * M, J = (j+M-1) % M;
+				auto index = offset + i * N, J = (j+M-1) % N;
 				indices.emplace_back(index + J);
 				indices.emplace_back(index + j - N);
 				indices.emplace_back(index + J - N);
@@ -83,9 +85,6 @@ unsigned sphere(V<S,VT...> &vertices, W<T,WT...> &indices, Point<U> center = {},
 				indices.emplace_back(index + j);
 			}
 		}
-#ifdef ENABLE_PRINTING
-		endl(cout);
-#endif
 	}
 	return indices.size();
 }
@@ -120,17 +119,6 @@ unsigned cube(VERT<S, VERTN...> &vertices, IND<T, INDN...> &indices,
 	for(auto const& p : points) {
 		for(auto px : {p.x+center.x, p.y+center.y, p.z+center.z})
 			vertices.emplace_back(px);
-	}
-	{
-#ifdef ENABLE_PRINTING
-		cout << std::right;
-		auto verticesSize = vertices.size();
-		for(unsigned i = 0; i < verticesSize; i+=3) {
-			Point<S> pt = {vertices[i], vertices[i+1], vertices[i+2]};
-			cout << to_string(pt, 2) << endl;
-		}
-		cout << std::left;
-#endif
 	}
 	return indices.size();
 }
@@ -183,11 +171,6 @@ unsigned cylinder(std::vector<S> & vertices, std::vector<T> & indices,
 			vertices.emplace_back(w.x);
 			vertices.emplace_back(w.y);
 			vertices.emplace_back(w.z);
-
-#ifdef ENABLE_PRINTING
-			std::cout << '[' << i << ',' << j << "]=" << to_string(w, 1) << " ";
-#endif
-
 			if(i) {
 				if(J < N) {
 					indices.emplace_back(I+J);
@@ -199,9 +182,6 @@ unsigned cylinder(std::vector<S> & vertices, std::vector<T> & indices,
 				}
 			}
 		}
-#ifdef ENABLE_PRINTING
-		std::cout << std::endl;
-#endif
 	}
 	return indices.size();
 }
