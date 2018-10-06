@@ -7,6 +7,7 @@
 
 #include "joystick.hpp"
 #include "parse.hpp"
+#include "streams.tpp"
 
 #define INIT SDL_INIT_JOYSTICK
 
