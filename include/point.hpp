@@ -107,10 +107,11 @@ std::pair<Point<U>, Point<U>> perpendicular(Point<U> const& p, bool norm = false
 template<class S>
 Point<S> normalize(Point<S> const& p) { return p.normalize(); }
 
-template<class S, class DELIM>
-std::string to_string(Point<S> const& p, unsigned prec, DELIM delim) {
-	return "(" + to_string(p.x, prec) + delim + to_string(p.y, prec)
-			+ delim + to_string(p.z, prec) + ")";
+template<class S, class DELIM, class... T>
+std::string to_string(Point<S> const& p, unsigned prec, DELIM delim, T &&... t) {
+	return "(" + to_string(p.x, prec, std::forward<T>(t)...) + delim
+			+ to_string(p.y, prec, std::forward<T>(t)...) + delim
+			+ to_string(p.z, prec, std::forward<T>(t)...) + ")";
 }
 
 #define USERDEF_TEMPLATE(CLASS,PARAM,UD,X,Y,Z) \
