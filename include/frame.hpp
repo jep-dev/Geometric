@@ -1,7 +1,6 @@
 #ifndef FRAME_HPP
 #define FRAME_HPP
 
-#include "view.hpp"
 #include "context.hpp"
 
 namespace View {
@@ -9,7 +8,7 @@ namespace View {
 /** Represents a window and associated GL context. */
 struct Frame {
 public:
-	int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
+	int flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL;
 	Events::Status status;
 protected:
 	static constexpr int center = SDL_WINDOWPOS_CENTERED;
@@ -29,9 +28,11 @@ public:
 	Frame& flip(void);
 	operator SDL_GLContext(void) const { return ctx; }
 	operator SDL_Window *const (void) const { return win; }
+	Frame& maximize(void) { SDL_MaximizeWindow(win); return *this; }
+	Frame& restore(void) { SDL_RestoreWindow(win); return *this; }
 	/** Constructor; currently initializes and sets a handful of hard-coded GL attributes */
 	Frame(int w = 720, int h = 540, int x = center, int y = center,
-			int flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+			int flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL);
 	/** Destructor; destroys the stored window. */
 	virtual ~Frame(void) {
 		if(win)
