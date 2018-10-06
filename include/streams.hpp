@@ -6,7 +6,7 @@
 #include <vector>
 
 #include <iosfwd>
-#include "utility.hpp"
+#include "geometric.hpp"
 
 #ifndef INDENT
 #define INDENT "\t"
@@ -23,16 +23,86 @@ using std::istringstream;
 using std::declval;
 using std::true_type;
 using std::false_type;
+using std::enable_if_t;
+//using std::is_arithmetic;
 
+template<class T>
+static constexpr bool is_arithmetic_v(Detail::Tag<T> = {}) {
+	return std::is_arithmetic<T>::value;
+}
 
-struct OStringStream;
+template<class S, class T, class = void>
+struct HasInsert : false_type {};
+template<class S, class T = S, class = void>
+struct HasAdd : false_type {};
+template<class S, class = void>
+struct HasLength : false_type {};
+template<class S, class = void, class = void>
+struct HasTellpSeekp : false_type {};
+
+template<class S, class T>
+struct HasInsert<S, T, Detail::Void_t<decltype(declval<S>() << declval<T>())>> : true_type {};
+template<class S, class T>
+struct HasAdd<S, T, Detail::Void_t<decltype(declval<S>() += declval<T>())>> : true_type {};
+template<class S>
+struct HasLength<S, Detail::Void_t<decltype(declval<S>().length())>> : true_type {};
+template<class S>
+struct HasTellpSeekp<S, Detail::Void_t<decltype(declval<S>().tellp())>,
+		Detail::Void_t<decltype(&S::seekp)>> : true_type {};
+
+template<class S, class T>
+constexpr bool has_insert(Detail::Tag<S> && s = {}, Detail::Tag<T> && t = {})
+	{ return HasInsert<S,T>::value; }
+template<class S, class T = S>
+constexpr bool has_add(Detail::Tag<S> && s = {}, Detail::Tag<T> && t = {})
+	{ return HasAdd<S, T>::value; }
 
 template<class S>
-ostream& center(ostream& out, S const& s, unsigned N, bool leftish = true);
-string center(string const& out, unsigned N, char fill = ' ', bool leftish = true);
+constexpr bool has_length(Detail::Tag<S> && s = {}) { return HasLength<S>::value; }
+template<class S>
+constexpr bool has_tellp_seekp(Detail::Tag<S> && s = {}) { return HasTellpSeekp<S>::value; }
+
+/** @brief Passthrough specialization for later abstract to_string(const T&) */
+string to_string(const char *s, unsigned, bool) { return s; }
+/** @brief Passthrough specialization for later abstract to_string(const T&) */
+string to_string(string const& s, unsigned, bool) { return s; }
+
+template<class S, class T>
+enable_if_t<HasInsert<S, T>::value, S&>
+center(S & out, T const& t, unsigned N, char fill = ' ', bool leftish = true) {
+	using namespace std;
+	auto str = to_string(t, 2, false);
+	int len = str.length(), dlen = N - len, dlen0 = dlen/2, dlen1 = dlen - dlen0;
+	string pads[] = {string(dlen0, fill), string(dlen1, fill)};
+	return out << (pads[leftish] + str + pads[!leftish]), out;
+}
+
+template<class S, class T>
+enable_if_t<!HasInsert<S, T>::value && HasInsert<S, string>::value, S&>
+center(S & out, T const& t, unsigned N, char fill = ' ', bool leftish = true) {
+	return center(out, to_string(t), N, leftish);
+}
+
+string center(string const& s, unsigned N, char fill = ' ', bool leftish = true) {
+	int len = s.length(), len2 = N - len, llen = len2/2, rlen = len2 - llen;
+	if(leftish) std::swap(llen, rlen);
+	return string(std::max(llen, 0), fill) + s + string(std::max(rlen, 0), fill);
+}
+
+template<template<class...> class V, class... VT>
+V<string, VT...> center(V<string, VT...> const& v,
+		unsigned N, char fill = ' ', bool leftish = true) {
+	V<string, VT...> out;
+	for(auto const& s : v) {
+		out.emplace_back(center(s, N, fill, leftish));
+	}
+}
+string center(const char *s, unsigned N, char fill, bool leftish) {
+	return center(string(s), N, fill, leftish);
+}
+
 string align(string const& out, unsigned N, int dir = 1,
 		bool truncate = false, char fill = ' ', bool leftish = true);
-vector<string> center(vector<string> const& out, unsigned N, char fill = ' ', bool leftish = true);
 
 string trim(string const& s, bool leading = true, bool trailing = true) {
 	long size = s.length(), front = 0, back = size-1;
@@ -87,36 +157,6 @@ std::pair<long, long> minimax(T& t) {
 	return MiniMax<T, First_t<T>>()(t);
 }
 
-template<class S, class T, class = void>
-struct HasInsert : false_type {};
-template<class S, class T = S, class = void>
-struct HasAdd : false_type {};
-template<class S, class = void>
-struct HasLength : false_type {};
-template<class S, class = void, class = void>
-struct HasTellpSeekp : false_type {};
-
-template<class S, class T>
-struct HasInsert<S, T, Detail::Void_t<decltype(declval<S>() << declval<T>())>> : true_type {};
-template<class S, class T>
-struct HasAdd<S, T, Detail::Void_t<decltype(declval<S>() += declval<T>())>> : true_type {};
-template<class S>
-struct HasLength<S, Detail::Void_t<decltype(declval<S>().length())>> : true_type {};
-template<class S>
-struct HasTellpSeekp<S, Detail::Void_t<decltype(declval<S>().tellp())>,
-		Detail::Void_t<decltype(&S::seekp)>> : true_type {};
-
-template<class S, class T>
-constexpr bool has_insert(Detail::Tag<S> && s = {}, Detail::Tag<T> && t = {})
-	{ return HasInsert<S,T>::value; }
-template<class S, class T = S>
-constexpr bool has_add(Detail::Tag<S> && s = {}, Detail::Tag<T> && t = {})
-	{ return HasAdd<S, T>::value; }
-
-template<class S>
-constexpr bool has_length(Detail::Tag<S> && s = {}) { return HasLength<S>::value; }
-template<class S>
-constexpr bool has_tellp_seekp(Detail::Tag<S> && s = {}) { return HasTellpSeekp<S>::value; }
 
 template<class S, class SV = typename S::value_type>
 auto level(S& s, char fill = ' ')
@@ -161,6 +201,7 @@ level_insert(O<S, SN...> & ss, T const& t, char fill = ' ', bool leveled = false
 	return ss;
 }
 
+struct OStringStream;
 
 }
 
