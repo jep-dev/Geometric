@@ -17,29 +17,35 @@ int main(int argc, const char *argv[]) {
 		tpad[1] = 'x';
 		bord[1] = '|';
 
-		Quaternion<T> LHS[] = {{1}, {0,1}, {0,0,1}, {0,0,0,1}},
-			RHS[] = {rotation(angle, 1, 0, 0),
+		vector<Quaternion<T>> LHS = {{1}, {0,1}, {0,0,1}, {0,0,0,1}},
+			RHS = {rotation(angle, 1, 0, 0),
 					rotation(angle, 0, 1, 0),
 					rotation(angle, 0, 0, 1)};
-
-		auto fills = setfill(' '), fillu = setfill('_');
-		auto setn = setw(N);
-
-		cout << tpad << tbord << fillu;
-		for(auto const& lhs : LHS)
-			cout << setw(N) << lhs << tsep;
-		long i = 0, iMax = sizeof(LHS) / sizeof(LHS[0]);
-		cout << fills << endl;
+		vector<string> rows(LHS.size());
+		unsigned i = 0;
 		for(auto const& lhs : LHS) {
-			cout << setw(N) << lhs << bord;
-			if(i == (iMax-1)) cout << fillu;
-			for(auto const& rhs : LHS)
-				cout << setw(N) << (lhs * rhs) << ((i == (iMax - 1)) ? tsep : sep);
-			cout << '|' << endl;
+			if(i) {
+				long j = i-1, N = RHS.size();
+				if(j < N)
+					rows[i] += to_string(RHS[j], 2);
+			}
+			else rows[i] += tpad;
 			i++;
-			cout << fills;
 		}
-		endl(cout);
+		Streams::level_insert(rows, bord);
+		i = 0;
+		for(auto const& rhs : RHS) {
+			//rows[i++] += to_string(rhs, 2);
+			for(auto const& lhs : LHS) {
+				rows[i++] += to_string(lhs * rhs, 2);
+			}
+			i = 0;
+			Streams::level_insert(rows, sep);
+		}
+		for(auto const& row : rows) {
+			cout << row << endl;
+		}
+
 		for(auto const& rhs : RHS) {
 			auto q = sqrt(2)/2*rhs;
 			cout << "For u = " << to_string(q) << ": u/u = " << to_string(q/q, 3) << "; "
@@ -53,7 +59,7 @@ int main(int argc, const char *argv[]) {
 			for(auto const& lhs : LHS) {
 				if(met) cout << "; ";
 				met = true;
-				cout << "u(" << lhs << ")u* = " << (rhs*lhs**rhs);
+				cout << "u(" << 10*lhs << ")u* = " << (rhs*10*lhs**rhs);
 			}
 			cout << endl;
 		}
