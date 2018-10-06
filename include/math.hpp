@@ -1,13 +1,9 @@
 #ifndef MATH_HPP
 #define MATH_HPP
 
-#include <algorithm>
 #include <math.h>
-#include <type_traits>
 #include <limits>
-#include <utility>
 
-#include "math.hpp"
 #include "utility.hpp"
 
 template<class> struct Point;
@@ -20,19 +16,79 @@ template<class L, class S> L& operator<<(L&, Quaternion<S> const&);
 template<class L, class S> L& operator<<(L&, DualQuaternion<S> const&);
 
 template<class S, class DELIM = const char*>
+std::enable_if_t<std::is_arithmetic<S>::value, std::string>
+to_string(S s, unsigned prec = 0, bool show_zero = true) {
+	using namespace std;
+	if(isnan(s))
+		return "NaN";
+	bool bSign = s < 0;
+	// s= abs(s);
+	if(bSign) s = -s;
+
+	string out;
+	unsigned uFactor = 0, uMajor = s, uDec = uMajor,
+			nMajor = 0, nMinor = 0, nZeroes = 0;
+	while(uDec) {
+		unsigned uCur = uDec % 10, uNext = uDec / 10;
+		out = char('0' + uCur) + out;
+		uDec = uNext;
+		if(uCur) nMajor++;
+	}
+	if(show_zero && !nMajor) {
+		out = "0";
+	}
+	s -= uMajor;
+	while(prec) {
+		s *= 10;
+		unsigned uCur = s;
+		if(uCur) {
+			s -= uCur;
+			if(!nMinor) out += '.';
+			nMinor++;
+			if(nZeroes) {
+				out += string(nZeroes, '0');
+				nZeroes = 0;
+			}
+			out += char('0' + uCur);
+		} else {
+			nZeroes++;
+		}
+		prec--;
+	}
+	if(bSign && (nMajor || nMinor))
+		return '-' + out;
+	return out;
+}
+template<class S, class DELIM = const char*>
 std::string to_string(Point<S> const& d, unsigned prec = 0, DELIM delim = ",");
 template<class S, class DELIM = const char*>
 std::string to_string(Quaternion<S> const& d, unsigned prec = 0, DELIM delim = "+");
 template<class S, class DELIM = const char*>
 std::string to_string(DualQuaternion<S> const& d, unsigned prec = 0, DELIM delim = "+");
-template<class S, class DELIM = const char*>
+
+template<class S, class... T>
 std::enable_if_t<std::is_arithmetic<S>::value, std::string>
-to_string(S const& s, unsigned prec = 0);
+to_unit_string(S s, char i, T &&... t) {
+	auto out = to_string(s, std::forward<T>(t)...);
+	if(out == "0") return "";
+	if(out == "1") return std::string("") + i;
+	if(out == "-1") return std::string("-") + i;
+	return out + i;
+}
 
 template<class S, class T, class ST = std::common_type_t<S,T>>
 DualQuaternion<ST> operator*(Point<S> const& p, DualQuaternion<T> const& d);
 template<class S, class T, class ST = std::common_type_t<S,T>>
 DualQuaternion<ST> operator*(DualQuaternion<S> const& l, Point<T> const& p);
+
+template<class S, class T>
+S lerp(S const& u, S const& v, T const& t) {
+	return u + (v-u)*t;
+}
+template<class S, class T>
+S lerp(S const& u0, S const& u1, S const& v0, S const& v1, T t0, T t1) {
+	return (u0*(1-t0)+u1*t0)*(1-t1) + (v0*(1-t0)+v1*t0)*t1;
+}
 
 /** Abstract comparison to zero (mainly intended for floating point types) */
 template<class L, class R = L>
