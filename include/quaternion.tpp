@@ -1,9 +1,7 @@
 #ifndef QUATERNION_TPP
 #define QUATERNION_TPP
 
-#include <sstream>
-#include <iomanip>
-
+#include "streams.hpp"
 #include "quaternion.hpp"
 
 /*template<class L, class S>
@@ -24,45 +22,24 @@ L& print(L &lhs, Quaternion<S> const& rhs) {
 	if(!nz) lhs << '0';
 	return lhs;
 }*/
-/*template<class S>
-std::string to_string(Quaternion<S> const& q) {
-	std::ostringstream oss;
-	print(oss, q);
-	return oss.str();
-}*/
-template<class L, class S, class DELIM = const char*>
-L& print(L &lhs, Quaternion<S> const& rhs, unsigned prec = 0, DELIM delim = "+") {
-	std::ostringstream oss;
-	if(prec) {
-		oss.precision(prec);
-		oss << std::fixed;
-	}
+template<class S, class DELIM>
+std::string to_string(Quaternion<S> const& qin, unsigned prec, DELIM delim) {
+	auto margin = std::pow(.1f, prec<<1);
 	bool nz = false;
+	std::string out;
 	for(auto i : {'e', 'i', 'j', 'k'}) {
-		auto const& q = rhs[i];
-		if(prec) {
-			if(std::abs(q) < std::pow(.1f, prec)) continue;
-		} else {
-			auto q0 = q*0;
-			if(q == q0) continue;
-		}
-		auto q2 = q*q;
-		if(q2 == q) oss << (nz ? "+" : "");
-		else if(q2 == -q) oss << (nz ? "-" : "-");
-		else if(q > 0) oss << (nz ? "+" : "") << q;
-		else oss << (nz ? "-" : "-") << -q;
-		oss << i;
+		auto const& v = qin[i];
+		auto stringified = to_string(v, prec);
+		if(stringified == "0") continue;
+		if(v > 0 && nz) out += '+';
+		if(out == "1") {}
+		else if(out == "-1") out += '-';
+		else out += stringified;
+		out += i;
 		nz = true;
 	}
-	if(!nz) oss << '0';
-	return lhs << oss.str(), lhs;
-	/*print(oss, rhs);
-	return lhs << oss.str(), lhs;*/
-}
-template<class S, class DELIM>
-std::string to_string(Quaternion<S> const& q, unsigned prec, DELIM delim) {
-	std::ostringstream oss;
-	return print(oss, q, prec, delim), oss.str();
+	if(!nz) out += '0';
+	return out;
 }
 
 template<class L, class S>
@@ -76,9 +53,7 @@ L& operator<<(L &lhs, Quaternion<S> const& rhs) {
 	// return lhs;
 
 	//bool nz = false;
-	std::ostringstream oss;
-	print(oss, rhs);
-	return lhs << oss.str(), lhs;
+	return lhs << std::string(rhs), lhs;
 }
 template<class S>
 Quaternion<S>::operator std::string(void) const {
