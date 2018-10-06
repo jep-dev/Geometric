@@ -4,14 +4,14 @@
 #include "math.hpp"
 #include "dual.hpp"
 
-template<class S, unsigned N, class DELIM>
-std::string to_string(const S (&sn)[N], unsigned prec, DELIM delim) {
+template<class S, unsigned N, class DELIM, class... T>
+std::string to_string(const S (&sn)[N], unsigned prec, DELIM delim, T &&... t) {
 	using namespace std;
 	bool met = false;
 	std::string out;
 	for(auto const& s : sn) {
 		if(met) out += delim;
-		out += to_string(s, prec, delim);
+		out += to_string(s, prec, delim, std::forward<T>(t)...);
 		met = true;
 	}
 	return out;
