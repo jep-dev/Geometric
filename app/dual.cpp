@@ -1,11 +1,8 @@
-#include <algorithm>
 #include <iostream>
-#include <iomanip>
 #include <vector>
 #include <map>
 
 #include "dual.tpp"
-#include "quaternion.hpp"
 #include "point.hpp"
 
 #include "pretty.tpp"
@@ -43,14 +40,14 @@ std::vector<std::string> get_table(std::string const& title,
 	out.emplace_back(north);
 	string header = b_none + string(wpcell, ' ') + vtitle;
 	for(auto const& rhs : RHS)
-		header += pad + center(rhs, wcell, ' ') + pad;
+		header += pad + center(to_string(rhs, 2, false), wcell, ' ', false) + pad;
 	header += b_e;
 	out.emplace_back(header);
 	out.emplace_back(middle);
 	for(auto const& lhs : LHS) {
-		string str = b_w + center(string(lhs), wpcell+lwv, ' ') + b_w + string(rwv, ' ');
+		string str = b_w + center(to_string(lhs,2), wpcell+lwv, ' ', false) + b_w + string(rwv, ' ');
 		for(auto const& rhs : RHS) {
-			str += pad + center(fn(lhs, rhs), wcell, ' ', false) + pad;
+			str += pad + center(to_string(fn(lhs, rhs),2), wcell, ' ', false) + pad;
 		}
 		str += b_e;
 		out.emplace_back(str);
