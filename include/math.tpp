@@ -1,23 +1,9 @@
 #ifndef MATH_TPP
 #define MATH_TPP
 
-#include <sstream>
-#include <iomanip>
+#include "math.hpp"
+#include "dual.hpp"
 
-template<class S, class DELIM>
-std::enable_if_t<std::is_arithmetic<S>::value, std::string>
-to_string(S const& s, unsigned prec) {
-	std::ostringstream oss;
-	if(prec) oss << std::setprecision(prec) << std::fixed;
-	char sgn = ' ';
-	S t = s;
-	if(t < 0) sgn = '-';
-	oss << std::abs(t);
-	auto out = oss.str();
-	if(out.find_first_not_of("0.") == std::string::npos)
-		sgn = ' ';
-	return sgn + out;
-}
 template<class S, unsigned N, class DELIM>
 std::string to_string(const S (&sn)[N], unsigned prec, DELIM delim) {
 	using namespace std;
