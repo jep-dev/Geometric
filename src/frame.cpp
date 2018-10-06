@@ -1,10 +1,7 @@
 #include <sstream>
 
-#include <glbinding/ContextInfo.h>
-#include <glbinding/Meta.h>
-#include <glbinding/Version.h>
-
 #include "frame.hpp"
+#include <glbinding/Binding.h>
 
 namespace View {
 
