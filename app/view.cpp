@@ -4,7 +4,6 @@
 #include "initializer.hpp"
 #include "presenter.hpp"
 
-#include "shader.hpp"
 #include "resource.hpp"
 #include "streams.tpp"
 #include "timing.hpp"
@@ -12,7 +11,6 @@
 #include "quaternion.tpp"
 #include "dual.tpp"
 #include "point.hpp"
-#include "math.tpp"
 #include "surface.hpp"
 
 #define USE_MODEL 0
@@ -72,9 +70,18 @@ struct Hnd: Presenter<Hnd> {
 			return *this;
 		}
 		auto & first = joysticks.begin() -> second;
+		auto & buttons = first.buttons;
+		auto button = buttons.find(7);
+		if(button != buttons.end()) {
+			if(button -> second.first != button -> second.second) {
+				if(button -> second.second) {
+					frame.maximize();
+				}
+			}
+		}
 		DualQuaternion<float> t = 1_e, r = 1_e; //orientation;
 		//auto d = 1_e + transform.x*1_I + transform.y*1_J + transform.z*1_K;
-		float theta = 0, phi = 0, x = 0, z = 0;
+		float theta = 0, phi = 0, psi = 0, x = 0, z = 0;
 		if(first.axes.find(0) != first.axes.cend())
 			x = first.axes[0];
 		if(first.axes.find(1) != first.axes.cend())
@@ -83,10 +90,18 @@ struct Hnd: Presenter<Hnd> {
 			theta = first.axes[3];
 		if(first.axes.find(4) != first.axes.cend())
 			phi = first.axes[4];
-		auto dead1 = .25, dead2 = .1;
-		auto xz = deadzone(x, z, dead1), pt = deadzone(theta, phi, dead2);
-		orientation = rotation<float>(pt.first * M_PI/4, 0, 1, 0)
-				* rotation<float>(pt.second * M_PI/4, -1, 0, 0);
+		if(first.axes.find(2) != first.axes.cend())
+			psi += first.axes[2];
+		if(first.axes.find(5) != first.axes.cend())
+			psi -= first.axes[5];
+
+		auto dead1 = .25, dead2 = .1, dead3 = .1;
+		auto xz = deadzone(x, z, dead1), pt = deadzone(theta, phi, dead2),
+				pp = deadzone(psi, psi, dead3);
+		orientation = rotation<float>(pt.first * M_PI/32, 0, 1, 0)
+				* rotation<float>(pt.second * M_PI/32, -1, 0, 0)
+				* rotation<float>(pp.first * M_PI/32, 0, 0, 1)
+				* orientation;
 		translation = ((1_e - .1_I * xz.first - .1_K * xz.second) ^ *orientation) * translation;
 		/*if(streams[e_out].tellp() > 0) streams[e_out] << std::endl;
 		streams[e_out] << transform;*/
@@ -238,30 +253,33 @@ int main(int argc, const char *argv[]) {
 		{"surface", false}
 	};
 	string nos[] = {"--no-", "-n"};
+	bool met_yes = false;
 	for(auto i = 1; i < argc; i++) {
 		string arg = argv[i];
-		bool met = false;
+		bool met_no = false;
 		for(auto const& no : nos) {
 			auto pos = arg.find(no);
 			if(pos != 0) continue;
 			arg = arg.substr(no.length());
 			models[arg] = false;
-			met = true;
+			met_no = true;
 			break;
 		}
-		if(!met) models[arg] = true;
+		if(!met_no) models[arg] = met_yes = true;
 	}
+	if(!met_yes) models["sphere"] = true;
+
 	for(auto const& it : models) {
 		cout << "models[" << it.first << "] = " << boolalpha << it.second << endl;
 	}
 
 	// Initialize projection matrix values and vertices
-	float width = 5, height = 5, depth = 10,
+	float width = 5, height = 5, depth = 30,
 			near = 1, far = near + depth,
 			mid = (near + far)/2,
 			right = width/2, left = -right,
 			top = height/2, bottom = -top;
-	int wmesh = 16, hmesh = wmesh;
+	int wmesh = 10, hmesh = wmesh*2;
 	auto scale = right;
 
 	std::vector<GLfloat> points;
@@ -269,27 +287,41 @@ int main(int argc, const char *argv[]) {
 	unsigned indicesSize = 0;
 	Point<float> p = {0, 0, -mid};
 	if(models["cube"])
-		cube(points, indices, p);
-	indicesSize = indices.size();
+		cout << "Indices: " << (indicesSize = cube(points, indices, p, indicesSize)) << endl;
 	if(models["sphere"])
-		sphere(points, indices, p, scale, wmesh, hmesh, indicesSize);
-	indicesSize = indices.size();
+		cout << "Indices: " << (indicesSize = sphere(points, indices,
+				p, scale, wmesh, hmesh, indicesSize)) << endl;
 	if(models["rope"])
-		rope(points, indices, 1_e - scale*1_J, 1_e + scale*1_J,
-			0_x, p, scale, wmesh, hmesh, indicesSize);
-	indicesSize = indices.size();
+		cout << "Indices: " << (indicesSize = rope(points, indices,
+				1_e - scale*1_J, 1_e + scale*1_J, 0_x,
+				p, scale, wmesh, hmesh, indicesSize)) << endl;
 	if(models["sanity"])
-		sanity(points, indices, p, scale, wmesh, hmesh, indicesSize);
-	indicesSize = indices.size();
-	if(models["surface"])
-		surface(points, indices,
-		//rot_translation(t,u,v,w,x,y,z)
-			rotation<float>(M_PI/5,scale,0,0)*rotation<float>(-M_PI/5,0,scale,0)+1_I+1_J,
-			rotation<float>(M_PI/5,scale,0,0)*rotation<float>(M_PI/5,0,scale,0)-1_I+1_J,
-			rotation<float>(-M_PI/5,scale,0,0)*rotation<float>(-M_PI/5,0,scale,0)+1_I-1_J,
+		cout << "Indices: " << (indicesSize = sanity(points, indices,
+				p, scale, wmesh, hmesh, indicesSize)) << endl;
+	if(models["surface"]) {
+		float theta = M_PI/5;
+		float phi = theta;
+		auto north = rotation<float>(phi, scale, 0, 0),
+			south = rotation<float>(-phi, scale, 0, 0),
+			west = rotation<float>(theta, 0, scale, 0),
+			east = rotation<float>(-theta, 0, scale, 0),
+			nw = north * west, ne = north * east,
+			sw = south * west, se = south * east;
+		cout << "Indices: " << (indicesSize = surface(points, indices,
+			ne + 1_I + 1_J, nw - 1_I + 1_J, se + 1_I - 1_J, sw - 1_I - 1_J,
+			-scale/2*1_z, p, wmesh, hmesh, indicesSize)) << endl;
+		/*surface(points, indices,
+			nw - 1_I + 1_J, ne + 1_I + 1_J, sw - 1_I - 1_J, se + 1_I - 1_J,
+			-scale/2*1_z, p, wmesh, hmesh, indicesSize);*/
+	}
+		/*surface(points, indices,
 			rotation<float>(-M_PI/5,scale,0,0)*rotation<float>(M_PI/5,0,scale,0)-1_I-1_J,
-			-scale/2*1_z, p, wmesh, hmesh, indicesSize);
+			rotation<float>(-M_PI/5,scale,0,0)*rotation<float>(-M_PI/5,0,scale,0)+1_I-1_J,
+			rotation<float>(M_PI/5,scale,0,0)*rotation<float>(M_PI/5,0,scale,0)-1_I+1_J,
+			rotation<float>(M_PI/5,scale,0,0)*rotation<float>(-M_PI/5,0,scale,0)+1_I+1_J,
+			-scale/2*1_z, p, wmesh, hmesh, indicesSize);*/
 	indicesSize = indices.size();
+	cout << "Indices: " << indicesSize << endl;
 
 	// Locate shaders from execution path
 	string self = argv[0], delim = "/", share = "share" + delim;
@@ -312,7 +344,9 @@ int main(int argc, const char *argv[]) {
 		return 1;
 	}
 
-	Hnd hnd(640, 480);
+	SDL_DisplayMode mode;
+	SDL_GetDesktopDisplayMode(0, &mode);
+	Hnd hnd(mode.w, mode.h);
 	cout << hnd.frame << endl;
 	glEnable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
