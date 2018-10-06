@@ -10,20 +10,23 @@ struct Model;
 template<class T, class I>
 struct Model {
 	DualQuaternion<T> transform = {1}, accumulated = transform;
+	bool ltr = true;
 	std::vector<Model> children;
 	std::vector<T> vertices;
 	std::vector<I> indices;
 	unsigned size(void) const { return children.size(); }
 	DualQuaternion<T>& accumulate(DualQuaternion<T> d = {1}) {
-		accumulated = d * transform;
-		//accumulated = transform * d;
+		if(ltr) accumulated = transform * d;
+		else accumulated = d * transform;
 		for(auto & c : children)
 			c.accumulate(accumulated);
 		return accumulated;
 	}
 	Model& emplace_back(DualQuaternion<T> d = {1}) {
-		children.emplace_back(std::move(Model{d, d*transform}));
-		//children.emplace_back(std::move(Model{d, transform*d}));
+		DualQuaternion<T> td = d;
+		if(ltr) td = transform * d;
+		else td = d * transform;
+		children.emplace_back(std::move(Model{d, td}));
 		return back();
 	}
 	typename std::vector<Model>::iterator begin(void) { return children.begin(); }
@@ -50,10 +53,9 @@ struct Model {
 		indices.emplace_back(u);
 		return add_indices(std::forward<V>(v)...);
 	}
-	Model(DualQuaternion<T> transform = {1}):
-		Model(transform, transform) {}
-	Model(DualQuaternion<T> transform, DualQuaternion<T> accumulated):
-		transform(transform), accumulated(accumulated) {}
+	Model(DualQuaternion<T> transform = {1},
+			DualQuaternion<T> accumulated = {1}, bool ltr = true):
+		transform(transform), accumulated(accumulated), ltr(ltr) {}
 };
 
 #endif
