@@ -37,6 +37,7 @@ Events::Status test_texture(void) {
 
 struct Hnd;
 struct Hnd: Presenter<Hnd> {
+	bool fullscreen = true;
 	typedef enum {
 		e_out=0, e_info, n_streams
 	} e_stream;
@@ -75,7 +76,9 @@ struct Hnd: Presenter<Hnd> {
 		if(button != buttons.end()) {
 			if(button -> second.first != button -> second.second) {
 				if(button -> second.second) {
-					frame.maximize();
+					if(fullscreen) frame.restore();
+					else frame.maximize();
+					fullscreen = !fullscreen;
 				}
 			}
 		}
@@ -90,10 +93,11 @@ struct Hnd: Presenter<Hnd> {
 			theta = first.axes[3];
 		if(first.axes.find(4) != first.axes.cend())
 			phi = first.axes[4];
+
 		if(first.axes.find(2) != first.axes.cend())
-			psi += first.axes[2];
+			psi -= (1+first.axes[2])/2;
 		if(first.axes.find(5) != first.axes.cend())
-			psi -= first.axes[5];
+			psi += (1+first.axes[5])/2;
 
 		auto dead1 = .25, dead2 = .1, dead3 = .1;
 		auto xz = deadzone(x, z, dead1), pt = deadzone(theta, phi, dead2),
@@ -245,7 +249,6 @@ int main(int argc, const char *argv[]) {
 	using namespace glbinding;
 
 	map<string, bool> models = {
-		{"sanity", false},
 		{"cube", false},
 		{"sphere", false},
 		{"cylinder", false},
@@ -279,7 +282,7 @@ int main(int argc, const char *argv[]) {
 			mid = (near + far)/2,
 			right = width/2, left = -right,
 			top = height/2, bottom = -top;
-	int wmesh = 10, hmesh = wmesh*2;
+	int wmesh = 10, hmesh = wmesh;
 	auto scale = right;
 
 	std::vector<GLfloat> points;
@@ -295,9 +298,6 @@ int main(int argc, const char *argv[]) {
 		cout << "Indices: " << (indicesSize = rope(points, indices,
 				1_e - scale*1_J, 1_e + scale*1_J, 0_x,
 				p, scale, wmesh, hmesh, indicesSize)) << endl;
-	if(models["sanity"])
-		cout << "Indices: " << (indicesSize = sanity(points, indices,
-				p, scale, wmesh, hmesh, indicesSize)) << endl;
 	if(models["surface"]) {
 		float theta = M_PI/5;
 		float phi = theta;
@@ -310,18 +310,11 @@ int main(int argc, const char *argv[]) {
 		cout << "Indices: " << (indicesSize = surface(points, indices,
 			ne + 1_I + 1_J, nw - 1_I + 1_J, se + 1_I - 1_J, sw - 1_I - 1_J,
 			-scale/2*1_z, p, wmesh, hmesh, indicesSize)) << endl;
-		/*surface(points, indices,
-			nw - 1_I + 1_J, ne + 1_I + 1_J, sw - 1_I - 1_J, se + 1_I - 1_J,
-			-scale/2*1_z, p, wmesh, hmesh, indicesSize);*/
+		cout << "Indices: " << (indicesSize = surface(points, indices,
+			ne + 1_I + 1_J - 1_K, nw - 1_I + 1_J - 1_K,
+			se + 1_I - 1_J - 1_K, sw - 1_I - 1_J - 1_K,
+			-scale/2*1_z, p, wmesh, hmesh, indicesSize)) << endl;
 	}
-		/*surface(points, indices,
-			rotation<float>(-M_PI/5,scale,0,0)*rotation<float>(M_PI/5,0,scale,0)-1_I-1_J,
-			rotation<float>(-M_PI/5,scale,0,0)*rotation<float>(-M_PI/5,0,scale,0)+1_I-1_J,
-			rotation<float>(M_PI/5,scale,0,0)*rotation<float>(M_PI/5,0,scale,0)-1_I+1_J,
-			rotation<float>(M_PI/5,scale,0,0)*rotation<float>(-M_PI/5,0,scale,0)+1_I+1_J,
-			-scale/2*1_z, p, wmesh, hmesh, indicesSize);*/
-	indicesSize = indices.size();
-	cout << "Indices: " << indicesSize << endl;
 
 	// Locate shaders from execution path
 	string self = argv[0], delim = "/", share = "share" + delim;
@@ -354,8 +347,8 @@ int main(int argc, const char *argv[]) {
 	glEnable(GL_TEXTURE_2D);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	auto used = hnd.init(share + "dual.glsl", share + "vert.glsl",
-			gl::GL_FRAGMENT_SHADER, share + "frag.glsl");
+	auto used = hnd.init(share + "dual.glsl", share + "uv_vert.glsl",
+			gl::GL_FRAGMENT_SHADER, share + "uv_frag.glsl");
 	if(!used.good()) {
 		cout << "Could not build shader program";
 		if(used.length()) cout << ":\n  " << used;
@@ -370,11 +363,22 @@ int main(int argc, const char *argv[]) {
 	Buffer<2> vbo;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
+
 	bufferData(GL_ARRAY_BUFFER, vbo[0], points, GL_STATIC_DRAW);
-	bufferData(GL_ELEMENT_ARRAY_BUFFER, vbo[1], indices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(0);
 	glBindAttribLocation(hnd.program, 0, "pos_in");
+	auto pos_location = glGetAttribLocation(hnd.program, "pos_in");
+	glEnableVertexAttribArray(pos_location);
+	glVertexAttribPointer(pos_location, 3, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), 0);
+
+	//bufferData(GL_ARRAY_BUFFER, vbo[1], points, GL_STATIC_DRAW);
+	glBindAttribLocation(hnd.program, 1, "uv_in");
+	auto uv_location = glGetAttribLocation(hnd.program, "uv_in");
+	glEnableVertexAttribArray(uv_location);
+	glVertexAttribPointer(uv_location, 2, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (GLvoid*)9);
+	/*glVertexAttribPointer(uv_location, 3, GL_FLOAT, GL_FALSE, 5,
+			(void*)(&points[0])+3*sizeof(decltype(points[0])));*/
+
+	bufferData(GL_ELEMENT_ARRAY_BUFFER, vbo[1], indices, GL_STATIC_DRAW);
 	glBindVertexArray(0);
 	glDisableVertexAttribArray(0);
 
