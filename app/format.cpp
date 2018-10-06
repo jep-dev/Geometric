@@ -1,15 +1,14 @@
 #include <iostream>
-#include <iomanip>
 #include <array>
 #include <vector>
 #include <limits>
 #include <functional>
 
 #include "pretty.tpp"
-#include "format.hpp"
+#include "format.tpp"
+#include "math.tpp"
 #include "streams.tpp"
 
-#include "quaternion.hpp"
 #include "quaternion.tpp"
 
 #include "utility.hpp"

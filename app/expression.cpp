@@ -5,6 +5,7 @@
 #include "expression.hpp"
 #include "pretty.hpp"
 #include "pretty.tpp"
+#include "math.tpp"
 #include "streams.hpp"
 #include "streams.tpp"
 #include "utility.hpp"
