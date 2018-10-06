@@ -1,12 +1,12 @@
 #ifndef VIEW_HPP
 #define VIEW_HPP
 
+///@cond
 #include <vector>
-
-#include <glbinding/gl/gl.h>
-#include <glbinding/Binding.h>
+///@endcond
 
 #include <SDL.h>
+#include <glbinding/gl/gl.h>
 
 namespace View {
 using namespace gl;
