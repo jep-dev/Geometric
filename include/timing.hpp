@@ -1,12 +1,13 @@
 #ifndef TIMING_HPP
 #define TIMING_HPP
 
+///@cond
 #include <chrono>
 #include <thread>
 #include <vector>
+///@endcond
 
 #include "math.hpp"
-#include "utility.hpp"
 #include "geometric.hpp"
 
 namespace Timing {
