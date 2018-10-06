@@ -130,11 +130,6 @@ template<class L, class R, class T, class LRT = std::common_type_t<L,R,T>>
 Quaternion<LRT> nlerp(Quaternion<L> const& l, Quaternion<R> const& r, T const& t)
 	{ return lerp(l.normalize(), r.normalize(), t); }
 
-/*template<class L1, class R1, class L2, class R2, class S, class T, class LRST>
-Quaternion<LRST> lerp(Quaternion<L1> const& l1, Quaternion<R1> const& r1,
-		Quaternion<L2> const& l2, Quaternion<R2> const& r2, S const& s, T const& t)
-	{ return lerp(lerp(l1, r1, s), lerp(l2, r2, s), t); }*/
-
 template<class L, class R, class T, class LRT = std::common_type_t<L,R,T>>
 Quaternion<LRT> slerp(Quaternion<L> const& lhs,
 		Quaternion<R> const& rhs, T && t, bool normalize = false) {
