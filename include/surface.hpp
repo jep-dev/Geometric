@@ -76,11 +76,11 @@ unsigned sphere(V<S,VT...> &vertices, W<T,WT...> &indices, Point<U> center = {},
 			if(i && j) {
 				auto index = offset + i * M, J = (j+M-1) % M;
 				indices.emplace_back(index + J);
+				indices.emplace_back(index + j - N);
 				indices.emplace_back(index + J - N);
 				indices.emplace_back(index + j - N);
-				indices.emplace_back(index + j - N);
-				indices.emplace_back(index + j);
 				indices.emplace_back(index + J);
+				indices.emplace_back(index + j);
 			}
 		}
 #ifdef ENABLE_PRINTING
