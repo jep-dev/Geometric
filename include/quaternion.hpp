@@ -127,10 +127,6 @@ Quaternion<S> rotation(W theta, X x, Y y, Z z) {
 }
 
 template<class L, class R, class T, class LRT = std::common_type_t<L,R,T>>
-Quaternion<LRT> lerp(Quaternion<L> const& lhs, Quaternion<R> const& rhs, T t)
-	{ return lhs * (1-t) + rhs * t; }
-
-template<class L, class R, class T, class LRT = std::common_type_t<L,R,T>>
 Quaternion<LRT> nlerp(Quaternion<L> const& l, Quaternion<R> const& r, T const& t)
 	{ return lerp(l.normalize(), r.normalize(), t); }
 
