@@ -7,10 +7,9 @@
 #include <vector>
 #include <set>
 
-#include "math.hpp"
+#include "math.tpp"
 #include "parse.hpp"
 #include "streams.tpp"
-#include "dual.hpp"
 #include "dual.tpp"
 
 using namespace Streams;
