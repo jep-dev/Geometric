@@ -1,8 +1,9 @@
-#include "quaternion.tpp"
-
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include "math.tpp"
+
+#include "quaternion.tpp"
 
 int main(int argc, const char *argv[]) {
 	using namespace std;
