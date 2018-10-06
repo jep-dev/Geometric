@@ -1,9 +1,7 @@
 #include <iostream>
-#include <utility>
 #include <vector>
 #include <algorithm>
 #include <functional>
-#include <sstream>
 
 #include "point.hpp"
 #include "quaternion.tpp"
