@@ -2,13 +2,10 @@
 #define PRESENTER_HPP
 
 #include <map>
-#include <string>
 
 #include "frame.hpp"
 #include "model.hpp"
 #include "shader.hpp"
-
-#include "joystick.hpp"
 
 template<class S>
 struct Presenter;
