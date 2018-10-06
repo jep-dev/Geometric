@@ -18,7 +18,8 @@
 
 template<class T, unsigned N, unsigned M>
 std::vector<std::string> get_table(std::string const& title,
-		const T (&LHS)[N], const T (&RHS)[M], T (*fn)(T const&, T const&)) {
+		const DualQuaternion<T> (&LHS)[N], const DualQuaternion<T> (&RHS)[M],
+		DualQuaternion<T> (*fn)(DualQuaternion<T> const&, DualQuaternion<T> const&)) {
 	using namespace std;
 	using Streams::center;
 
