@@ -7,7 +7,6 @@
 #include <algorithm>
 ///@endcond
 
-#include "math.hpp"
 #include "quaternion.hpp"
 
 /** A dual quaternion with a flat structure. */
