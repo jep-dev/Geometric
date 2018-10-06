@@ -1,14 +1,9 @@
 #include <iostream>
 #include <iomanip>
 
-#ifdef DUAL2
-#include "dual2.hpp"
-#else
-#include "dual.hpp"
-#endif
-
 #include "dual.tpp"
 #include "quaternion.tpp"
+#include "streams.tpp"
 
 #include "timing.hpp"
 #include "utility.hpp"
