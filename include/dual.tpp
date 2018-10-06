@@ -4,8 +4,7 @@
 #include "dual.hpp"
 #include "quaternion.hpp"
 #include "quaternion.tpp"
-
-#include <iosfwd>
+#include "streams.hpp"
 
 /*template<class L, class S>
 L& print(L &lhs, DualQuaternion<S> const& rhs) {
@@ -28,53 +27,28 @@ L& print(L &lhs, DualQuaternion<S> const& rhs) {
 
 template<class L, class S, class DELIM = const char*>
 L& print(L &lhs, DualQuaternion<S> const& rhs, unsigned prec, DELIM delim = "+") {
-	bool nz = false;
-	std::ostringstream oss;
-	if(prec) {
-		oss.precision(prec);
-		oss << std::fixed;
-	}
-	for(auto i : {'e', 'i', 'j', 'k', 'E', 'I', 'J', 'K'}) {
-		auto const& q = rhs[i];
-		if(prec) {
-			if(std::abs(q) < std::pow(.1f, prec)) continue;
-		} else {
-			auto q0 = q*0;
-			if(q == q0) continue;
-		}
-		auto q2 = q*q;
-		if(q2 == q) oss << (nz ? "+" : "");
-		else if(q2 == -q) oss << (nz ? "-" : "-");
-		else if(q > 0) oss << (nz ? "+" : "") << q;
-		else oss << (nz ? "-" : "-") << -q;
-		oss << i;
-		nz = true;
-	}
-	if(!nz) oss << '0';
-	return lhs << oss.str(), lhs;
+	return lhs << to_string(rhs, prec, delim), lhs;
 }
 
 template<class L, class S>
 L& operator<<(L &lhs, DualQuaternion<S> const& rhs) {
-	/*std::ostringstream oss;
-	Quaternion<S,S> p = {rhs.s, rhs.t, rhs.u, rhs.v},
-		q = {rhs.w, rhs.x, rhs.y, rhs.z};
-	oss << p << "+(" << q << ")E";
-	return lhs << oss.str(), lhs;*/
-	/*for(auto i : {'e', 'i', 'j', 'k', 'E', 'I', 'J', 'K'}) {
-		oss << rhs[i] << i << (i == 'e' ? "" : "+");
-	}
-	lhs << oss.str();
-	return lhs;*/
-	std::ostringstream oss;
-	print(oss, rhs, 0);
-	return lhs << oss.str(), lhs;
+	return lhs << to_string(rhs, 0), lhs;
 }
 
 template<class S, class DELIM>
 std::string to_string(DualQuaternion<S> const& s, unsigned prec, DELIM delim) {
-	std::ostringstream oss;
-	return print(oss, s, prec, delim), oss.str();
+	bool nz = false;
+	std::string out;
+	for(auto i : {'e', 'i', 'j', 'k', 'E', 'I', 'J', 'K'}) {
+		auto const& v = s[i];
+		auto stringified = to_unit_string(v, i, prec);
+		if(!stringified.length()) continue;
+		if(v > 0 && nz) out += '+';
+		out += stringified;
+		nz = true;
+	}
+	if(!nz) out += '0';
+	return out;
 }
 template<class S>
 DualQuaternion<S>::operator std::string(void) const
