@@ -1,7 +1,6 @@
 #ifndef POINT_HPP
 #define POINT_HPP
 
-#include "math.hpp"
 #include "quaternion.hpp"
 
 template<class S>
