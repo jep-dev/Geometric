@@ -17,7 +17,7 @@ template<class L, class S> L& operator<<(L&, DualQuaternion<S> const&);
 
 template<class S, class DELIM = const char*>
 std::enable_if_t<std::is_arithmetic<S>::value, std::string>
-to_string(S s, unsigned prec = 0, bool show_zero = true) {
+to_string(S s, unsigned prec = 0, bool show_zero = true, bool fill_zeroes = false) {
 	using namespace std;
 	if(isnan(s))
 		return "NaN";
@@ -41,7 +41,7 @@ to_string(S s, unsigned prec = 0, bool show_zero = true) {
 	while(prec) {
 		s *= 10;
 		unsigned uCur = s;
-		if(uCur) {
+		if(uCur || fill_zeroes) {
 			s -= uCur;
 			if(!nMinor) out += '.';
 			nMinor++;
@@ -59,12 +59,12 @@ to_string(S s, unsigned prec = 0, bool show_zero = true) {
 		return '-' + out;
 	return out;
 }
-template<class S, class DELIM = const char*>
-std::string to_string(Point<S> const& d, unsigned prec = 0, DELIM delim = ",");
-template<class S, class DELIM = const char*>
-std::string to_string(Quaternion<S> const& d, unsigned prec = 0, DELIM delim = "+");
-template<class S, class DELIM = const char*>
-std::string to_string(DualQuaternion<S> const& d, unsigned prec = 0, DELIM delim = "+");
+template<class S, class DELIM = const char*, class... T>
+std::string to_string(Point<S> const& d, unsigned prec = 2, DELIM delim = ", ", T &&... t);
+template<class S, class... T>
+std::string to_string(Quaternion<S> const& d, T &&... t);
+template<class S, class... T>
+std::string to_string(DualQuaternion<S> const& d, T &&... t);
 
 template<class S, class... T>
 std::enable_if_t<std::is_arithmetic<S>::value, std::string>
