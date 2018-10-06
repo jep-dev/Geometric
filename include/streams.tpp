@@ -2,36 +2,20 @@
 #define STREAMS_TPP
 
 #include "streams.hpp"
-#include <iostream>
+//#include <iostream>
 #include <iomanip>
-#include <sstream>
+//#include <sstream>
 
 namespace Streams {
 
-template<class S>
-ostream& center(ostream& out, S const& s, unsigned N, bool leftish) {
+template<class S, class T>
+enable_if_t<HasInsert<S, string>::value, S&>
+center(S & out, T const& t, unsigned N, char fill, bool leftish) {
 	using namespace std;
-	ostringstream oss;
-	oss << s;
-	auto str = oss.str();
+	auto str = to_string(t);
 	int len = str.length(), dlen = N - len, dlen0 = dlen/2, dlen1 = dlen - dlen0;
-	if(leftish) swap(dlen0, dlen1);
-	if(dlen0 > 0) out << setw(dlen0) << "";
-	out << str;
-	if(dlen1 > 0) out << setw(dlen1) << "";
-	return out;
-}
-string center(string const& s, unsigned N, char fill, bool leftish) {
-	int len = s.length(), len2 = N - len, llen = len2/2, rlen = len2 - llen;
-	if(leftish) std::swap(llen, rlen);
-	return string(std::max(llen, 0), fill) + s + string(std::max(rlen, 0), fill);
-}
-
-vector<string> center(vector<string> const& v, unsigned N, char fill, bool leftish) {
-	vector<string> out;
-	for(auto const& s : v)
-		out.emplace_back(center(s, N, fill, leftish));
-	return out;
+	string pads[] = {string(dlen0, fill), string(dlen1, fill)};
+	return out << (pads[!leftish] + str + pads[leftish]), out;
 }
 
 string align(string const& out, unsigned N, int dir, bool truncate, char fill, bool leftish) {
