@@ -78,13 +78,10 @@ unsigned cube(VERT<S, VERTN...> &vertices, IND<T, INDN...> &indices,
 			c = {center.x, center.y, center.z},
 			points[] = {c, c, c, c, c, c, c, c};
 	auto face = [&] (unsigned tr, unsigned tl, unsigned bl, unsigned br, Point<S> const& p) {
-		for(auto i : {tr, tl, bl, br}) {
+		for(auto i : {tr, tl, bl, br})
 			points[i] += p;
-		}
-		emplace_indices(indices, offset + tr, offset + tl,
-				offset + bl, offset + bl, offset + br, tr);
-		/*for(auto i : {tr, tl, bl, tr, bl, br})
-			indices.emplace_back(i+offset);*/
+		for(auto i : {tr, tl, bl, tr, bl, br})
+			indices.emplace_back(i+offset);
 	};
 	face(tne, tse, tsw, tnw, t); // Top
 	face(bse, bsw, bnw, bne, b); // Bottom
@@ -111,15 +108,10 @@ unsigned cylinder(std::vector<S> & vertices, std::vector<T> & indices,
 		U s = U(i)/(M-1);
 		for(unsigned j = 0, J = 1; j < N; j++, J = j+1 /*(j+1) % N*/) {
 			U t = U(j)/(N-1);
-			//Pt w = (radius * u) ^ rotation<U>(M_PI*2*t, n10.x, n10.y, n10.z);
 			Pt w = p0 + s * p10 + ((radius * t * u) ^ rotation<U>(M_PI*2*t, n10.x, n10.y, n10.z));
-			//Pt w = p0 + s * p10 + U(cos(t*M_PI*2)) * uv.first + U(sin(t*M_PI*2)) * uv.second;
-			//Pt w = p0 + s * p10 + p2 * radius;
 			emplace_vertices(vertices, w, s, t);
-			if(i && j < N) {
-					//emplace_indices(indices, I+J, I-N+j, I+j, I-N+j, I+J, I-N+J);
+			if(i && j < N)
 					emplace_indices(indices, I+J, I+j, I-N+j, I-N+j, I-N+J, I+J);
-			}
 		}
 	}
 	return indices.size();
