@@ -41,33 +41,22 @@ template<class S, class T, class U, class R = U,
 		template<class...> class V, class... VT,
 		template<class...> class W, class... WT>
 unsigned sphere(V<S,VT...> &vertices, W<T,WT...> &indices, Point<U> center = {},
-		R radius = 1, unsigned M = 100, unsigned N = 100, unsigned offset = 0) {
+		R radius = 1, unsigned M = 100, unsigned N = 100, unsigned offset = 0, bool uv = true) {
 	using namespace std;
 	auto x = radius * 1_x;
 	for(unsigned i = 0, I = offset; i < M; i++, I += N) {
-		/*
-		S s = S(i)/(M-1), phi = -M_PI/2+M_PI*s, cp = cos(phi), sp = sin(phi);
-		*/
 		S s = S(i)/(M-1), phi = -M_PI/2 + M_PI*s;
 		auto y = x ^ rotation(phi, 0, 0, 1);
 		for(unsigned j = 0; j < N; j++) {
 			S t = S(j)/(N-1), theta = 2*M_PI*t;
-				/*ct = cos(theta), st = sin(theta),
-				x = center.x + radius * ct * cp,
-				y = center.y + radius * sp,
-				z = center.z + radius * st * cp;*/
 			auto z = center + (x ^ rotation(phi, 0, 0, 1) ^ rotation(theta, 0, 1, 0));
-			emplace_vertices(vertices, z.x, z.y, z.z, s, t);
-			//emplace_vertices(vertices, x, y, z, s, t);
+			emplace_vertices(vertices, z);
+			if(uv) emplace_vertices(vertices, s, t);
 			if(i && j) {
 				auto index = I, J = (j+M-1) % N;
-				/*emplace_indices(indices, index+J, index+j-N, index+J-N,
-						index+J-N, index+J, index+j);*/
 				emplace_indices(indices,
 					index+J, index+J-N, index+j-N,
-					//index+J, index+j-N, index+J-N,
 					index+j-N, index+j, index+J);
-					//index+j-N, index+J, index+j);
 			}
 		}
 	}
@@ -77,7 +66,7 @@ template<class S, class T, class U = S, class W = U,
 		template<class...> class VERT, class... VERTN,
 		template<class...> class IND, class... INDN>
 unsigned cube(VERT<S, VERTN...> &vertices, IND<T, INDN...> &indices,
-		Point<U> center = {0, 0, 0}, W width = 1, unsigned offset = 0) {
+		Point<U> center = {0, 0, 0}, W width = 1, unsigned offset = 0, bool uv = true) {
 	using std::cout;
 	using std::endl;
 
@@ -92,7 +81,8 @@ unsigned cube(VERT<S, VERTN...> &vertices, IND<T, INDN...> &indices,
 		for(auto i : {tr, tl, bl, br}) {
 			points[i] += p;
 		}
-		emplace_indices(indices, tr, tl, bl, bl, br, tr);
+		emplace_indices(indices, offset + tr, offset + tl,
+				offset + bl, offset + bl, offset + br, tr);
 		/*for(auto i : {tr, tl, bl, tr, bl, br})
 			indices.emplace_back(i+offset);*/
 	};
@@ -103,40 +93,9 @@ unsigned cube(VERT<S, VERTN...> &vertices, IND<T, INDN...> &indices,
 	face(tne, tse, bse, bne, e); // East
 	face(tsw, tnw, bnw, bsw, w); // West
 	for(auto const& p : points) {
-		emplace_vertices(vertices, p, 0, 0);
-		/*for(auto px : {p.x+center.x, p.y+center.y, p.z+center.z})
-			vertices.emplace_back(px);*/
+		emplace_vertices(vertices, p);
+		if(uv) emplace_vertices(vertices, 0, 0);
 	}
-	return indices.size();
-}
-template<class S, class IND, class T>
-unsigned cube(S &vertices, IND &indices, DualQuaternion<T> const& transform,
-		T scale = 1, unsigned offset = 0) {
-	enum { tne=0, tse, tsw, tnw, bne, bse, bsw, bnw };
-
-	scale /= 2;
-	DualQuaternion<T> north = 1_e + scale * 1_J, east = 1_e + scale * 1_I,
-			south = 1_e - scale * 1_J, west = 1_e - scale * 1_I,
-			top = 1_e + scale * 1_K, bottom = 1_e - scale * 1_K;
-
-	for(auto p : {top * north * east, top * south * east,
-			top * south * west, top * north * west,
-			bottom * north * east, bottom * south * east,
-			bottom * south * west, bottom * north * west}) {
-		auto tp = transform * p * *transform;
-		vertices.emplace_back(T(tp.x));
-		vertices.emplace_back(T(tp.y));
-		vertices.emplace_back(T(tp.z));
-		PRINT_STRING(tp, 2);
-	}
-	for(gl::GLuint i : {
-			tse, tsw, bsw, tse, bsw, bse, // south/front
-			tne, tse, bse, tse, bse, bne, // east/right
-			tne, bne, bnw, tne, bnw, tnw, // north/back
-			tnw, bnw, bsw, tnw, bsw, tsw, // west/left
-			tne, tnw, tsw, tne, tsw, tse, // top
-			bse, bsw, bnw, bse, bnw, bne, // bottom
-		}) indices.emplace_back(offset + i);
 	return indices.size();
 }
 
@@ -145,28 +104,21 @@ unsigned cylinder(std::vector<S> & vertices, std::vector<T> & indices,
 	Point<U> const& p0, Point<U> const& p1, R && radius = 1,
 	unsigned M = 100, unsigned N = 100, unsigned offset = 0) {
 	typedef Point<U> Pt;
+	Pt p10 = p1 - p0, n10 = p10.normalize();
+	std::pair<Pt, Pt> uv = perpendicular(p10, true);
+	auto const& u = uv.first, v = uv.second;
 	for(unsigned i = 0, I = offset; i < M; i++, I += N) {
 		U s = U(i)/(M-1);
 		for(unsigned j = 0, J = 1; j < N; j++, J = j+1 /*(j+1) % N*/) {
 			U t = U(j)/(N-1);
-			Pt p10 = p1-p0, n10 = p10.normalize();
-			std::pair<Pt, Pt> uv = perpendicular(-p10, false);
-			Pt p2 = uv.first ^ rotation<U>(M_PI*2*t, n10.x, n10.y, n10.z);
-			//Pt w = p0 + s * p1 - s * p0 + radius * t * uv.first;
+			//Pt w = (radius * u) ^ rotation<U>(M_PI*2*t, n10.x, n10.y, n10.z);
+			Pt w = p0 + s * p10 + ((radius * t * u) ^ rotation<U>(M_PI*2*t, n10.x, n10.y, n10.z));
 			//Pt w = p0 + s * p10 + U(cos(t*M_PI*2)) * uv.first + U(sin(t*M_PI*2)) * uv.second;
-			Pt w = p0 + s * p10 + p2 * radius;
-			vertices.emplace_back(w.x);
-			vertices.emplace_back(w.y);
-			vertices.emplace_back(w.z);
-			if(i) {
-				if(J < N) {
-					indices.emplace_back(I+J);
-					indices.emplace_back(I+j);
-					indices.emplace_back(I-N+j);
-					indices.emplace_back(I-N+j);
-					indices.emplace_back(I-N+J);
-					indices.emplace_back(I+J);
-				}
+			//Pt w = p0 + s * p10 + p2 * radius;
+			emplace_vertices(vertices, w, s, t);
+			if(i && j < N) {
+					//emplace_indices(indices, I+J, I-N+j, I+j, I-N+j, I+J, I-N+J);
+					emplace_indices(indices, I+J, I+j, I-N+j, I-N+j, I-N+J, I+J);
 			}
 		}
 	}
