@@ -9,11 +9,15 @@ template<class T, class U>
 T linear(const T (&x) [2], const T (&y) [2], U u, U v) {
 	return linear(linear(x[0], x[1], u), linear(y[0], y[1], u), v);
 }
+template<class T, class U>
+T linear(const T (&x) [2][2], const T (&y) [2][2], U u, U v, U w) {
+	return linaer(linear(linear(x[0][0], y[0][0], u), linear(x[0][1], y[0][1], u), v),
+		linear(linear(x[1][0], y[1][0], u), linear(x[1][1], y[1][1], u), v), w);
+}
 
 template<class T, class U>
 T quadratic(T x, T y, T z, U u) {
-	auto v = 1-u;
-	return x*v*v + y*v*u + z*u*u;
+	return linear(linear(x, y, u), linear(y, z, u), u);
 }
 template<class T, class U>
 T quadratic(const T (&x)[3], const T (&y)[3], const T (&z)[3], U const& u, U const& v) {
@@ -24,8 +28,7 @@ T quadratic(const T (&x)[3], const T (&y)[3], const T (&z)[3], U const& u, U con
 
 template<class T, class U>
 T cubic(T w, T x, T y, T z, U u) {
-	auto v = 1-u, u2 = u*u, v2 = v*v;
-	return w*v2*v + x*v2*u + y*v*u2 + z*u2*u;
+	return linear(quadratic(w, x, y, u), quadratic(x, y, z, u), u);
 }
 template<class T, class U>
 T cubic(T (&w) [4], T (&x) [4], T (&y) [4], T (&z) [4], U u, U v) {
