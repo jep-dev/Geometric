@@ -13,33 +13,34 @@ int main(int argc, const char *argv[]) {
 	typedef Point<T> Pt;
 
 
-	Pt p22[][2] = {
-		{1_y, 1_x},
-		{-1_x, -1_y},
+	float p22[][2] = {
+		{1, 1},
+		{0, 1}
 	}, p33[][3] = {
-		{1_y, 0_x, 1_x},
-		{0_x, 0_x, 0_x},
-		{-1_x, 0_x, -1_y},
+		{1, 1, 1},
+		{0, 0, 1},
+		{0, 0, 1}
 	}, p44[][4] = {
-		{1_y, 0_x, 0_x, 1_x},
-		{0_x, 0_x, 0_x, 0_x},
-		{0_x, 0_x, 0_x, 0_x},
-		{-1_x, 0_x, 0_x, -1_y}
+		{1, 1, 1, 1},
+		{0, 0, 0, 1},
+		{0, 0, 0, 1},
+		{0, 0, 0, 1},
 	};
 
-	auto abbrev = [] (Dq const& d)
-		-> string { return to_string(d-(1_e + 0_E), 2, false, true); };
+	auto abbrev = [] (float const& f)
+		-> string { return to_string(f, 0, true, false); };
 
-	unsigned W = 6, H = 6;
+	unsigned W = 10, H = 10;
 	float divisors[] = {1,1,1};
 	vector<string> rows[] = {vector<string>(H), vector<string>(H), vector<string>(H)};
 	for(unsigned i = 0; i < W; i++) {
 		float s = float(i)/(H-1);
 		for(unsigned j = 0; j < H; j++) {
 			float t = float(j)/(W-1);
-			rows[0][j] += abbrev(linear(p22[0], p22[1], s/divisors[0], t/divisors[0]));
-			rows[1][j] += abbrev(quadratic(p33[0], p33[1], p33[2], s/divisors[1], t/divisors[1]));
-			rows[2][j] += abbrev(cubic(p44[0], p44[1], p44[2], p44[3], s/divisors[2], t/divisors[2]));
+			rows[0][j] += abbrev(9*linear(p22[0], p22[1], s/divisors[0], t/divisors[0]));
+			//rows[0][j] += abbrev(linear(p22[0], p22[1], s/divisors[0], t/divisors[0]));
+			rows[1][j] += abbrev(9*quadratic(p33[0], p33[1], p33[2], s/divisors[1], t/divisors[1]));
+			rows[2][j] += abbrev(9*cubic(p44[0], p44[1], p44[2], p44[3], s/divisors[2], t/divisors[2]));
 		}
 		for(vector<string> & r : rows)
 			level_insert(r, "  ");
