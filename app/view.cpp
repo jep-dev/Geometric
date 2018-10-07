@@ -249,7 +249,6 @@ int main(int argc, const char *argv[]) {
 	using namespace glbinding;
 
 	map<string, bool> models = {
-		{"cube", false},
 		{"sphere", false},
 		{"cylinder", false},
 		{"rope", false},
@@ -289,8 +288,9 @@ int main(int argc, const char *argv[]) {
 	std::vector<GLuint> indices;
 	unsigned indicesSize = 0;
 	Point<float> p = {0, 0, -mid};
-	if(models["cube"])
-		cout << "Indices: " << (indicesSize = cube(points, indices, p, indicesSize)) << endl;
+	if(models["cylinder"])
+		cout << "Indices: " << (indicesSize = cylinder(points, indices,
+				p - scale*1_y, p + scale*1_y, scale, wmesh, hmesh, indicesSize)) << endl;
 	if(models["sphere"])
 		cout << "Indices: " << (indicesSize = sphere(points, indices,
 				p, scale, wmesh, hmesh, indicesSize)) << endl;
