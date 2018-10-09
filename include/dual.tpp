@@ -13,7 +13,7 @@ L& print(L &lhs, DualQuaternion<S> const& rhs, T &&... t) {
 
 template<class L, class S>
 L& operator<<(L &lhs, DualQuaternion<S> const& rhs) {
-	return lhs << to_string(rhs, 0, false), lhs;
+	return lhs << to_string(rhs, 1, true), lhs;
 }
 
 template<class S, class... T>
