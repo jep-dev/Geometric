@@ -150,6 +150,14 @@ Quaternion<L2> const& l2, Quaternion<R2> const& r2,
 		S const& s, T const& t, bool normalize = false)
 	{ return slerp(slerp(l1, r1, s), slerp(l2, r2, s), t); }
 
+/*template<class S>
+Quaternion<S> exp(Quaternion<S> const& q) {
+	// e^(a+bi+cj+dk) = (e^a) (e^bi) (e^cj) (e^dk)
+	auto a = exp(q.w), bc = cos(q.x), bs = sin(q.y),
+		cc = cos(q.y), cs = sin(q.y),
+		dc = cos(q.z), ds = sin(q.z);
+}*/
+
 // Generate user-defined literals for likely parameter types
 #define USERDEF_TEMPLATE(CLASS,PARAM,UD,W,X,Y,Z) \
 CLASS<PARAM> operator"" UD(long long unsigned d) \
