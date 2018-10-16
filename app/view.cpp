@@ -281,23 +281,27 @@ int main(int argc, const char *argv[]) {
 			mid = (near + far)/2,
 			right = width/2, left = -right,
 			top = height/2, bottom = -top;
-	int wmesh = 10, hmesh = wmesh;
+	int wmesh = 5, hmesh = wmesh;
 	auto scale = right;
 
 	std::vector<GLfloat> points;
 	std::vector<GLuint> indices;
 	unsigned indicesSize = 0;
 	Point<float> p = {0, 0, -mid};
-	if(models["cylinder"])
-		cout << "Indices: " << (indicesSize = cylinder(points, indices,
-				p - scale*1_y, p + scale*1_y, scale, wmesh, hmesh, indicesSize)) << endl;
-	if(models["sphere"])
-		cout << "Indices: " << (indicesSize = sphere(points, indices,
-				p, scale, wmesh, hmesh, indicesSize)) << endl;
-	if(models["rope"])
-		cout << "Indices: " << (indicesSize = rope(points, indices,
-				1_e - scale*1_J, 1_e + scale*1_J, 0_x,
-				p, scale, wmesh, hmesh, indicesSize)) << endl;
+	if(models["cylinder"]) {
+		cylinder(points, indices, p - scale*1_y, p,
+				scale, wmesh, hmesh, points.size());
+		cylinder(points, indices, p, p + scale*1_y,
+				scale, wmesh, hmesh, points.size());
+	}
+	if(models["sphere"]) {
+		sphere(points, indices, p - scale*1_y, scale, wmesh, hmesh, points.size());
+		sphere(points, indices, p + scale*1_y, scale, wmesh, hmesh, points.size());
+	}
+	if(models["rope"]) {
+		rope(points, indices, 1_e - scale*1_J, 1_e + scale*1_J, 0_x,
+				p, scale, wmesh, hmesh, points.size());
+	}
 	if(models["surface"]) {
 		float theta = M_PI/5;
 		float phi = theta;
@@ -307,14 +311,14 @@ int main(int argc, const char *argv[]) {
 			east = rotation<float>(-theta, 0, scale, 0),
 			nw = north * west, ne = north * east,
 			sw = south * west, se = south * east;
-		cout << "Indices: " << (indicesSize = surface(points, indices,
-			ne + 1_I + 1_J, nw - 1_I + 1_J, se + 1_I - 1_J, sw - 1_I - 1_J,
-			-scale/2*1_z, p, wmesh, hmesh, indicesSize)) << endl;
-		cout << "Indices: " << (indicesSize = surface(points, indices,
-			ne + 1_I + 1_J - 1_K, nw - 1_I + 1_J - 1_K,
+		surface(points, indices, ne + 1_I + 1_J, nw - 1_I + 1_J,
+			se + 1_I - 1_J, sw - 1_I - 1_J, -scale/2*1_z, p,
+			wmesh, hmesh, points.size());
+		surface(points, indices, ne + 1_I + 1_J - 1_K, nw - 1_I + 1_J - 1_K,
 			se + 1_I - 1_J - 1_K, sw - 1_I - 1_J - 1_K,
-			-scale/2*1_z, p, wmesh, hmesh, indicesSize)) << endl;
+			-scale/2*1_z, p, wmesh, hmesh, points.size());
 	}
+	indicesSize = indices.size();
 
 	// Locate shaders from execution path
 	string self = argv[0], delim = "/", share = "share" + delim;
