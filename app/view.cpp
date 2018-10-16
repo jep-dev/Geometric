@@ -251,7 +251,6 @@ int main(int argc, const char *argv[]) {
 	map<string, bool> models = {
 		{"sphere", false},
 		{"cylinder", false},
-		{"rope", false},
 		{"surface", false}
 	};
 	string nos[] = {"--no-", "-n"};
@@ -297,10 +296,6 @@ int main(int argc, const char *argv[]) {
 	if(models["sphere"]) {
 		offset = sphere(points, indices, p - scale*1_y, scale, wmesh, hmesh, offset);
 		offset = sphere(points, indices, p + scale*1_y, scale, wmesh, hmesh, offset);
-	}
-	if(models["rope"]) {
-		offset = rope(points, indices, 1_e - scale*1_J, 1_e + scale*1_J, 0_x,
-				p, scale, wmesh, hmesh, offset);
 	}
 	if(models["surface"]) {
 		float theta = M_PI/5;

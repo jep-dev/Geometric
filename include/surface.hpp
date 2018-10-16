@@ -142,27 +142,4 @@ unsigned surface(V<S,VT...> & vertices, W<T,WT...> & indices,
 	return offset + M*N;
 }
 
-template<class S, class T, class U = S, class R = S,
-	class DQ = DualQuaternion<U>, class PT = DualQuaternion<U>,
-	template<class...> class V, class... VT,
-	template<class...> class W, class... WT>
-unsigned rope(V<S,VT...> & vertices, W<T,WT...> & indices,
-		DQ const& u, DQ const& v, PT const& p, PT const& center, R && radius = 1,
-		unsigned M = 100, unsigned N = 100, unsigned offset = 0, bool uv = true) {
-	typedef DualQuaternion<U> Dq;
-	typedef Point<U> Pt;
-	Pt prev_pt = center + (p ^ u), next_pt = center + (p ^ v);
-	offset = cylinder(vertices, indices, prev_pt, next_pt, radius, M, N, offset, uv);
-
-	/*Dq prev;
-	for(unsigned i = 0, M2 = 10; i < M2; i++) {
-		Dq cur = sclerp(u, v, U(i)/(M2-1));
-		//Dq cur = u + (v-u) * U(i)/(M2-1);
-
-		Pt x = center + (p ^ cur); //w = (prev_pt - x).normalize();
-		cylinder(vertices, indices, prev_pt, x, radius, M/M2, N, indices.size());
-	}*/
-	return offset;
-}
-
 #endif
