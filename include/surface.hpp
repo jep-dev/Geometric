@@ -60,7 +60,7 @@ unsigned sphere(V<S,VT...> &vertices, W<T,WT...> &indices, Point<U> center = {},
 			}
 		}
 	}
-	return indices.size();
+	return offset += M*N;
 }
 template<class S, class T, class U = S, class W = U,
 		template<class...> class VERT, class... VERTN,
@@ -93,7 +93,7 @@ unsigned cube(VERT<S, VERTN...> &vertices, IND<T, INDN...> &indices,
 		emplace_vertices(vertices, p);
 		if(uv) emplace_vertices(vertices, 0, 0);
 	}
-	return indices.size();
+	return offset; // TODO
 }
 
 template<class R, class S, class T, class U,
@@ -116,7 +116,7 @@ unsigned cylinder(V<S,VT...> & vertices, W<T,WT...> & indices,
 					emplace_indices(indices, I+J, I+j, I-N+j, I-N+j, I-N+J, I+J);
 		}
 	}
-	return indices.size();
+	return offset + M*N;
 }
 
 template<class S, class T, class U,
@@ -139,7 +139,7 @@ unsigned surface(V<S,VT...> & vertices, W<T,WT...> & indices,
 				emplace_indices(indices, I+j, I-N+j-1, I+j-1, I-N+j-1, I+j, I-N+j);
 		}
 	}
-	return indices.size();
+	return offset + M*N;
 }
 
 template<class S, class T, class U = S, class R = S,
@@ -152,7 +152,7 @@ unsigned rope(V<S,VT...> & vertices, W<T,WT...> & indices,
 	typedef DualQuaternion<U> Dq;
 	typedef Point<U> Pt;
 	Pt prev_pt = center + (p ^ u), next_pt = center + (p ^ v);
-	cylinder(vertices, indices, prev_pt, next_pt, radius, M, N, offset, uv);
+	offset = cylinder(vertices, indices, prev_pt, next_pt, radius, M, N, offset, uv);
 
 	/*Dq prev;
 	for(unsigned i = 0, M2 = 10; i < M2; i++) {
@@ -162,7 +162,7 @@ unsigned rope(V<S,VT...> & vertices, W<T,WT...> & indices,
 		Pt x = center + (p ^ cur); //w = (prev_pt - x).normalize();
 		cylinder(vertices, indices, prev_pt, x, radius, M/M2, N, indices.size());
 	}*/
-	return indices.size();
+	return offset;
 }
 
 #endif

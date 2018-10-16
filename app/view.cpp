@@ -289,23 +289,18 @@ int main(int argc, const char *argv[]) {
 	unsigned indicesSize = 0, offset = 0;
 	Point<float> p = {0, 0, -mid};
 	if(models["cylinder"]) {
-		cylinder(points, indices, p - scale*1_y, p,
-				scale, wmesh, hmesh, 0);
-		offset += wmesh * hmesh;
-		cylinder(points, indices, p, p + scale*1_y,
+		offset = cylinder(points, indices, p - scale*1_y, p,
 				scale, wmesh, hmesh, offset);
-		offset += wmesh * hmesh;
+		offset = cylinder(points, indices, p, p + scale*1_y,
+				scale, wmesh, hmesh, offset);
 	}
 	if(models["sphere"]) {
-		sphere(points, indices, p - scale*1_y, scale, wmesh, hmesh, offset);
-		offset += wmesh * hmesh;
-		sphere(points, indices, p + scale*1_y, scale, wmesh, hmesh, offset);
-		offset += wmesh * hmesh;
+		offset = sphere(points, indices, p - scale*1_y, scale, wmesh, hmesh, offset);
+		offset = sphere(points, indices, p + scale*1_y, scale, wmesh, hmesh, offset);
 	}
 	if(models["rope"]) {
-		rope(points, indices, 1_e - scale*1_J, 1_e + scale*1_J, 0_x,
+		offset = rope(points, indices, 1_e - scale*1_J, 1_e + scale*1_J, 0_x,
 				p, scale, wmesh, hmesh, offset);
-		offset += wmesh * hmesh;
 	}
 	if(models["surface"]) {
 		float theta = M_PI/5;
@@ -316,14 +311,12 @@ int main(int argc, const char *argv[]) {
 			east = rotation<float>(-theta, 0, scale, 0),
 			nw = north * west, ne = north * east,
 			sw = south * west, se = south * east;
-		surface(points, indices, ne + 1_I + 1_J, nw - 1_I + 1_J,
+		offset = surface(points, indices, ne + 1_I + 1_J, nw - 1_I + 1_J,
 			se + 1_I - 1_J, sw - 1_I - 1_J, -scale/2*1_z, p,
 			wmesh, hmesh, offset);
-		offset += wmesh*hmesh;
-		surface(points, indices, ne + 1_I + 1_J - 1_K, nw - 1_I + 1_J - 1_K,
+		offset = surface(points, indices, ne + 1_I + 1_J - 1_K, nw - 1_I + 1_J - 1_K,
 			se + 1_I - 1_J - 1_K, sw - 1_I - 1_J - 1_K,
 			-scale/2*1_z, p, wmesh, hmesh, offset);
-		offset += wmesh * hmesh;
 	}
 	indicesSize = indices.size();
 
