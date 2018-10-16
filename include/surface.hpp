@@ -44,7 +44,7 @@ unsigned sphere(V<S,VT...> &vertices, W<T,WT...> &indices, Point<U> center = {},
 		R radius = 1, unsigned M = 100, unsigned N = 100, unsigned offset = 0, bool uv = true) {
 	using namespace std;
 	auto x = radius * 1_x;
-	for(unsigned i = 0, I = offset / (uv ? 5 : 3); i < M; i++, I += N) {
+	for(unsigned i = 0, I = offset; i < M; i++, I += N) {
 		S s = S(i)/(M-1), phi = -M_PI/2 + M_PI*s;
 		auto y = x ^ rotation(phi, 0, 0, 1);
 		for(unsigned j = 0; j < N; j++) {
@@ -69,7 +69,6 @@ unsigned cube(VERT<S, VERTN...> &vertices, IND<T, INDN...> &indices,
 		Point<U> center = {0, 0, 0}, W width = 1, unsigned offset = 0, bool uv = true) {
 	using std::cout;
 	using std::endl;
-	offset /= uv ? 5 : 3;
 
 	enum { tne=0, tse, tsw, tnw, bne, bse, bsw, bnw, nDirs };
 	S scale = S(width)/2;
@@ -106,7 +105,7 @@ unsigned cylinder(V<S,VT...> & vertices, W<T,WT...> & indices,
 	Pt p10 = p1 - p0, n10 = p10.normalize();
 	std::pair<Pt, Pt> perp = perpendicular(p10, true);
 	auto const& u = perp.first, v = perp.second;
-	for(unsigned i = 0, I = offset / (uv ? 5 : 3); i < M; i++, I += N) {
+	for(unsigned i = 0, I = offset; i < M; i++, I += N) {
 		U s = U(i)/(M-1);
 		for(unsigned j = 0, J = 1; j < N; j++, J = /*j+1*/ (j+1) % N) {
 			U t = U(j)/(N-1);
@@ -129,7 +128,7 @@ unsigned surface(V<S,VT...> & vertices, W<T,WT...> & indices,
 		unsigned M = 100, unsigned N = 100, unsigned offset = 0, bool uv = true) {
 	typedef DualQuaternion<U> Dq;
 	typedef Point<U> Pt;
-	for(unsigned i = 0, I = offset / (uv ? 5 : 3); i < M; i++, I += N) {
+	for(unsigned i = 0, I = offset; i < M; i++, I += N) {
 		U s = U(i)/(M-1);
 		for(unsigned j = 0; j < N; j++) {
 			U t = U(j)/(N-1);
