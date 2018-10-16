@@ -44,7 +44,7 @@ unsigned sphere(V<S,VT...> &vertices, W<T,WT...> &indices, Point<U> center = {},
 		R radius = 1, unsigned M = 100, unsigned N = 100, unsigned offset = 0, bool uv = true) {
 	using namespace std;
 	auto x = radius * 1_x;
-	for(unsigned i = 0, I = offset; i < M; i++, I += N) {
+	for(unsigned i = 0, I = offset / (uv ? 5 : 3); i < M; i++, I += N) {
 		S s = S(i)/(M-1), phi = -M_PI/2 + M_PI*s;
 		auto y = x ^ rotation(phi, 0, 0, 1);
 		for(unsigned j = 0; j < N; j++) {
@@ -69,6 +69,7 @@ unsigned cube(VERT<S, VERTN...> &vertices, IND<T, INDN...> &indices,
 		Point<U> center = {0, 0, 0}, W width = 1, unsigned offset = 0, bool uv = true) {
 	using std::cout;
 	using std::endl;
+	offset /= uv ? 5 : 3;
 
 	enum { tne=0, tse, tsw, tnw, bne, bse, bsw, bnw, nDirs };
 	S scale = S(width)/2;
@@ -96,20 +97,22 @@ unsigned cube(VERT<S, VERTN...> &vertices, IND<T, INDN...> &indices,
 	return indices.size();
 }
 
-template<class S, class T, class U, class R>
-unsigned cylinder(std::vector<S> & vertices, std::vector<T> & indices,
+template<class R, class S, class T, class U,
+	template<class...> class V, class... VT, template<class...> class W, class... WT>
+unsigned cylinder(V<S,VT...> & vertices, W<T,WT...> & indices,
 	Point<U> const& p0, Point<U> const& p1, R && radius = 1,
-	unsigned M = 100, unsigned N = 100, unsigned offset = 0) {
+	unsigned M = 100, unsigned N = 100, unsigned offset = 0, bool uv = true) {
 	typedef Point<U> Pt;
 	Pt p10 = p1 - p0, n10 = p10.normalize();
-	std::pair<Pt, Pt> uv = perpendicular(p10, true);
-	auto const& u = uv.first, v = uv.second;
-	for(unsigned i = 0, I = offset; i < M; i++, I += N) {
+	std::pair<Pt, Pt> perp = perpendicular(p10, true);
+	auto const& u = perp.first, v = perp.second;
+	for(unsigned i = 0, I = offset / (uv ? 5 : 3); i < M; i++, I += N) {
 		U s = U(i)/(M-1);
-		for(unsigned j = 0, J = 1; j < N; j++, J = j+1 /*(j+1) % N*/) {
+		for(unsigned j = 0, J = 1; j < N; j++, J = /*j+1*/ (j+1) % N) {
 			U t = U(j)/(N-1);
 			Pt w = p0 + s * p10 + ((radius * t * u) ^ rotation<U>(M_PI*2*t, n10.x, n10.y, n10.z));
-			emplace_vertices(vertices, w, s, t);
+			emplace_vertices(vertices, w);
+			if(uv) emplace_vertices(vertices, s, t);
 			if(i && j < N)
 					emplace_indices(indices, I+J, I+j, I-N+j, I-N+j, I-N+J, I+J);
 		}
@@ -123,10 +126,10 @@ unsigned surface(V<S,VT...> & vertices, W<T,WT...> & indices,
 		DualQuaternion<U> const& nw, DualQuaternion<U> const& ne,
 		DualQuaternion<U> const& sw, DualQuaternion<U> const& se,
 		Point<U> const& p, Point<U> const& center,
-		unsigned M = 100, unsigned N = 100, unsigned offset = 0) {
+		unsigned M = 100, unsigned N = 100, unsigned offset = 0, bool uv = true) {
 	typedef DualQuaternion<U> Dq;
 	typedef Point<U> Pt;
-	for(unsigned i = 0, I = offset; i < M; i++, I += N) {
+	for(unsigned i = 0, I = offset / (uv ? 5 : 3); i < M; i++, I += N) {
 		U s = U(i)/(M-1);
 		for(unsigned j = 0; j < N; j++) {
 			U t = U(j)/(N-1);
@@ -146,11 +149,11 @@ template<class S, class T, class U = S, class R = S,
 	template<class...> class W, class... WT>
 unsigned rope(V<S,VT...> & vertices, W<T,WT...> & indices,
 		DQ const& u, DQ const& v, PT const& p, PT const& center, R && radius = 1,
-		unsigned M = 100, unsigned N = 100, unsigned offset = 0) {
+		unsigned M = 100, unsigned N = 100, unsigned offset = 0, bool uv = true) {
 	typedef DualQuaternion<U> Dq;
 	typedef Point<U> Pt;
 	Pt prev_pt = center + (p ^ u), next_pt = center + (p ^ v);
-	cylinder(vertices, indices, prev_pt, next_pt, radius, M, N, offset);
+	cylinder(vertices, indices, prev_pt, next_pt, radius, M, N, offset, uv);
 
 	/*Dq prev;
 	for(unsigned i = 0, M2 = 10; i < M2; i++) {
