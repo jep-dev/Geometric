@@ -5,6 +5,8 @@
 
 namespace View {
 
+struct GlslAttribute;
+
 template<SDL_GLattr A>
 struct Attribute;
 
@@ -89,6 +91,69 @@ auto make_attr(int value, CMP && comp = {})
  *      (major version changes introduce backward-incompatible changes.)
  */
 
+struct GlslAttribute {
+	const char *name;
+	GLint location;
+	operator GLint(void) const {
+		return location;
+	}
+	GlslAttribute& enable(void) {
+		return glEnableVertexAttribArray(location), *this;
+	}
+	GlslAttribute& disable(void) {
+		return glDisableVertexAttribArray(location), *this;
+	}
+	GLint size(void) const {
+		GLint s = -1;
+		glGetVertexAttribiv(location, GL_VERTEX_ATTRIB_ARRAY_SIZE, &s);
+		return s;
+	}
+	GLint stride(void) const {
+		GLint s = -1;
+		glGetVertexAttribiv(location, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &s);
+		return s;
+	}
+	GLenum type(void) const {
+		GLenum e;
+		glGetVertexAttribiv(location, GL_VERTEX_ATTRIB_ARRAY_TYPE, &e);
+		return e;
+	}
+	GlslAttribute& setName(const char *n) {
+		return name = n, *this;
+	}
+
+	GlslAttribute& setPointer(GLuint count, GLenum type, GLboolean normalized,
+		GLsizei stride, const void* ptr) {
+		glVertexAttribPointer(location, count, type, normalized, stride, ptr);
+	}
+
+	GlslAttribute& setLocation(GLuint program, GLint loc) {
+		glBindAttribLocation(program, loc, name);
+		location = glGetAttribLocation(program, name);
+		enable();
+		return *this;
+	}
+
+	GlslAttribute(const char *name): name(name) {}
+
+	/*template<class S, class... T>
+	GlslAttribute(const char *name, S && s, T &&... t):
+			GlslAttribute(name) {
+		setLocation(std::forward<S>(s), std::forward<T>(t)...);
+	}*/
+	GlslAttribute(const char *name, GLuint program, GLint loc):
+			GlslAttribute(name) {
+		setLocation(program, loc);
+	}
+	GlslAttribute(const char *name, GLuint program, GLint loc,
+			GLuint count, GLenum type, GLboolean normalized,
+			GLsizei stride, const void *ptr):
+				GlslAttribute(name, program, loc) {
+		setPointer(count, type, normalized, stride, ptr);
+	}
+
+};
 }
+
 
 #endif
