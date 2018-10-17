@@ -338,13 +338,17 @@ int main(int argc, const char *argv[]) {
 
 	SDL_DisplayMode mode;
 	SDL_GetDesktopDisplayMode(0, &mode);
+
 	Hnd hnd(mode.w, mode.h);
 	cout << hnd.frame << endl;
+
 	glEnable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// TODO results in a GL_INVALID_ENUM
+	// glEnable(GL_TEXTURE_2D);
 
 	auto used = hnd.init(share + "dual.glsl", share + "uv_vert.glsl",
 			gl::GL_FRAGMENT_SHADER, share + "uv_frag.glsl");
@@ -354,7 +358,8 @@ int main(int argc, const char *argv[]) {
 		cout << endl;
 		return 1;
 	}
-	hnd.locate("l", "r", "b", "t", "n", "f", "model[0]", "model[1]")
+	hnd.locate("l", "r", "b", "t", "n", "f")
+		.locate("model.u", "model.v", "view.u", "view.v")
 		.project(left, right, bottom, top, near, far);
 
 	// Create and initialize vertex array and buffer
@@ -363,42 +368,47 @@ int main(int argc, const char *argv[]) {
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
+	// TODO replace this with a vector of structs instead of manually assigning them
+	const char* attrib_names[] = {"pos_in", "uv_in"};
+	GLint attrib_locations[2];
+	auto pos_location = glGetAttribLocation(hnd.program, pos_in);
+
+
 	bufferData(GL_ARRAY_BUFFER, vbo[0], points, GL_STATIC_DRAW);
 	glBindAttribLocation(hnd.program, 0, "pos_in");
 	auto pos_location = glGetAttribLocation(hnd.program, "pos_in");
 	glEnableVertexAttribArray(pos_location);
 	glVertexAttribPointer(pos_location, 3, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), 0);
 
-	//bufferData(GL_ARRAY_BUFFER, vbo[1], points, GL_STATIC_DRAW);
 	glBindAttribLocation(hnd.program, 1, "uv_in");
 	auto uv_location = glGetAttribLocation(hnd.program, "uv_in");
 	glEnableVertexAttribArray(uv_location);
 	glVertexAttribPointer(uv_location, 2, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (GLvoid*)9);
-	/*glVertexAttribPointer(uv_location, 3, GL_FLOAT, GL_FALSE, 5,
-			(void*)(&points[0])+3*sizeof(decltype(points[0])));*/
 
 	bufferData(GL_ELEMENT_ARRAY_BUFFER, vbo[1], indices, GL_STATIC_DRAW);
 	glBindVertexArray(0);
 	glDisableVertexAttribArray(0);
 
-	/*{
+	{
 		GLint attrib_size, attrib_stride;
 		GLenum attrib_type;
+		for(auto name : {"pos_in", "uv_in"}) {
+			auto pos = glGetAttribLocation(hnd.program, name);
+			glGetVertexAttribiv(pos, GL_VERTEX_ATTRIB_ARRAY_SIZE, &attrib_size);
+			glGetVertexAttribiv(pos, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &attrib_stride);
+			glGetVertexAttribiv(pos, GL_VERTEX_ATTRIB_ARRAY_TYPE, &attrib_type);
 
-		auto pos = glGetAttribLocation(hnd.program, "pos_in");
-		glGetVertexAttribiv(pos, GL_VERTEX_ATTRIB_ARRAY_SIZE, &attrib_size);
-		glGetVertexAttribiv(pos, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &attrib_stride);
-		glGetVertexAttribiv(pos, GL_VERTEX_ATTRIB_ARRAY_TYPE, &attrib_type);
-
-		auto err = glGetError();
-		if(err != GL_NO_ERROR) {
-			cout << "GL error: " << err << endl;
-		} else {
-			cout << "Attrib " << pos << " has size " << attrib_size
-				<< ", stride " << attrib_stride << (attrib_stride ? "" : " (contiguous)")
-				<< ", and type " << attrib_type << endl;
+			auto err = glGetError();
+			if(err != GL_NO_ERROR) {
+				cout << "GL error: " << err << endl;
+			} else {
+				cout << "Attrib '" << name << "' (" << pos << ") has size " << attrib_size
+					<< ", stride " << attrib_stride << (attrib_stride ? "" : " (contiguous)")
+					<< ", and type " << attrib_type << endl;
+			}
 		}
-	}*/
+
+	}
 
 	hnd.project(left, right, bottom, top, near, far);
 	hnd.enable(Hnd::e_out);
@@ -407,9 +417,11 @@ int main(int argc, const char *argv[]) {
 
 	auto stopwatch = Timing::make_stopwatch();
 	float theta = 0;
+
 	// Poll/render loop
 	for(auto i = 0;; i++, theta += M_PI/8) {
 		stopwatch.advance();
+
 		auto polled = hnd.poll();
 		if(!polled) {
 			if(polled.errored()) cout << "Errored; ";
@@ -417,26 +429,27 @@ int main(int argc, const char *argv[]) {
 			else if(polled.failed()) cout << "Failed; ";
 			cout << polled.message << std::endl;
 			if(polled.quit()) hnd.joysticks.close_all();
-
 			break;
 		}
+
 		// Task
 		if(hnd.size()) {
 			cout << /*"'" << */ hnd /* << "'" */ << endl;
 			hnd.clear();
 		}
 
-		double ms_elapsed = stopwatch.update().count()*1000;
+		stopwatch.update();
+		double ms_elapsed; // = stopwatch.count()*1000;
 		hnd.update();
 
 		// Render
 		hnd.frame.clear().draw(vao, GL_TRIANGLES, indicesSize, GL_UNSIGNED_INT, nullptr).flip();
+
 		ms_elapsed = stopwatch.update().count()*1000;
 		static const double ms_ideal = 1000/60.0;
 		double ms_diff = ms_ideal - ms_elapsed;
-		if(ms_diff > 0) {
-			SDL_Delay(unsigned(ms_diff));
-		}
+
+		if(ms_diff > 0) SDL_Delay(unsigned(ms_diff));
 	}
 
 	if(hnd.size())
