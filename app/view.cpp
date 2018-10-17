@@ -368,47 +368,20 @@ int main(int argc, const char *argv[]) {
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	// TODO replace this with a vector of structs instead of manually assigning them
-	const char* attrib_names[] = {"pos_in", "uv_in"};
-	GLint attrib_locations[2];
-	auto pos_location = glGetAttribLocation(hnd.program, pos_in);
-
-
 	bufferData(GL_ARRAY_BUFFER, vbo[0], points, GL_STATIC_DRAW);
-	glBindAttribLocation(hnd.program, 0, "pos_in");
-	auto pos_location = glGetAttribLocation(hnd.program, "pos_in");
-	glEnableVertexAttribArray(pos_location);
-	glVertexAttribPointer(pos_location, 3, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), 0);
-
-	glBindAttribLocation(hnd.program, 1, "uv_in");
-	auto uv_location = glGetAttribLocation(hnd.program, "uv_in");
-	glEnableVertexAttribArray(uv_location);
-	glVertexAttribPointer(uv_location, 2, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (GLvoid*)9);
+	vector<GlslAttribute> attributes = {
+		{"pos_in", hnd.program, 0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), 0},
+		{"uv_in", hnd.program, 1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (GLvoid*) 9}};
+	for(auto & attr : attributes) {
+		cout << "Attrib '" << attr.name << "' (" << attr << ") "
+				"has size " << attr.size() << ", "
+				"stride " << attr.stride() << (attr.stride() ? "" : " (contiguous)") << ", "
+				"and type " << attr.type() << endl;
+	}
 
 	bufferData(GL_ELEMENT_ARRAY_BUFFER, vbo[1], indices, GL_STATIC_DRAW);
 	glBindVertexArray(0);
 	glDisableVertexAttribArray(0);
-
-	{
-		GLint attrib_size, attrib_stride;
-		GLenum attrib_type;
-		for(auto name : {"pos_in", "uv_in"}) {
-			auto pos = glGetAttribLocation(hnd.program, name);
-			glGetVertexAttribiv(pos, GL_VERTEX_ATTRIB_ARRAY_SIZE, &attrib_size);
-			glGetVertexAttribiv(pos, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &attrib_stride);
-			glGetVertexAttribiv(pos, GL_VERTEX_ATTRIB_ARRAY_TYPE, &attrib_type);
-
-			auto err = glGetError();
-			if(err != GL_NO_ERROR) {
-				cout << "GL error: " << err << endl;
-			} else {
-				cout << "Attrib '" << name << "' (" << pos << ") has size " << attrib_size
-					<< ", stride " << attrib_stride << (attrib_stride ? "" : " (contiguous)")
-					<< ", and type " << attrib_type << endl;
-			}
-		}
-
-	}
 
 	hnd.project(left, right, bottom, top, near, far);
 	hnd.enable(Hnd::e_out);
