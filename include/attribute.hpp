@@ -85,6 +85,8 @@ auto make_attr(int value, CMP && comp = {})
 /* TODO list:
  *   take a page from <functional>; how to compose/curry?
  *   fix false negative for M>3, N<3 (e.g. 4.0) which evaluates as false.
+ *    - Going by semantic versioning, this would not be a false negative
+ *      (major version changes introduce backward-incompatible changes.)
  */
 
 }
