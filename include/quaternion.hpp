@@ -88,11 +88,11 @@ template<class S> struct Quaternion {
 
 	template<class U, class US = std::common_type_t<S,U>>
 	friend Quaternion<US> operator/(U const& u, Quaternion const& q)
-		{ return u * *q / q.length(); }
+		{ return *q * u / q.lengthSquared(); }
 
 	template<class L, class LS = std::common_type_t<L, S>>
-	friend auto operator/(Quaternion<L> const& lhs, Quaternion<S> const& rhs)
-		-> decltype(lhs*rhs) { return lhs * *rhs / rhs.lengthSquared(); }
+	friend Quaternion<LS> operator/(Quaternion<L> const& lhs, Quaternion<S> const& rhs)
+		{ return lhs * *rhs / rhs.lengthSquared(); }
 
 	operator std::string(void) const;
 };
