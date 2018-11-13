@@ -26,4 +26,22 @@ Pretty<T...>::operator std::string(void) const {
 	return std::move(result);
 }
 
+template<class T>
+std::string prettyTrunc(void) {
+	std::string s = Pretty<T>(),
+			subs[][2] {{"std::", ""}, {"< <", "<<"}, {"> >", ">>"}};
+	std::size_t pos = 0;
+	for(auto const& sub : subs) {
+		pos = 0;
+		while((pos = s.find(sub[0], pos)) != std::string::npos) {
+			s.replace(pos, sub[0].length(), sub[1]);
+		}
+	}
+	return s;
+}
+template<class T>
+std::string prettyTrunc(T && t) {
+	return prettyTrunc<T>();
+}
+
 #endif

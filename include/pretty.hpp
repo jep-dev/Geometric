@@ -40,4 +40,9 @@ template<class... T> struct Pretty {
 template<class... R>
 Pretty<R...> make_pretty(R &&... r) { return {}; }
 
+template<class T>
+std::string prettyTrunc(void);
+template<class T>
+std::string prettyTrunc(T && t);
+
 #endif
