@@ -7,28 +7,7 @@
 
 #include "pretty.tpp"
 #include "utility.hpp"
-#include "adaptor.hpp"
-
-using False = std::false_type;
-using True = std::true_type;
-
-template<class S, class = void> struct HasSize : False { };
-template<class S, class = void> struct HasLength : False { };
-template<class S, class = void> struct HasDimension
-	: std::is_array<std::remove_const_t<std::remove_reference_t<S>>> { };
-	//: std::is_array<Detail::RemoveCVRef_t<S>> { };
-template<class S, class = void, class = void> struct HasTellpSeekp : False { };
-template<class S, class = void, class = void> struct HasTellgSeekg : False { };
-
-template<class S> struct HasSize<S, Detail::Void_t<decltype(&S::size)>> : True { };
-template<class S> struct HasLength<S, Detail::Void_t<decltype(&S::length)>> : True { };
-
-template<class S>
-struct HasTellpSeekp<S, Detail::Void_t<decltype(&S::tellp)>,
-		Detail::Void_t<decltype(&S::seekp)>> : True {};
-template<class S>
-struct HasTellgSeekg<S, Detail::Void_t<decltype(&S::tellg)>,
-		Detail::Void_t<decltype(&S::seekg)>> : True {};
+#include "size.hpp"
 
 /////////////////////////////////// Arrays ///////////////////////////////////
 template<class T, unsigned N = 0> const char *whichSize(T const (&) [N]) { return "deduced const&"; }
@@ -39,44 +18,17 @@ template<class T> const char* whichSize(T const (&) [0]) { return "deduced const
 template<class T> const char* whichSize(T (&&) [0]) { return "deduced &&"; }
 template<class T> const char* whichSize(T (&) [0]) { return "deduced &"; }
 
-/* TODO Fallback candidates are preferred to these for some reason
-	template<class T> std::enable_if_t<HasDimension<T>::value, const char*>
-		whichSize(T const& t) { return "deduced"; }
-*/ // etc.
-
-template<class T, unsigned N = 0> std::size_t size(T const (&) [N]) { return N; }
-template<class T, unsigned N = 0> std::size_t size(T (&) [N]) { return N; }
-template<class T, unsigned N = 0> std::size_t size(T (&&) [N]) { return N; }
-template<class T> std::size_t size(T const (&) [0]) { return 0; }
-template<class T> std::size_t size(T (&&) [0]) { return 0; }
-template<class T> std::size_t size(T (&) [0]) { return 0; }
-
 /////////////////////////////////// Length ///////////////////////////////////
 /** Proof of concept for HasLength */
 template<class T> std::enable_if_t<HasLength<Detail::RemoveCVRef_t<T>>::value, const char*>
 	whichSize(T && t) { return "length"; }
 template<class T> std::enable_if_t<HasLength<T>::value, const char*>
 	whichSize(T & t) { return "length"; }
-template<class T> std::enable_if_t<HasLength<Detail::RemoveCVRef_t<T>>::value, std::size_t>
-	size(T && t) { return t.length(); }
-template<class T> std::enable_if_t<HasLength<T>::value, std::size_t>
-	size(T & t) { return t.length(); }
 
 ///////////////////////////////////// Size ///////////////////////////////////
 /** Proof of concept for HasSize; excludes types with length to remove ambiguity */
 template<class T> std::enable_if_t<HasSize<T>::value && !HasLength<T>::value, const char*>
 	whichSize(T && t) { return "size"; }
-template<class T> std::enable_if_t<HasSize<T>::value && !HasLength<T>::value, std::size_t>
-	size(T && t) { return t.size(); }
-
-/* Removed due to ambiguity with HasTellpSeekp/HasTellgSeekg
-	// Proof of concept for HasTellp
-	template<class T> std::enable_if_t<HasTellp<T>::value, const char*>
-		whichSize(T && t) { return t.tellp(), "tellp"; }
-	// Proof of concept for HasTellg
-	template<class T> std::enable_if_t<HasTellg<T>::value, const char*>
-		whichSize(T && t) { return t.tellg(), "tellg"; }
-*/
 
 ///////////////////////////////////// Seek* //////////////////////////////////
 template<class T> std::enable_if_t<HasTellpSeekp<T>::value, const char*>
@@ -87,27 +39,6 @@ template<class T> std::enable_if_t<HasTellpSeekp<T>::value, const char*>
 	whichSize(T && t) { return t.tellp(), t.seekp(0, std::ios::end), "seekp"; }
 template<class T> std::enable_if_t<HasTellgSeekg<T>::value, const char*>
 	whichSize(T && t) { return t.tellg(), t.seekg(0, std::ios::end), "seekg"; }
-
-template<class T>
-std::enable_if_t<HasTellpSeekp<T>::value, std::size_t> size(T & t) {
-	auto pos = t.tellp(), out = (t.seekp(0, std::ios::end), t.tellp());
-	return t.seekp(pos), out;
-}
-template<class T>
-std::enable_if_t<HasTellpSeekp<T>::value, std::size_t> size(T && t) {
-	auto pos = t.tellp(), out = (t.seekp(0, std::ios::end), t.tellp());
-	return t.seekp(pos), out;
-}
-template<class T>
-std::enable_if_t<HasTellgSeekg<T>::value, std::size_t> size(T & t) {
-	auto pos = t.tellg(), out = (t.seekg(0, std::ios::end), t.tellg());
-	return t.seekg(pos), out;
-}
-template<class T>
-std::enable_if_t<HasTellgSeekg<T>::value, std::size_t> size(T && t) {
-	auto pos = t.tellg(), out = (t.seekg(0, std::ios::end), t.tellg());
-	return t.seekg(pos), out;
-}
 
 /////////////////////////////////// Fallbacks ////////////////////////////////
 /** Fallback in case none are implemented; comment out to require one of the others */
@@ -123,21 +54,6 @@ template<class T> std::enable_if_t<!std::is_array<T>::value
 		&& !HasTellpSeekp<T>::value && !HasTellgSeekg<T>::value
 		&& !HasSize<T>::value && !HasLength<T>::value, const char*>
 	whichSize(T && t) { return "fallback"; }
-
-/*template<class T> std::enable_if_t<!std::is_array<T>::value
-		&& !HasTellpSeekp<T>::value && !HasTellgSeekg<T>::value
-		&& !HasSize<T>::value && !HasLength<T>::value, std::size_t>
-	size(T & t) { return 0; }
-template<class T> std::enable_if_t<!std::is_array<T>::value
-		&& !HasTellpSeekp<T>::value && !HasTellgSeekg<T>::value
-		&& !HasSize<T>::value && !HasLength<T>::value, std::size_t>
-	size(T const& t) { return 0; }*/
-template<class T> std::enable_if_t<!std::is_array<T>::value
-		&& !HasTellpSeekp<T>::value && !HasTellgSeekg<T>::value
-		&& !HasSize<T>::value && !HasLength<T>::value, std::size_t>
-	size(T && t) { return 0; }
-
-
 
 struct A { constexpr std::size_t length(void) const { return 0; } };
 struct B {
@@ -170,7 +86,7 @@ struct Printer {
 		std::string realName = prettyTrunc<T>();
 		return s << std::setw(nameCol) << ((name.length() && name != realName) ? name : "") << pad
 			<< std::setw(whichCol) << whichSize(std::forward<T>(t)) << pad
-			<< std::setw(sizeCol) << size(std::forward<T>(t)) << pad
+			<< std::setw(sizeCol) << getSize(std::forward<T>(t)) << pad
 			<< "(" << realName << ")" << std::endl, s;
 	}
 };
