@@ -251,7 +251,9 @@ int main(int argc, const char *argv[]) {
 	map<string, bool> models = {
 		{"sphere", false},
 		{"cylinder", false},
-		{"surface", false}
+		{"surface", false},
+		{"surface2", false},
+		{"surface3", false}
 	};
 	string nos[] = {"--no-", "-n"};
 	bool met_yes = false;
@@ -280,7 +282,7 @@ int main(int argc, const char *argv[]) {
 			mid = (near + far)/2,
 			right = width/2, left = -right,
 			top = height/2, bottom = -top;
-	int wmesh = 5, hmesh = wmesh;
+	int wmesh = 15, hmesh = wmesh;
 	auto scale = right;
 
 	std::vector<GLfloat> points;
@@ -312,6 +314,30 @@ int main(int argc, const char *argv[]) {
 		offset = surface(points, indices, ne + 1_I + 1_J - 1_K, nw - 1_I + 1_J - 1_K,
 			se + 1_I - 1_J - 1_K, sw - 1_I - 1_J - 1_K,
 			-scale/2*1_z, p, wmesh, hmesh, offset);
+	}
+	if(models["surface2"]) {
+		float theta = M_PI/5;
+		float phi = theta;
+		DualQuaternion<float> north = rotation(phi, scale, 0, 0),
+			south = rotation(-phi, scale, 0, 0),
+			west = rotation(theta, 0, scale, 0),
+			east = rotation(-theta, 0, scale, 0),
+			nw = north * west, ne = north * east,
+			sw = south * west, se = south * east;
+		/*offset = surface2(points, indices, {{nw - 1_I + 1_J, ne + 1_I + 1_J},
+			{sw - 1_I - 1_J, se + 1_I - 1_J}}, -scale/2*1_z, p,
+			wmesh, hmesh, offset);*/
+		offset = surface2(points, indices, {{nw - scale*(1_I+1_J), sclerp(nw, ne, .5f), ne},
+			{sclerp(nw, sw, .5f), sclerp(sclerp(nw, ne, .5f), sclerp(sw, se, .5f), .5f),
+				sclerp(ne, se, .5f)},
+			{sw, sclerp(sw, se, .5f), se}}, -scale/2*1_z, p,
+			wmesh, hmesh, offset);
+	}
+	if(models["surface3"]) {
+		offset = surface3(points, indices, {{scale*(-1_x+1_y), scale*1_y, scale*(1_x+1_y)},
+			{scale*-1_x, 0_x, scale*1_x},
+			{scale*(-1_x-1_y), scale*-1_y, scale*(1_x-1_y)}}, p,
+			wmesh, hmesh, offset);
 	}
 	indicesSize = indices.size();
 
