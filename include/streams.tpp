@@ -65,6 +65,8 @@ auto level(S& s, char fill)
 	return s;
 }
 
+/** Subclass of STL ostringstream that defines a const size method.
+ * Note - adaptor.hpp does not use this because it relies on str(). */
 struct OStringStream : std::ostringstream {
 	std::size_t size(void) const { return str().length(); }
 	std::size_t size(void) {
