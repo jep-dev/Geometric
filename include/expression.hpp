@@ -173,8 +173,11 @@ struct Scalar : Symbol<T>, std::enable_shared_from_this<Scalar<T>> {
 	Scalar(Scalar const& s): value(s.value) {}
 	Scalar(T const& t): value(t) {}
 	template<class... S>
-	Scalar(Detail::ValueType_t<T> const& t, S const&... s):
-		value({t, (Detail::ValueType_t<T>) s...}) {}
+	Scalar(Detail::ValueType_t<true, T> const& t, S const&... s):
+		value({t, (Detail::ValueType_t<true, T>) s...}) {}
+	/*template<class... S>
+	Scalar(T && t, S &&... s):
+		value({std::forward<T>(t), std::forward<S>(s)...}) {}*/
 	virtual ~Scalar(void) {}
 };
 
@@ -184,7 +187,7 @@ struct Variable : Symbol<T>, std::enable_shared_from_this<Variable<T>> {
 	T value = {1};
 	virtual EType type(void) const { return e_variable; }
 	SharedSymbol<T> derive(char c) const
-		{ return make_scalar<T>(Detail::ValueType_t<T>(name == c)); }
+		{ return make_scalar<T>(Detail::ValueType_t<true, T>(name == c)); }
 	SharedSymbol<T> simplify(void) const {
 		if(value == value*0)
 			return make_scalar<T>(0);
