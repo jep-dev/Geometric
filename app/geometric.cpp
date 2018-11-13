@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "utility.hpp"
+#include "sequence.hpp"
 #include "geometric.hpp"
 #include "pretty.tpp"
 
@@ -179,7 +180,7 @@ int main(int argc, const char *argv[]) {
 			<< "rot^2(U+V+W) = " << make_pretty(rotate(rotate(UVW{}))) << ";" << para
 			<< "rot^3(U+V+W) = " << make_pretty(rotate(rotate(rotate(UVW{})))) << ".\n"
 		"Sequences:" << para
-			<< "seq(1,2) = " << make_pretty(Seq<1,2>{}) << ".";
+			<< "seq(1,2) = " << make_pretty(Detail::SeqU<1,2>{}) << ".";
 
 	auto res = oss.str();
 
