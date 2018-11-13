@@ -38,33 +38,33 @@ template<class T, T I0, T... IN>
 constexpr auto append(Detail::Seq<T, IN...> = {})
 	-> Detail::Seq<T, IN..., I0> { return {}; }
 /** Prepends a sequence to another. */
-template<class T, T... I0, T... I1>
-constexpr auto prepend(Detail::Seq<T, I0...> = {}, Detail::Seq<T, I1...> = {})
-	-> Detail::Seq<T, I0..., I1...> { return {}; }
+template<class T, T... I0, T I1, T... IN>
+constexpr auto prepend(Detail::Seq<T, I0...> = {}, Detail::Seq<T, I1, IN...> = {})
+	-> Detail::Seq<T, I0..., I1, IN...> { return {}; }
 /** Appends a sequence to another. */
-template<class T, T... I0, T... I1>
-constexpr auto append(Detail::Seq<T, I0...> = {}, Detail::Seq<T, I1...> = {})
-	-> Detail::Seq<T, I1..., I0...> { return {}; }
+template<class T, T... I0, T I1, T... IN>
+constexpr auto append(Detail::Seq<T, I0...> = {}, Detail::Seq<T, I1, IN...> = {})
+	-> Detail::Seq<T, I1, IN..., I0...> { return {}; }
 
 template<class T, T... IN>
-constexpr std::size_t size(Detail::Seq<T, IN...> = {}) { return sizeof...(IN); }
+constexpr std::size_t getSize(Detail::Seq<T, IN...> = {}) { return sizeof...(IN); }
 /** Pairwise sum of sequences */
-template<class TI, unsigned... I, class TJ, unsigned... J,
+template<class TI, TI... I, class TJ, TJ... J,
 		class T = SumType_t<TI, TJ>>
 constexpr auto operator+(Seq<TI, I...>, Seq<TJ, J...>) -> Seq<T, I+J...> { return {}; }
 
 /** Pairwise difference of sequences */
-template<class TI, unsigned... I, class TJ, unsigned... J,
+template<class TI, TI... I, class TJ, TJ... J,
 		class T = DifferenceType_t<TI, TJ>>
 constexpr auto operator-(Seq<TI, I...>, Seq<TJ, J...>) -> Seq<T, I-J...> { return {}; }
 
 /** Pairwise product of sequences */
-template<class TI, unsigned... I, class TJ, unsigned... J,
+template<class TI, TI... I, class TJ, TJ... J,
 		class T = ProductType_t<TI, TJ>>
 constexpr auto operator*(Seq<TI, I...>, Seq<TJ, J...>) -> Seq<T, I*J...> { return {}; }
 
 /** Pairwise division of sequences */
-template<class TI, unsigned... I, class TJ, unsigned... J,
+template<class TI, TI... I, class TJ, TJ... J,
 		class T = QuotientType_t<TI, TJ>>
 constexpr auto operator/(Seq<TI, I...>, Seq<TJ, J...>) -> Seq<T, I/J...> { return {}; }
 
@@ -81,17 +81,49 @@ OS& operator<<(OS &os, Detail::Seq<S, I...> const&) {
 	return os;
 }
 
-/** Defines value as the sum of all {I0, IN...}.
+/** @brief Defines value as the sum of all {I0, IN...}.
  * Not to be confused with pairwise sum, etc. */
-template<class T, T I = 0, T... IN>
-struct SumSeq: std::integral_constant<T, I> {};
+template<class T, T I0 = 0, T... IN>
+struct SumSeq: std::integral_constant<T, I0> {};
 template<class T, T I0, T I1, T... IN>
 struct SumSeq<T, I0, I1, IN...>: SumSeq<T, I0+I1, IN...> {};
 
+/** @brief Represents N copies of I as a Seq. */
+template<unsigned N, class T, T I>
+struct RepeatSeq: decltype(prepend<T, I>(typename RepeatSeq<N-1, T, I>::value_type{})) {
+	typedef typename RepeatSeq<N-1, T, I>::value_type prev_type;
+	typedef decltype(prepend<T, I>(prev_type{})) value_type;
+	constexpr operator value_type(void) const { return {}; }
+};
+template<class T, T I>
+struct RepeatSeq<0, T, I> {};
+template<class T, T I>
+struct RepeatSeq<1, T, I>: Seq<T, I> {
+	typedef Seq<T, I> value_type;
+	constexpr operator value_type(void) const { return {}; }
+};
 
-/** Defines value as the product of all of {I0, IN...}.
+/** @brief Represents the partial sum of a Seq. */
+template<class T> struct PartialSumSeq;
+template<class T, T I0>
+struct PartialSumSeq<Seq<T, I0>>: Seq<T, I0> {
+	typedef Seq<T, I0> value_type;
+};
+template<class T>
+struct PartialSumSeq: PartialSumSeq<ValueType_t<true, T>> {
+	using PartialSumSeq<ValueType_t<true, T>>::value_type;
+};
+template<class T, T I0, T I1, T... IN>
+struct PartialSumSeq<Seq<T, I0, I1, IN...>>:
+		decltype(prepend<T, I0>(PartialSumSeq<Seq<T, I0+I1, IN...>>{})) {
+	// I hate repeating myself, but my usual method (adding a trailing default template arg
+	// and using it as a superclass and a member) doesn't work with specializations.
+	typedef ValueType_t<false, decltype(prepend<T, I0>(
+		PartialSumSeq<Seq<T, I0+I1, IN...>>{}))> value_type;
+};
+
+/** @brief Defines value as the product of all of {I0, IN...}.
  * Not to be confused with inner product, etc. */
-//template<class T, T... IN> struct ProductSeq;
 template<class T, T I0 = 1, T... IN>
 struct ProductSeq: std::integral_constant<T, I0> {};
 template<class T, T I0, T I1, T... IN>
