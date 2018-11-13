@@ -100,12 +100,6 @@ struct SumValueType<R, S, T, U...> {
 		+ std::declval<ValueType_t<R, T, U...>>()) value_type;
 };
 
-/*template<bool R, class S, class... T>
-struct ProductValueType<R, S, T...> {
-	typedef ProductType_t<ProductType_t<R, ValueType_t<S>>,
-			ValueType_t<T>...> value_type;
-};*/
-
 template<bool R, class S, class T, class... U>
 struct ProductValueType<R, S, T, U...> {
 	typedef decltype(std::declval<ValueType_t<R, S>>()
