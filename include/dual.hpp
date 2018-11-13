@@ -154,8 +154,13 @@ DualQuaternion<XYZ> translation(X && x, Y && y, Z && z)
 
 template<class X, class Y = X>
 DualQuaternion<Y> trans_rotation(X && x, X && y, X && z, X && t, X && u, X && v, X && w) {
+	// (1+Et)(r)=r+Etr
+	// (r)(1+Et)=r+Ert
+	/*auto rot = rotation<Y>(t, u, v, w);
+	return {rot.w, rot.x, rot.y, rot.z, 0, x, y, z};*/
 	auto rot = rotation<Y>(t, u, v, w);
-	return {rot.w, rot.x, rot.y, rot.z, 0, x, y, z};
+	auto pt = Point<Y>{x/2, y/2, z/2} * rot;
+	return {rot.w, rot.x, rot.y, rot.z, pt.w, pt.x, pt.y, pt.z};
 }
 template<class X, class Y = X>
 DualQuaternion<Y> rot_translation(X && t, X && u, X && v, X && w, X && x, X && y, X && z) {
@@ -175,6 +180,17 @@ DualQuaternion<Z> operator*(Quaternion<X> const& l, Point<Y> const& r) {
 	return {l.w, l.x, l.y, l.z,
 		-l.x*r.x-l.y*r.y-l.z*r.z, l.w*r.x+l.y*r.z-l.z*r.y,
 		l.w*r.y-l.x*r.z+l.z*r.x, l.w*r.z+l.x*r.y-l.y*r.z};
+}
+template<class X, class Y = X, class Z = std::common_type_t<X,Y>>
+DualQuaternion<Z> operator/(DualQuaternion<X> const& l, DualQuaternion<Y> const& r) {
+	Point<Z> lp = {l.x, l.y, l.z}, rp = {r.x, r.y, r.z};
+	Quaternion<Z> lq = {l.s, l.t, l.u, l.v},
+			rq = {r.s, r.t, r.u, r.v};
+	auto rmag2 = rq.lengthSquared();
+	auto qq = lq * rq / rmag2;
+	Point<Z> rq_lp = rq*lp, lq_rp = lq*rp, qp = (rq_lp - lq_rp) / rmag2;
+	return {qq.w, qq.x, qq.y, qq.z, qp.x, qp.y, qp.z};
+
 }
 
 template<class X, class Y = X>
