@@ -24,17 +24,6 @@ int main(int argc, const char *argv[]) {
 	auto poly = polyLoop<T>(widths, fnPtr);
 	//auto poly = polyTest<T>(normalize<T>); */
 
-	Binomial bin;
-	constexpr unsigned nBinomial = 6;
-	cout << "First " << nBinomial << " binomial"
-			<< ((nBinomial-1) ? "s" : "") << ":" << endl;
-	for(unsigned i = 0; i < 6; i++) {
-		for(auto const& j : bin[i]) {
-			cout << int(j) << " ";
-		}
-		cout << endl;
-	}
-
 	float p22[][2] = {
 		{1, 0},
 		{0, 1}
