@@ -1,5 +1,5 @@
-#ifndef ADAPTOR_HPP
-#define ADAPTOR_HPP
+#ifndef SIZE_HPP
+#define SIZE_HPP
 
 #include "utility.hpp"
 
