@@ -6,7 +6,17 @@
 namespace Detail {
 
 /** A variadic unsigned sequence, useful for indexing Tag/Val. */
-template<class T = void, T... I> struct Seq {};
+template<class T = void, T... I> struct Seq { typedef T type; };
+template<class T, T T0, T... TN> struct Seq<T, T0, TN...> {
+	typedef T type;
+	template<unsigned I>
+	static constexpr T nth(std::integral_constant<unsigned, I> = {}) {
+		return Seq<T, TN...>::nth(std::integral_constant<unsigned, I-1>{});
+	}
+	static constexpr T nth(std::integral_constant<unsigned, 0>) {
+		return T0;
+	}
+};
 
 // Enable more if you need them.
 template<char... I> using SeqC = Seq<char, I...>;
@@ -83,10 +93,11 @@ OS& operator<<(OS &os, Detail::Seq<S, I...> const&) {
 
 /** @brief Defines value as the sum of all {I0, IN...}.
  * Not to be confused with pairwise sum, etc. */
-template<class T, T I0 = 0, T... IN>
-struct SumSeq: std::integral_constant<T, I0> {};
-template<class T, T I0, T I1, T... IN>
-struct SumSeq<T, I0, I1, IN...>: SumSeq<T, I0+I1, IN...> {};
+template<class S> struct SumSeq;
+template<class S, S I0>
+struct SumSeq<Seq<S, I0>>: std::integral_constant<S, I0> {};
+template<class S, S I0, S I1, S... IN>
+struct SumSeq<Seq<S, I0, I1, IN...>>: SumSeq<Seq<S, I0+I1, IN...>> {};
 
 /** @brief Represents N copies of I as a Seq. */
 template<unsigned N, class T, T I>
