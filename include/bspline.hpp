@@ -40,7 +40,7 @@ namespace Detail {
 		// d = |knots|-1 - (|controls|-1) - 1
 		// d = |knots| - |controls| - 1
 		// |controls| = |knots| - d - 1
-		auto M = -1 + getSize(knots), N = M - D;
+		auto M = -1 + ::getSize(knots), N = M - D;
 		// TODO Only D+1 will be used, improve here
 		V out(N+1, 0);
 		// Special cases
