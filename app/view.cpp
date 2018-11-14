@@ -64,12 +64,7 @@ struct Hnd: Presenter<Hnd> {
 		return total;
 	}
 	Hnd& update(void) {
-		if(!joysticks.size()) {
-			/*if(streams[e_out].tellp() > 0) streams[e_out] << std::endl;
-			streams[e_out] << "Skipped updating due to no joysticks";
-			return *this;*/
-			return *this;
-		}
+		if(!joysticks.size()) return *this;
 		auto & first = joysticks.begin() -> second;
 		auto & buttons = first.buttons;
 		auto button = buttons.find(7);
@@ -82,22 +77,14 @@ struct Hnd: Presenter<Hnd> {
 				}
 			}
 		}
-		DualQuaternion<float> t = 1_e, r = 1_e; //orientation;
-		//auto d = 1_e + transform.x*1_I + transform.y*1_J + transform.z*1_K;
+		DualQuaternion<float> t = 1_e, r = 1_e;
 		float theta = 0, phi = 0, psi = 0, x = 0, z = 0;
-		if(first.axes.find(0) != first.axes.cend())
-			x = first.axes[0];
-		if(first.axes.find(1) != first.axes.cend())
-			z = first.axes[1];
-		if(first.axes.find(3) != first.axes.cend())
-			theta = first.axes[3];
-		if(first.axes.find(4) != first.axes.cend())
-			phi = first.axes[4];
-
-		if(first.axes.find(2) != first.axes.cend())
-			psi -= (1+first.axes[2])/2;
-		if(first.axes.find(5) != first.axes.cend())
-			psi += (1+first.axes[5])/2;
+		x = first.axes[0];
+		z = first.axes[1];
+		theta = first.axes[3];
+		phi = first.axes[4];
+		psi -= (1+first.axes[2])/2;
+		psi += (1+first.axes[5])/2;
 
 		auto dead1 = .25, dead2 = .1, dead3 = .1;
 		auto xz = deadzone(x, z, dead1), pt = deadzone(theta, phi, dead2),
@@ -107,8 +94,8 @@ struct Hnd: Presenter<Hnd> {
 				* rotation<float>(pp.first * M_PI/32, 0, 0, 1)
 				* orientation;
 		translation = ((1_e - .1_I * xz.first - .1_K * xz.second) ^ *orientation) * translation;
-		/*if(streams[e_out].tellp() > 0) streams[e_out] << std::endl;
-		streams[e_out] << transform;*/
+		if(streams[e_out].tellp() > 0) streams[e_out] << std::endl;
+		streams[e_out] << transform;
 		set_view(transform = orientation * translation);
 		return *this;
 	}
