@@ -67,7 +67,7 @@ struct Handler {
 		if(found == joysticks.end())
 			return out.code = Events::StatusWarn, out;
 		auto & joy = found -> second;
-		joy.axes[a.axis] = a.value / float(SDL_JOYSTICK_AXIS_MAX);
+		joy.setAxis(a.axis, a.value / float(SDL_JOYSTICK_AXIS_MAX));
 		return out;
 	}
 	template<class... T>
@@ -90,7 +90,7 @@ struct Handler {
 		auto & joy = found -> second;
 		auto button = joy.buttons.find(b.button);
 		if(button == joy.buttons.end()) {
-			joy.buttons.emplace(b.button, Joystick::History<>{b.state, b.state});
+			joy.buttons.emplace(b.button, std::make_pair(b.state, b.state));
 		} else {
 			button -> second.first = button -> second.second;
 			button -> second.second = b.state;
