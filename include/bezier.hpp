@@ -62,32 +62,47 @@ T cubic(T (&w) [4], T (&x) [4], T (&y) [4], T (&z) [4], U u, U v) {
 template<class S, class T, unsigned N>
 S getNormalized(S const& s, T const (&bounds) [N]) {
 	static_assert(N > 0, "Cannot normalize without at least an upper bound!");
+	if(N > 1) return s >= bounds[0] && s < bounds[1];
+	return s < bounds[0];
 }
+// In-place array normalization
+template<class S, class T, unsigned N>
+auto getNormalized(S (&params) [N], T const (&minima) [N], T const (&maxima) [N])
+	-> decltype(params) { return getNormalized(params, minima, maxima, params); }
 
-template<class S, class VT = std::vector<unsigned>, class VT1 = VT,
-		class T = Detail::ValueType_t<true, VT>,
-		class T1 = Detail::ValueType_t<true, VT1>>
-std::vector<S> normalizeAll(VT const& params, VT1 const& widths,
-		S (*norm)(T const&, T const&) = getNormalized<S, T>) {
-	std::vector<S> out;
-	std::transform(params.begin(), params.end(), widths.begin(), out.begin(), norm);
-	return out;
+// Array normalization (not in-place)
+template<class S, class T, class U, unsigned N, class R = S>
+void getNormalized(R (&out) [N], S const (&in) [N], T const (&minima) [N], U const (&maxima) [N]) {
+	typedef std::common_type_t<T, U> TU;
+	typedef std::common_type_t<S, T> ST;
+	typedef std::common_type_t<S, TU> STU;
+
+	TU widths[N] = {0};
+	std::transform(minima, minima+N, maxima, widths, std::minus<TU>());
+	std::transform(params, params+N, minima, out, std::minus<ST>());
+	std::transform(out, out+N, widths, out, std::divides<T>());
 }
 
 template<class S, class MAXIMA, class MINIMA>
 struct PolyForEach;
 
-template<class S, unsigned... MINIMA, unsigned... MAXIMA>
-struct PolyForEach<S, Detail::SeqU<MINIMA...>, Detail::SeqU<MAXIMA...>> {
-	static constexpr unsigned RANK = sizeof...(MAXIMA);
-	static_assert(RANK >= sizeof...(MINIMA), "Only minima can be implicit (default to 0)");
+template<class S, class T, T... MINIMA, T... MAXIMA>
+struct PolyForEach<S, Detail::Seq<T, MINIMA...>, Detail::Seq<T, MAXIMA...>> {
+	static constexpr unsigned NMAXIMA = sizeof...(MAXIMA), NMINIMA = sizeof...(MINIM),
+			RANK = NMAXIMA;
+	static_assert(NMAXIMA >= NMINIMA, "Only minima can be implicit (default to 0)");
 	static constexpr unsigned maxima[RANK] = {MAXIMA...}, minima[RANK] = {MINIMA...};
+
+	// Requires NMAXIMA == NMINIMA:
+	//   static constexpr unsigned bounds[RANK][2] = {{MINIMA, MAXIMA}...};
+
 	typedef unsigned indices_type [RANK];
 	typedef S params_type [RANK];
 
-	typedef params_type& (*fnNorm_type) (params_type& params, indices_type const& indices);
 	typedef void (*fnAct_type) (params_type & params);
-	typedef S (*fnAccum_type) (params_type & params);
+	template<class R> struct Accumulate {
+		typedef R (*fnAccumType) (R const&, R const&);
+	};
 };*/
 
 /*template<class S, class U = unsigned, unsigned BOUNDS,
