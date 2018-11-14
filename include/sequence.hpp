@@ -135,11 +135,11 @@ struct PartialSumSeq<Seq<T, I0, I1, IN...>>:
 
 /** @brief Defines value as the product of all of {I0, IN...}.
  * Not to be confused with inner product, etc. */
-template<class T, T I0 = 1, T... IN>
-struct ProductSeq: std::integral_constant<T, I0> {};
-template<class T, T I0, T I1, T... IN>
-struct ProductSeq<T, I0, I1, IN...>: ProductSeq<T, I0*I1, IN...> {};
-
+template<class S> struct ProductSeq;
+template<class S, S I0>
+struct ProductSeq<Seq<S, I0>>: std::integral_constant<S, I0> {};
+template<class S, S I0, S I1, S... IN>
+struct ProductSeq<Seq<S, I0, I1, IN...>>: ProductSeq<Seq<S, I0*I1, IN...>> {};
 }
 
 #endif
