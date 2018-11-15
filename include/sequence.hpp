@@ -6,7 +6,9 @@
 namespace Detail {
 
 /** A variadic unsigned sequence, useful for indexing Tag/Val. */
-template<class T = void, T... I> struct Seq { typedef T type; };
+template<class T = void, T... I> struct Seq {
+	typedef T type;
+};
 template<class T, T T0, T... TN> struct Seq<T, T0, TN...> {
 	typedef T type;
 	template<unsigned I>
@@ -17,6 +19,12 @@ template<class T, T T0, T... TN> struct Seq<T, T0, TN...> {
 		return T0;
 	}
 };
+template<class T> struct SeqArray;
+template<class T, T... I> struct SeqArray<Seq<T, I...>> {
+	static constexpr T value[sizeof...(I)] = {I...};
+};
+template<class T, T... I>
+constexpr T SeqArray<Seq<T, I...>>::value [sizeof...(I)];
 
 // Enable more if you need them.
 template<char... I> using SeqC = Seq<char, I...>;
@@ -80,6 +88,8 @@ constexpr auto operator/(Seq<TI, I...>, Seq<TJ, J...>) -> Seq<T, I/J...> { retur
 
 template<class OS, class S, S... I>
 OS& operator<<(OS &os, Detail::Seq<S, I...> const&) {
+	/*typedef decltype(Detail::Seq<S, I...>::value) test_type;
+	static constexpr test_type& test_value = Detail::Seq<S, I...>::value;*/
 	bool first = true;
 	os << '{';
 	for(auto i : {I...}) {
@@ -140,6 +150,12 @@ template<class S, S I0>
 struct ProductSeq<Seq<S, I0>>: std::integral_constant<S, I0> {};
 template<class S, S I0, S I1, S... IN>
 struct ProductSeq<Seq<S, I0, I1, IN...>>: ProductSeq<Seq<S, I0*I1, IN...>> {};
+
+template<unsigned N, class S = unsigned, S A = 1, S B = 1, S... C>
+struct Fibonacci: Fibonacci<N-1, S, A+B, A, B, C...> {};
+template<class S, S A, S B, S... C>
+struct Fibonacci<0, S, A, B, C...>: std::integral_constant<S, A> {};
+
 }
 
 #endif
