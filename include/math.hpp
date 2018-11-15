@@ -34,7 +34,7 @@ to_string(S s, unsigned prec = 0, bool show_zero = true, bool fill_zeroes = fals
 		uDec = uNext;
 		if(uCur) nMajor++;
 	}
-	if(show_zero && !nMajor) {
+	if((show_zero && !nMajor)) {
 		out = "0";
 	}
 	s -= uMajor;
@@ -55,6 +55,9 @@ to_string(S s, unsigned prec = 0, bool show_zero = true, bool fill_zeroes = fals
 		}
 		prec--;
 	}
+	if(!show_zero && out.find("0.") != string::npos)
+		out = out.substr(1);
+	if(!out.length()) out = "0";
 	if(bSign && (nMajor || nMinor))
 		return '-' + out;
 	return out;
