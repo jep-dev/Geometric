@@ -125,6 +125,11 @@ template<class S> struct DualQuaternion {
 	DualQuaternion& operator/=(Quaternion<T> const& q)
 		{ return *this = *this / Quaternion<S>{q.w, q.x, q.y, q.z}; }
 
+	// TODO investigate why (i+Ei) * 1/(i+Ei) = 1+2E != 1 = (i+Ei)/(i+Ei)
+	template<class T, class ST = std::common_type_t<S,T>>
+	friend DualQuaternion<ST> operator/(T const& l, DualQuaternion const& r)
+		{ return l * inverse(r); }
+
 	template<class T, class V = typename T::value_type, class SV = std::common_type_t<S,V>>
 	DualQuaternion<SV> operator^(T const& r) const { return r * *this * *r; }
 
@@ -134,6 +139,13 @@ template<class S> struct DualQuaternion {
 				&& w == d.w && x == d.x && y == d.y && z == d.z; }
 	operator std::string(void) const;
 };
+
+template<class S>
+DualQuaternion<S> inverse(DualQuaternion<S> const& d) {
+	Quaternion<S> p = {d.s, d.t, d.u, d.v}, q = {d.w, d.x, d.y, d.z},
+		pi = *p / p.lengthSquared(), pq = pi * q * pi;
+		return {pi.w, pi.x, pi.y, pi.z, -pq.w, -pq.x, -pq.y, -pq.z};
+}
 
 template<class S, class T, class ST = std::common_type_t<S,T>>
 DualQuaternion<ST> to_dual(Quaternion<S> const& s, Quaternion<T> const& t)
@@ -181,20 +193,6 @@ DualQuaternion<Z> operator*(Quaternion<X> const& l, Point<Y> const& r) {
 		-l.x*r.x-l.y*r.y-l.z*r.z, l.w*r.x+l.y*r.z-l.z*r.y,
 		l.w*r.y-l.x*r.z+l.z*r.x, l.w*r.z+l.x*r.y-l.y*r.z};
 }
-template<class X, class Y = X, class Z = std::common_type_t<X,Y>>
-DualQuaternion<Z> operator/(DualQuaternion<X> const& l, DualQuaternion<Y> const& r) {
-	Point<Z> lp = {l.x, l.y, l.z}, rp = {r.x, r.y, r.z};
-	Quaternion<Z> lq = {l.s, l.t, l.u, l.v},
-			rq = {r.s, r.t, r.u, r.v};
-	auto irq = 1 / rq;
-	/*auto rmag2 = rq.lengthSquared();
-	auto qq = lq * rq / rmag2;
-	Point<Z> rq_lp = rq*lp, lq_rp = lq*rp, qp = (rq_lp - lq_rp) / rmag2; */
-	auto qq = lq * irq;
-	Point<Z> rq_lp = irq*lp, lq_rp = lq*rp, qp = (rq_lp - lq_rp);
-	return {qq.w, qq.x, qq.y, qq.z, qp.x, qp.y, qp.z};
-
-}
 
 template<class X, class Y = X>
 DualQuaternion<Y> pivot(X && t, X && u, X && v, X && w, X && x, X && y, X && z) {
@@ -204,7 +202,7 @@ DualQuaternion<Y> pivot(X && t, X && u, X && v, X && w, X && x, X && y, X && z) 
 	return {rot.w, rot.x, rot.y, rot.z, rptr.w, rptr.x, rptr.y, rptr.z};
 }
 
-// // TODO Should dot be non-dual dot (rotations), dual dot (translations), or both?
+// TODO Should dot be non-dual dot (rotations), dual dot (translations), or both?
 template<class S, class T>
 std::common_type_t<S,T> dot(DualQuaternion<S> const& l, DualQuaternion<T> const& r) {
 	/*return l.s*r.s + l.t*r.t + l.u*r.u + l.v*r.v
