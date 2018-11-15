@@ -181,23 +181,77 @@ int main(int argc, const char *argv[]) {
 	test_transformations();
 
 	DQ ds[] = {1_e, 1_i, 1_j, 1_k, 1_E, 1_I, 1_J, 1_K};
+	vector<DQ> dsMixed = {1_e, 1_i, 1_j, 1_k,
+			1_e + 1_I, 1_e + 1_J, 1_e + 1_K,
+			1_i + 1_I, 1_i + 1_J, 1_i + 1_K};
 
 	vector<pair<string, binary*>> functions = {
 		{"W(u, v) = u v *u", [] (DQ const& l, DQ const& r) -> DQ { return l ^ r; }},
 		{"W(u, v) = v u *v", [] (DQ const& l, DQ const& r) -> DQ { return r ^ l; }},
-		{"W(u, v) = uv", [] (DQ const& l, DQ const& r) -> DQ { return l * r; }},
+		{"W(u, v) = uv", [] (DQ const& l, DQ const& r) -> DQ { return l * r; }}
 	};
 
-	cout << "Operators: " << endl;
-	vector<vector<std::string>> lines;
-	for(auto const& fn : functions)
-		lines.emplace_back(get_table(fn.first, ds, ds, fn.second));
-	for(long k = 0, dk = 2, n = lines.size(); k < n; k += dk) {
-		for(long j = 0, m = lines[0].size(); j < m; j++) {
-			for(long i = k; i < k+dk && i < n; i++)
-				cout << lines[i][j] << "  ";
-			cout << endl;
+	{
+		cout << "Operators: " << endl;
+		vector<vector<std::string>> lines;
+		for(auto const& fn : functions)
+			lines.emplace_back(get_table(fn.first, ds, ds, fn.second));
+		for(long k = 0, dk = 2, n = lines.size(); k < n; k += dk) {
+			for(long j = 0, m = lines[0].size(); j < m; j++) {
+				for(long i = k; i < k+dk && i < n; i++)
+					cout << lines[i][j] << "  ";
+				cout << endl;
+			}
 		}
+	}
+
+	cout << "\nDivision:\n";
+	{
+		unsigned n = dsMixed.size();
+		vector<string> lines(n+1, "");
+
+		for(unsigned i = 0; i < n; i++)
+			lines[i+1] += to_string(dsMixed[i], 2, false);
+		Streams::level_insert(lines, " | ");
+		lines[0].replace(std::max<unsigned>(0, lines[0].length()-4), 1, "/");
+		for(unsigned j = 0; j < n; j++) {
+			auto const& rhs = dsMixed[j];
+			lines[0] += to_string(rhs, 2, false);
+			for(unsigned i = 0; i < n; i++) {
+				auto const& lhs = dsMixed[i];
+				auto quot = lhs / rhs;
+				lines[i+1] += to_string(quot, 2, false);
+			}
+			Streams::level_insert(lines, "  ");
+		}
+		lines.insert(lines.begin()+1, string(lines[0].length(), '-'));
+		for(auto const& line : lines) cout << line << endl;
+		/*vector<vector<string>> lines(3, vector<string>(n, ""));
+		unsigned numLens = 0, denLens = 0, quotLens = 0;
+		for(unsigned i = 0; i < n; i++) {
+			auto const& d = dsMixed[i];
+			lines[0][i] += to_string(d, 2, false);
+			lines[1][i] += to_string(1/d, 2, false);
+			//lines[2][i] += to_string( d * (1/d), 2, false);
+			//lines[2][i] += to_string( (1/d) * d, 2, false);
+			lines[2][i] += to_string( d/d, 2, false);
+			numLens = std::max<unsigned>(numLens, lines[0][i].length());
+			denLens = std::max<unsigned>(denLens, lines[1][i].length());
+			quotLens = std::max<unsigned>(quotLens, lines[2][i].length());
+		}
+		for(vector<string> & v : lines) {
+			unsigned len = 0;
+			for(auto const& i : v)
+				len = std::max<unsigned>(len, i.length());
+			for(string & i : v) {
+				auto dlen = len - i.length();
+				i = string(dlen/2, ' ') + i + string(dlen - dlen/2, ' ');
+			}
+		}
+		for(unsigned i = 0; i < n; i++) {
+			cout << lines[0][i] << " / " << lines[0][i] << " = "
+					<< lines[0][i] << " * " << lines[1][i] << " = " << lines[2][i] << endl;
+		}*/
 	}
 
 	cout << "\nSclerp:\n";
