@@ -186,9 +186,12 @@ DualQuaternion<Z> operator/(DualQuaternion<X> const& l, DualQuaternion<Y> const&
 	Point<Z> lp = {l.x, l.y, l.z}, rp = {r.x, r.y, r.z};
 	Quaternion<Z> lq = {l.s, l.t, l.u, l.v},
 			rq = {r.s, r.t, r.u, r.v};
-	auto rmag2 = rq.lengthSquared();
+	auto irq = 1 / rq;
+	/*auto rmag2 = rq.lengthSquared();
 	auto qq = lq * rq / rmag2;
-	Point<Z> rq_lp = rq*lp, lq_rp = lq*rp, qp = (rq_lp - lq_rp) / rmag2;
+	Point<Z> rq_lp = rq*lp, lq_rp = lq*rp, qp = (rq_lp - lq_rp) / rmag2; */
+	auto qq = lq * irq;
+	Point<Z> rq_lp = irq*lp, lq_rp = lq*rp, qp = (rq_lp - lq_rp);
 	return {qq.w, qq.x, qq.y, qq.z, qp.x, qp.y, qp.z};
 
 }
