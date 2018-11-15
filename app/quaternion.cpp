@@ -21,6 +21,7 @@ int main(int argc, const char *argv[]) {
 			RHS = {rotation(angle, 1, 0, 0),
 					rotation(angle, 0, 1, 0),
 					rotation(angle, 0, 0, 1)};
+
 		vector<string> rows(LHS.size());
 		unsigned i = 0;
 		for(auto const& lhs : LHS) {
@@ -42,13 +43,41 @@ int main(int argc, const char *argv[]) {
 			i = 0;
 			Streams::level_insert(rows, sep);
 		}
-		for(auto const& row : rows) {
+		for(auto & row : rows) {
 			cout << row << endl;
+			row = "";
 		}
+		endl(cout);
+		i = 0;
+		for(auto const& lhs : LHS) {
+			if(i) {
+				long j = i-1, N = RHS.size();
+				if(j < N)
+					rows[i] += to_string(RHS[j], 2);
+			}
+			else rows[i] += tpad;
+			i++;
+		}
+		Streams::level_insert(rows, bord);
+		i = 0;
+		for(auto const& rhs : RHS) {
+			//rows[i++] += to_string(rhs, 2);
+			for(auto const& lhs : LHS) {
+				rows[i++] += to_string(lhs / rhs, 2);
+			}
+			i = 0;
+			Streams::level_insert(rows, sep);
+		}
+		for(auto & row : rows) {
+			cout << row << endl;
+			row = "";
+		}
+		endl(cout);
 
 		for(auto const& rhs : RHS) {
-			auto q = sqrt(2)/2*rhs;
-			cout << "For u = " << to_string(q) << ": u/u = " << to_string(q/q, 3) << "; "
+			auto const& q = rhs;
+			//auto q = scale2 * rhs;
+			cout << "For u = " << to_string(q, 3) << ": u/u = " << to_string(q/q, 3) << "; "
 					"u/|u| = " << to_string(q.normalize(), 3) << "; "
 					"1/u = " << to_string(1/q, 3) << '.' << endl;
 		}
