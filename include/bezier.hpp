@@ -6,6 +6,7 @@
 
 #include <functional> // TODO remove, used in poly-looping
 
+#include "binomial.hpp"
 #include "utility.hpp"
 #include "sequence.hpp"
 
@@ -134,20 +135,72 @@ VS polyLoop(S (*fn)(VS const&), VS (*norm) (VU const&, VU const&, TN &&...),
 	return out;
 }*/
 
-// This was the beginning of an attempt to consolidate linear/quadratic/etc.
-// The templates above can boil down to a single expression, but here, I can't
-// seem to get around using dynamic sizes (e.g. binomial coefficients in a vector.)
-/*template<unsigned DEG, class T, class... V>
-T bezier(T const& t, V &&...) { return t; }
-template<unsigned DEG, class T, unsigned W, class U, class...V,
-		class C = std::remove_all_extents_t<T>>
-C& bezier(T const (&t)[W], U const& u, V &&... v) {
-	C out = {0};
-	Binomial bin;
-	auto coef = bin[DEG];
-	for(unsigned i = 0; i < W; i++) {
-		out += coef[i]
+template<class S, unsigned MD, unsigned ND>
+void binomialBasis(S (&basis) [MD] [ND]) {
+	static_assert(MD * ND > 0, "Must have nonzero dimensions!");
+	using namespace Detail;
+	typedef SeqArray<ValueType_t<false, Binomial<MD-1>>> mb_type;
+	typedef SeqArray<ValueType_t<false, Binomial<ND-1>>> nb_type;
+	static constexpr auto ub = nb_type::value;
+	static constexpr auto vb = mb_type::value;
+	/*typedef ValueType_t<false, Binomial<MD-1>> mb_type;
+	typedef ValueType_t<false, Binomial<ND-1>> nb_type;
+	static constexpr auto ub = nb_type::value;
+	static constexpr auto vb = mb_type::value;*/
+	for(unsigned i = 0; i < MD; i++) {
+		for(unsigned j = 0; j < ND; j++) {
+			basis[i][j] = vb[i] * ub[j];
+		}
 	}
-}*/
+}
+
+template<class S, unsigned MD, unsigned ND>
+void bezierBasis(S (&basis) [MD] [ND], S u, S v) {
+	binomialBasis(basis);
+	S s = 1-u, t = 1-v;
+	S curs = 1, curt = 1, curu = 1, curv = 1,
+		ss[MD] = {0}, us[MD] = {0},
+		ts[ND] = {0}, vs[ND] = {0};
+	for(unsigned i = 0; i < MD; i++) {
+		curt *= t;
+		curv *= v;
+		ts[i] = curt;
+		vs[i] = curv;
+	}
+	for(unsigned j = 0; j < ND; j++) {
+		curs *= s;
+		curu *= u;
+		ss[j] = curs;
+		us[j] = curu;
+	}
+	for(unsigned i = 0; i < MD; i++) {
+		for(unsigned j = 0; j < ND; j++) {
+			//basis[i][j] *= us[ND-j-1] * ss[j] * vs[MD-i-1] * ts[i];
+			basis[i][j] *= pow(s, MD-j-1) * pow(u, j) * pow(t, ND-i-1) * pow(v, i);
+			//basis[i][j] *= pow(s, MD-j-1) * pow(t, ND-i-1);
+		}
+	}
+}
+
+template<unsigned MD, unsigned ND, unsigned M, unsigned N, class S, class T>
+T bezier(T const (&points) [M] [N], S u, S v) {
+	static_assert(M >= MD && N >= ND, "There are not enough points!");
+	T out = {0};
+	S basis[MD][ND], uj = u * (N-1), vi = v * (M-1);
+	// Find the range closest to centered around the point inside the bounds
+	unsigned i0 = std::max<int>(0, -M/2 + vi), j0 = std::max<int>(0, -N/2 + uj),
+			i1 = std::min<int>(-1 + MD + i0, -1 + M), j1 = std::min<int>(-1 + ND + j0, -1 + N);
+	// Remap the point to the interior of the range
+	uj = (uj - j0) / (j1 - j0);
+	vi = (vi - i0) / (i1 - i0);
+	// Generate the basis at the new point
+	bezierBasis(basis, uj, vi);
+	for(unsigned i = 0, k = i0; i < MD; i++, k++) {
+		for(unsigned j = 0, l = j0; j < ND; j++, l++) {
+			out += basis[i][j] * points[k][l];
+		}
+	}
+	return out;
+}
 
 #endif
