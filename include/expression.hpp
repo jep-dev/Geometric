@@ -25,11 +25,12 @@ template<class> struct Conjugate;
 template<class> struct Sum;
 template<class> struct Difference;
 template<class> struct Product;
-/*template<class> struct Exp;
-template<class> struct Cosine;
+template<class> struct Quotient;
+template<class> struct Exp;
+//template<class> struct Log;
+/*template<class> struct Cosine;
 template<class> struct Sine;*/
 /*template<class> struct Power;
-template<class> struct Log;
 template<class> struct Tangent;*/
 
 template<class T> using SharedSymbol = std::shared_ptr<Symbol<T>>;
@@ -40,11 +41,12 @@ template<class T> using SharedConjugate = std::shared_ptr<Conjugate<T>>;
 template<class T> using SharedSum = std::shared_ptr<Sum<T>>;
 template<class T> using SharedDifference = std::shared_ptr<Difference<T>>;
 template<class T> using SharedProduct = std::shared_ptr<Product<T>>;
-/*template<class T> using SharedExp = std::shared_ptr<Exp<T>>;
-template<class T> using SharedCosine = std::shared_ptr<Cosine<T>>;
+template<class T> using SharedQuotient = std::shared_ptr<Quotient<T>>;
+template<class T> using SharedExp = std::shared_ptr<Exp<T>>;
+//template<class T> using SharedLog = std::shared_ptr<Log<T>>;
+/*template<class T> using SharedCosine = std::shared_ptr<Cosine<T>>;
 template<class T> using SharedSine = std::shared_ptr<Sine<T>>;*/
 /*template<class T> using SharedPower = std::shared_ptr<Product<T>>;
-template<class T> using SharedLog = std::shared_ptr<Log<T>>;
 template<class T> using SharedTangent = std::shared_ptr<Tangent<T>>;*/
 
 template<class S, class... T>
@@ -68,10 +70,17 @@ SharedSymbol<S> make_difference(std::shared_ptr<TS1<S>> const& t1, std::shared_p
 template<template<class> class TS1, template<class> class TS2, class S>
 SharedSymbol<S> make_product(std::shared_ptr<TS1<S>> const& t1, std::shared_ptr<TS2<S>> const& t2)
 	{ return (SharedSymbol<S>) std::make_shared<Product<S>>(t1, t2); }
-/*template<template<class> class TS, class S>
+template<template<class> class TS1, template<class> class TS2, class S>
+SharedSymbol<S> make_quotient(std::shared_ptr<TS1<S>> const& t1, std::shared_ptr<TS2<S>> const& t2)
+	{ return (SharedSymbol<S>) std::make_shared<Quotient<S>>(t1, t2); }
+template<template<class> class TS, class S>
 SharedSymbol<S> make_exp(std::shared_ptr<TS<S>> const& t)
 	{ return (SharedSymbol<S>) std::make_shared<Exp<S>>(t); }
-template<template<class> class TS, class S>
+/*template<template<class> class TS, class S>
+SharedSymbol<S> make_log(std::shared_ptr<TS<S>> const& t)
+	{ return (SharedSymbol<S>) std::make_shared<Log<S>>(t); }*/
+
+/*template<template<class> class TS, class S>
 SharedSymbol<S> make_cosine(std::shared_ptr<TS<S>> const& t)
 	{ return (SharedSymbol<S>) std::make_shared<Cosine<S>>(t); }
 template<template<class> class TS, class S>
@@ -82,9 +91,6 @@ template<template<class> class TS1, template<class> class TS2, class S>
 SharedSymbol<S> make_power(std::shared_ptr<TS1<S>> const& t1, std::shared_ptr<TS2<S>> const& t2)
 	{ return (SharedSymbol<S>) std::make_shared<Power<S>>(t1, t2); }
 template<template<class> class TS, class S>
-SharedSymbol<S> make_log(std::shared_ptr<TS<S>> const& t)
-	{ return (SharedSymbol<S>) std::make_shared<Log<S>>(t); }
-template<template<class> class TS, class S>
 SharedSymbol<S> make_tangent(std::shared_ptr<TS<S>> const& t)
 	{ return (SharedSymbol<S>) std::make_shared<Tangent<S>>(t); }*/
 
@@ -92,15 +98,19 @@ typedef enum {
 	e_undefined = 0, e_scalar, e_variable,
 		e_negative, e_conjugate,
 		e_sum, e_difference,
-		e_product,
-		// e_exp, e_cosine, e_sine
-		// e_power, e_log, e_tangent
+		e_product, e_quotient,
+		e_exp, //e_log,
+		// e_power,
+		// e_cosine, e_sine, e_tangent,
+		// e_cosh, e_sinh, e_tanh
 } EType;
 
 template<class T>
 struct Symbol: std::enable_shared_from_this<Symbol<T>> {
 	virtual EType type(void) const = 0;
-	virtual SharedSymbol<T> simplify(void) const {
+	virtual bool varies(char c) const = 0;
+	virtual SharedSymbol<T> simplify(void) const = 0;
+	/*virtual SharedSymbol<T> simplify(void) const {
 		switch(this -> type()) {
 			case e_scalar: return ((Scalar<T> *const) this) -> simplify();
 			case e_variable: return ((Variable<T> *const) this) -> simplify();
@@ -109,16 +119,18 @@ struct Symbol: std::enable_shared_from_this<Symbol<T>> {
 			case e_sum: return ((Sum<T> *const) this) -> simplify();
 			case e_difference: return ((Difference<T> *const) this) -> simplify();
 			case e_product: return ((Product<T> *const) this) -> simplify();
-			/*case e_exp: return ((Exp<T> *const) this) -> simplify();
-			case e_cosine: return ((Cosine<T> *const) this) -> simplify();
-			case e_sine: return ((Sine<T> *const) this) -> simplify();*/
-			/*case e_power: return ((Power<T> *const) this) -> simplify();
-			case e_log: return ((Log<T> *const) this) -> simplify();
-			case e_tangent: return ((Tangent<T> *const) this) -> simplify();*/
+			case e_quotient: return ((Quotient<T> *const) this) -> simplify();
+			case e_exp: return ((Exp<T> *const) this) -> simplify();
+			//case e_log: return ((Log<T> *const) this) -> simplify();
+			//case e_power: return ((Power<T> *const) this) -> simplify();
+			//case e_cosine: return ((Cosine<T> *const) this) -> simplify();
+			//case e_sine: return ((Sine<T> *const) this) -> simplify();
+			//case e_tangent: return ((Tangent<T> *const) this) -> simplify();
 			default: return nullptr;
 		}
-	}
-	std::shared_ptr<Symbol> derive(char c) const {
+	}*/
+	virtual std::shared_ptr<Symbol> derive(char c) const = 0;
+	/*std::shared_ptr<Symbol> derive(char c) const {
 		switch(this -> type()) {
 			case e_scalar: return ((Scalar<T> *const) this) -> derive(c);
 			case e_variable: return ((Variable<T> *const) this) -> derive(c);
@@ -127,15 +139,16 @@ struct Symbol: std::enable_shared_from_this<Symbol<T>> {
 			case e_sum: return ((Sum<T> *const) this) -> derive(c);
 			case e_difference: return ((Difference<T> *const) this) -> derive(c);
 			case e_product: return ((Product<T> *const) this) -> derive(c);
-			/*case e_exp: return ((Exp<T> *const) this) -> derive(c);
-			case e_cosine: return ((Cosine<T> *const) this) -> derive(c);
-			case e_sine: return ((Sine<T> *const) this) -> derive(c);*/
-			/*case e_power: return ((Power<T> *const) this) -> derive(c);
-			case e_log: return ((Log<T> *const) this) -> derive(c);
-			case e_tangent: return ((Tangent<T> *const) this) -> derive(c);*/
+			case e_quotient: return ((Quotient<T> *const) this) -> derive(c);
+			case e_exp: return ((Exp<T> *const) this) -> derive(c);
+			//case e_log: return ((Log<T> *const) this) -> derive(c);
+			//case e_cosine: return ((Cosine<T> *const) this) -> derive(c);
+			//case e_sine: return ((Sine<T> *const) this) -> derive(c);
+			//case e_tangent: return ((Tangent<T> *const) this) -> derive(c);
+			//case e_power: return ((Power<T> *const) this) -> derive(c);
 			default: return nullptr;
 		}
-	}
+	}*/
 	template<class S> bool operator==(S const& s) const { return false; }
 	friend std::ostream& operator<<(std::ostream &lhs, Symbol<T> const& rhs) {
 		switch(rhs.type()) {
@@ -146,12 +159,13 @@ struct Symbol: std::enable_shared_from_this<Symbol<T>> {
 			case e_sum: return lhs << (Sum<T> const&) rhs, lhs;
 			case e_difference: return lhs << (Difference<T> const&) rhs, lhs;
 			case e_product: return lhs << (Product<T> const&) rhs, lhs;
-			/*case e_exp: return lhs << (Exp<T> const&) rhs, lhs;
-			case e_cosine: return lhs << (Cosine<T> const&) rhs, lhs;
-			case e_sine: return lhs << (Sine<T> const&) rhs, lhs;*/
-			/*case e_power: return lhs << (Power<T> const&) rhs, lhs;
-			case e_log: return lhs << (Log<T> const&) rhs, lhs;
-			case e_tangent: return lhs << (Tangent<T> const&) rhs, lhs;*/
+			case e_quotient: return lhs << (Quotient<T> const&) rhs, lhs;
+			case e_exp: return lhs << (Exp<T> const&) rhs, lhs;
+			//case e_log: return lhs << (Log<T> const&) rhs, lhs;
+			/*case e_cosine: return lhs << (Cosine<T> const&) rhs, lhs;
+			case e_sine: return lhs << (Sine<T> const&) rhs, lhs;
+			case e_tangent: return lhs << (Tangent<T> const&) rhs, lhs;
+			case e_power: return lhs << (Power<T> const&) rhs, lhs;*/
 			default: return lhs;
 		}
 	}
@@ -162,8 +176,9 @@ template<class T>
 struct Scalar : Symbol<T>, std::enable_shared_from_this<Scalar<T>> {
 	T value = {};
 	virtual EType type(void) const { return e_scalar; }
-	SharedSymbol<T> simplify(void) const { return make_scalar<T>(value); }
-	SharedSymbol<T> derive(char c) const
+	virtual bool varies(char c) const { return false; }
+	virtual SharedSymbol<T> simplify(void) const { return make_scalar<T>(value); }
+	virtual SharedSymbol<T> derive(char c) const
 		{ return make_scalar<T>(T{0}); }
 	using Symbol<T>::operator==;
 	bool operator==(Scalar<T> const& t) const
@@ -175,9 +190,6 @@ struct Scalar : Symbol<T>, std::enable_shared_from_this<Scalar<T>> {
 	template<class... S>
 	Scalar(Detail::ValueType_t<true, T> const& t, S const&... s):
 		value({t, (Detail::ValueType_t<true, T>) s...}) {}
-	/*template<class... S>
-	Scalar(T && t, S &&... s):
-		value({std::forward<T>(t), std::forward<S>(s)...}) {}*/
 	virtual ~Scalar(void) {}
 };
 
@@ -186,9 +198,11 @@ struct Variable : Symbol<T>, std::enable_shared_from_this<Variable<T>> {
 	char name;
 	T value = {1};
 	virtual EType type(void) const { return e_variable; }
-	SharedSymbol<T> derive(char c) const
-		{ return make_scalar<T>(Detail::ValueType_t<true, T>(name == c)); }
-	SharedSymbol<T> simplify(void) const {
+	virtual bool varies(char c) const { return c == name; }
+	virtual SharedSymbol<T> derive(char c) const
+		{ return make_scalar<T>(name == c ? value : T{0}); }
+		//{ return make_scalar<T>(Detail::ValueType_t<true, T>(name == c)); }
+	virtual SharedSymbol<T> simplify(void) const {
 		if(value == value*0)
 			return make_scalar<T>(0);
 		return make_variable<T>(name, value);
@@ -207,9 +221,10 @@ template<class T>
 struct Negative : Symbol<T>, std::enable_shared_from_this<Negative<T>> {
 	SharedSymbol<T> value;
 	virtual EType type(void) const { return e_negative; }
-	SharedSymbol<T> derive(char c) const
+	virtual bool varies(char c) const { return value -> varies(c); }
+	virtual SharedSymbol<T> derive(char c) const
 		{ return make_negative(value -> derive(c)); }
-	SharedSymbol<T> simplify(void) const {
+	virtual SharedSymbol<T> simplify(void) const {
 		auto type = value -> type();
 		if(type == e_negative)
 			return ((Negative<T>&)*value).value -> simplify();
@@ -238,9 +253,10 @@ template<class T>
 struct Conjugate : Symbol<T>, std::enable_shared_from_this<Conjugate<T>> {
 	SharedSymbol<T> value;
 	virtual EType type(void) const { return e_conjugate; }
-	SharedSymbol<T> derive(char c) const
+	virtual bool varies(char c) const { return value -> varies(c); }
+	virtual SharedSymbol<T> derive(char c) const
 		{ return make_conjugate((SharedSymbol<T>) (value -> derive(c))); }
-	SharedSymbol<T> simplify(void) const {
+	virtual SharedSymbol<T> simplify(void) const {
 		auto type = value -> type();
 		if(type == e_conjugate)
 			return ((Conjugate<T>&)*value).value -> simplify();
@@ -259,16 +275,25 @@ struct Conjugate : Symbol<T>, std::enable_shared_from_this<Conjugate<T>> {
 template<class T>
 struct Sum : Symbol<T>, std::enable_shared_from_this<Sum<T>> {
 	SharedSymbol<T> first, second;
+	virtual bool varies(char c) const { return first -> varies(c) || second -> varies(c); }
 	virtual EType type(void) const { return e_sum; }
-	SharedSymbol<T> derive(char c) const {
+	virtual SharedSymbol<T> derive(char c) const {
 		auto dfirst = first -> derive(c), dsecond = second -> derive(c);
 		return make_sum(dfirst, dsecond) -> simplify();
 	}
-	SharedSymbol<T> simplify(void) const {
+	virtual SharedSymbol<T> simplify(void) const {
 		auto sfirst = first -> simplify(), ssecond = second -> simplify();
 		auto tfirst = sfirst -> type(), tsecond = ssecond -> type();
 		if(tfirst == e_scalar && tsecond == e_scalar) {
 			return make_scalar<T>(((Scalar<T>&)*sfirst).value + ((Scalar<T>&)*ssecond).value);
+		}
+		if(tfirst == e_scalar) {
+			auto const& kfirst = ((Scalar<T>&)*sfirst).value;
+			if(kfirst == kfirst*0) return ssecond;
+		}
+		if(tsecond == e_scalar) {
+			auto const& ksecond = ((Scalar<T>&)*ssecond).value;
+			if(ksecond == ksecond*0) return sfirst;
 		}
 		if(tfirst == e_variable && tsecond == e_variable) {
 			auto & vfirst = (Variable<T>&)*sfirst, vsecond = (Variable<T>&)*ssecond;
@@ -303,12 +328,13 @@ template<class T>
 struct Difference : Symbol<T>, std::enable_shared_from_this<Difference<T>> {
 	SharedSymbol<T> first, second;
 	virtual EType type(void) const { return e_difference; }
-	SharedSymbol<T> derive(char c) const {
+	virtual bool varies(char c) const { return first -> varies(c) || second -> varies(c); }
+	virtual SharedSymbol<T> derive(char c) const {
 		SharedSymbol<T> dfirst = first -> derive(c),
 			dsecond = second -> derive(c);
 		return make_difference(dfirst, dsecond) -> simplify();
 	}
-	SharedSymbol<T> simplify(void) const {
+	virtual SharedSymbol<T> simplify(void) const {
 		auto tfirst = first -> type(), tsecond = second -> type();
 		if(tfirst == e_scalar && tsecond == e_scalar)
 			return make_scalar<T>(((Scalar<T>&)*first).value - ((Scalar<T>&)*second).value);
@@ -335,33 +361,55 @@ template<class T>
 struct Product : Symbol<T>, std::enable_shared_from_this<Product<T>> {
 	SharedSymbol<T> first, second;
 	virtual EType type(void) const { return e_product; }
-	SharedSymbol<T> derive(char c) const {
+	virtual bool varies(char c) const { return first -> varies(c) || second -> varies(c); }
+	virtual SharedSymbol<T> derive(char c) const {
 		auto dfirst = first -> derive(c), dsecond = second -> derive(c);
 		return make_sum(make_product(first, dsecond),
 			make_product(dfirst, second)) -> simplify();
 	}
-	SharedSymbol<T> simplify(void) const {
+	virtual SharedSymbol<T> simplify(void) const {
 		auto sfirst = first -> simplify(), ssecond = second -> simplify();
 		auto first_type = sfirst -> type(), second_type = ssecond -> type();
-		if(first_type == e_scalar && second_type == e_variable) {
-			auto & kfirst = (Scalar<T>&)*sfirst;
-			auto & vsecond = (Variable<T>&)*ssecond;
-			return make_variable<T>(vsecond.name, kfirst.value * vsecond.value);
+		if(first_type == e_scalar) {
+			auto const& kfirst = ((Scalar<T>&) *sfirst).value;
+			if(kfirst == T{1}) return ssecond;
+			if(kfirst == kfirst * 0) return make_scalar<T>(T{0});
+			if(kfirst == T{-1}) return make_negative(ssecond);
+			if(second_type == e_variable) {
+				auto & vsecond = (Variable<T>&)*ssecond;
+				return make_variable<T>(vsecond.name, kfirst * vsecond.value);
+			} // TODO handle conj(v), neg(v), etc.
 		}
-		if(first_type == e_variable && second_type == e_scalar) {
-			auto & vfirst = (Variable<T>&)*sfirst;
-			auto & ksecond = (Scalar<T>&)*ssecond;
-			return make_variable<T>(vfirst.name, vfirst.value * ksecond.value);
+		if(second_type == e_scalar) {
+			auto const& ksecond = ((Scalar<T>&) *ssecond).value;
+			if(ksecond == T{1}) return sfirst;
+			if(ksecond == ksecond * 0) return make_scalar<T>(T{0});
+			if(ksecond == T{-1}) return make_negative(sfirst);
+			if(first_type == e_variable) {
+				auto & vfirst = (Variable<T>&)*sfirst;
+				return make_variable<T>(vfirst.name, ksecond * vfirst.value);
+			} // TODO handle conj(v), neg(v), etc.
 		}
+		bool neg = false;
 		if(first_type == e_negative && second_type == e_negative) {
 			auto & nfirst = (Negative<T>&)*sfirst, nsecond = (Negative<T>&)*ssecond;
 			return make_product(nfirst.value, nsecond.value);
+		} else if(first_type == e_negative) {
+			auto &nfirst = (Negative<T>&)*sfirst;
+			sfirst = nfirst.value;
+			neg = true;
+		} else if(second_type == e_negative) {
+			auto & nsecond = (Negative<T>&)*ssecond;
+			ssecond = nsecond.value;
+			neg = true;
 		}
 		if(first_type == e_conjugate && second_type == e_conjugate) {
 			auto & cfirst = (Conjugate<T>&)*sfirst, csecond = (Conjugate<T>&)*ssecond;
-			return make_conjugate(make_product(csecond.simplify(), cfirst.simplify()));
+			auto out = make_conjugate(make_product(csecond.value, cfirst.value));
+			return neg ? make_negative(out) : out;
 		}
-		return make_product(sfirst, ssecond);
+		auto out = make_product(sfirst, ssecond);
+		return neg ? make_negative(out) : out;
 	}
 	using Symbol<T>::operator==;
 	bool operator==(Product<T> const& t) const {
@@ -385,17 +433,117 @@ struct Product : Symbol<T>, std::enable_shared_from_this<Product<T>> {
 	virtual ~Product(void) {}
 };
 
+template<class T>
+struct Quotient : Symbol<T>, std::enable_shared_from_this<Quotient<T>> {
+	SharedSymbol<T> first, second;
+	virtual EType type(void) const { return e_quotient; }
+	virtual bool varies(char c) const { return first -> varies(c) || second -> varies(c); }
+	virtual SharedSymbol<T> derive(char c) const {
+		auto dfirst = first -> derive(c), dsecond = second -> derive(c);
+		return make_sum(make_quotient(first, dsecond),
+			make_quotient(dfirst, second)) -> simplify();
+	}
+	virtual SharedSymbol<T> simplify(void) const {
+		auto sfirst = first -> simplify(), ssecond = second -> simplify();
+		if(*sfirst == *ssecond) return make_scalar<T>(1);
+		auto first_type = sfirst -> type(), second_type = ssecond -> type();
+		if(first_type == e_variable && second_type == e_scalar) {
+			auto & vfirst = (Variable<T>&)*sfirst;
+			auto & ksecond = (Scalar<T>&)*ssecond;
+			return make_variable<T>(vfirst.name, vfirst.value * ksecond.value);
+		}
+		bool neg = false;
+		if(first_type == e_negative && second_type == e_negative) {
+			auto & nfirst = (Negative<T>&)*sfirst, nsecond = (Negative<T>&)*ssecond;
+			return make_quotient(nfirst.value, nsecond.value);
+		} else if(first_type == e_negative) {
+			auto &nfirst = (Negative<T>&)*sfirst;
+			sfirst = nfirst.value;
+			neg = true;
+		} else if(second_type == e_negative) {
+			auto & nsecond = (Negative<T>&)*ssecond;
+			ssecond = nsecond.value;
+			neg = true;
+		}
+		first_type = sfirst -> type();
+		second_type = ssecond -> type();
+		if(first_type == e_conjugate && second_type == e_conjugate) {
+			auto & cfirst = (Conjugate<T>&)*sfirst, csecond = (Conjugate<T>&)*ssecond;
+			auto out = make_conjugate(make_quotient(csecond.simplify(), cfirst.simplify()));
+			return neg ? make_negative(out) : out;
+		}
+		auto out = make_quotient(sfirst, ssecond);
+		return neg ? make_negative(out) : out;
+	}
+	using Symbol<T>::operator==;
+	bool operator==(Quotient<T> const& t) const {
+		if((first ^ t.first) || (second ^ t.second)) return false;
+		if(first && *first == *t.first || second && *second == *t.second) return false;
+		return true;
+	}
+	friend std::ostream& operator<<(std::ostream &lhs, Quotient<T> const& rhs) {
+		if(rhs.first) lhs << *rhs.first;
+		else lhs << "!";
+		lhs << '/';
+		if(rhs.second) lhs << *rhs.second;
+		else lhs << "!";
+		return lhs;
+	}
+	Quotient(SharedSymbol<T> first, SharedSymbol<T> second):
+		first(first), second(second) {}
+	template<class R, class S>
+	Quotient(std::shared_ptr<R> first, std::shared_ptr<S> second):
+		Quotient((SharedSymbol<T>)first, (SharedSymbol<T>)second) {}
+	virtual ~Quotient(void) {}
+};
 /*template<class T>
+struct Log: Symbol<T>, std::enable_shared_from_this<Log<T>> {
+	SharedSymbol<T> value;
+	virtual EType type(void) const { return e_log; }
+	virtual bool varies(char c) const { return value -> varies(c); }
+	virtual SharedSymbol<T> simplify(void) const {
+		if(value -> type() != e_scalar)
+			return make_log(value -> simplify());
+		return make_scalar<T>(log(((Scalar<T> const&) *value).value));
+	}
+	virtual std::shared_ptr<Symbol<T>> derive(char c) const {
+		return make_quotient(value -> derive(c), value) -> simplify();
+	}
+	using Symbol<T>::operator==;
+	bool operator==(Log<T> const& s) const {
+		return *value == s.value;
+	}
+	template<class S>
+	friend S& operator<<(S &s, Log<T> const& e) {
+		return s << "log(" << *e.value << ")", s;
+	}
+	Log(SharedSymbol<T> value): value(value) {}
+	template<class R>
+	Log(std::shared_ptr<R> value):
+		Log((SharedSymbol<T>)value) {}
+	virtual ~Log(void) {}
+};*/
+
+template<class T>
 struct Exp: Symbol<T>, std::enable_shared_from_this<Exp<T>> {
 	SharedSymbol<T> value;
 	virtual EType type(void) const { return e_exp; }
+	virtual bool varies(char c) const { return value -> varies(c); }
 	virtual SharedSymbol<T> simplify(void) const {
-		if(value -> type() != e_scalar)
+		//if(value -> type() != e_scalar)
 			return make_exp(value -> simplify());
-		return make_scalar<T>(exp(((Scalar<T> const&) *value).value));
+		/*Scalar<T> const& sc = *value;
+		return make_scalar<T>(exp(sc.value));*/
+		//return make_scalar<T>(exp(((Scalar<T> const&) *value).value));
 	}
-	std::shared_ptr<Symbol<T>> derive(char c) const {
-		return make_product(make_exp(value), value -> derive(c)) -> simplify();
+	virtual SharedSymbol<T> derive(char c) const {
+		auto lhs = make_exp(value), rhs = value -> derive(c);
+		if(rhs -> type() == e_scalar) {
+			auto sr = (Scalar<T>&)(*rhs);
+			auto val = sr.value;
+			if(val == val*0) return make_scalar<T>(0);
+		}
+		return make_product(lhs, rhs) -> simplify();
 	}
 	using Symbol<T>::operator==;
 	bool operator==(Exp<T> const& s) const {
@@ -403,15 +551,20 @@ struct Exp: Symbol<T>, std::enable_shared_from_this<Exp<T>> {
 	}
 	template<class S>
 	friend S& operator<<(S &s, Exp<T> const& e) {
-		return s << "exp(" << e.value << ")", s;
+		return s << "exp(" << *e.value << ")", s;
 	}
+	Exp(SharedSymbol<T> value): value(value) {}
+	template<class R>
+	Exp(std::shared_ptr<R> value):
+		Exp((SharedSymbol<T>)value) {}
 	virtual ~Exp(void) {}
 };
 
-template<class T>
+/*template<class T>
 struct Cosine: Symbol<T>, std::enable_shared_from_this<Cosine<T>> {
 	SharedSymbol<T> value;
 	virtual EType type(void) const { return e_cosine; }
+	virtual bool varies(char c) const { return value -> varies(c); }
 	virtual SharedSymbol<T> simplify(void) const {
 		auto operand = value -> simplify();
 		if(operand -> type() != e_scalar)
@@ -419,7 +572,7 @@ struct Cosine: Symbol<T>, std::enable_shared_from_this<Cosine<T>> {
 		auto val = ((SharedScalar<T> const&) *operand).value;
 		return make_scalar<T>(cos(value));
 	}
-	std::shared_ptr<Symbol<T>> derive(char c) const {
+	virtual SharedSymbol<T> derive(char c) const {
 		return make_product(make_negative(make_sine(value -> simplify())),
 			value -> derive(c) -> simplify()) -> simplify();
 	}
@@ -437,6 +590,7 @@ template<class T>
 struct Sine: Symbol<T>, std::enable_shared_from_this<Sine<T>> {
 	SharedSymbol<T> value;
 	virtual EType type(void) const { return e_sine; }
+	virtual bool varies(char c) const { return value -> varies(c); }
 	virtual SharedSymbol<T> simplify(void) const {
 		auto operand = value -> simplify();
 		if(operand -> type() != e_scalar)
@@ -444,7 +598,7 @@ struct Sine: Symbol<T>, std::enable_shared_from_this<Sine<T>> {
 		auto val = ((SharedScalar<T> const&) *operand).value;
 		return make_scalar<T>(sin(value));
 	}
-	std::shared_ptr<Symbol<T>> derive(char c) const {
+	SharedSymbol<T> derive(char c) const {
 		return make_product(make_sine(value), value -> derive(c));
 	}
 	using Symbol<T>::operator==;
