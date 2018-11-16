@@ -140,6 +140,12 @@ template<class S> struct DualQuaternion {
 	operator std::string(void) const;
 };
 
+template<class S, class T = S>
+DualQuaternion<T> exp(DualQuaternion<S> const& d) {
+	Quaternion<T> q = {d.s, d.t, d.u, d.v}, eq = exp(q);
+	return {eq.w, eq.x, eq.y, eq.z, d.w, d.x, d.y, d.z};
+}
+
 template<class S>
 DualQuaternion<S> inverse(DualQuaternion<S> const& d) {
 	Quaternion<S> p = {d.s, d.t, d.u, d.v}, q = {d.w, d.x, d.y, d.z},
