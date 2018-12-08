@@ -145,6 +145,11 @@ DualQuaternion<T> exp(DualQuaternion<S> const& d) {
 	Quaternion<T> q = {d.s, d.t, d.u, d.v}, eq = exp(q);
 	return {eq.w, eq.x, eq.y, eq.z, d.w, d.x, d.y, d.z};
 }
+template<class S, class T = S>
+DualQuaternion<T> log(DualQuaternion<S> const& d) {
+	Quaternion<T> lq = log(Quaternion<T>{d.s, d.t, d.u, d.v});
+	return {lq.w, lq.x, lq.y, lq.z, d.w, d.x, d.y, d.z};
+}
 
 template<class S>
 DualQuaternion<S> inverse(DualQuaternion<S> const& d) {
@@ -177,7 +182,8 @@ DualQuaternion<Y> trans_rotation(X && x, X && y, X && z, X && t, X && u, X && v,
 	/*auto rot = rotation<Y>(t, u, v, w);
 	return {rot.w, rot.x, rot.y, rot.z, 0, x, y, z};*/
 	auto rot = rotation<Y>(t, u, v, w);
-	auto pt = Point<Y>{x/2, y/2, z/2} * rot;
+	//auto pt = Point<Y>(x/2, y/2, z/2) * rot;
+	auto pt = Quaternion<Y>{0, x/2, y/2, z/2} * rot;
 	return {rot.w, rot.x, rot.y, rot.z, pt.w, pt.x, pt.y, pt.z};
 }
 template<class X, class Y = X>
