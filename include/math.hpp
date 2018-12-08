@@ -91,6 +91,17 @@ DualQuaternion<ST> operator*(Point<S> const& p, DualQuaternion<T> const& d);
 template<class S, class T, class ST = std::common_type_t<S,T>>
 DualQuaternion<ST> operator*(DualQuaternion<S> const& l, Point<T> const& p);
 
+/** @brief Abstract real; specialize as necessary */
+template<class S>
+std::enable_if_t<std::is_arithmetic<S>::value, S>
+getReal(S const& s) { return s; }
+template<class S>
+S getReal(Quaternion<S> const& q) { return q.w; }
+template<class S>
+S getReal(DualQuaternion<S> const& d) { return d.s; }
+/*template<class S>
+S getNonreal(S const& s) { return s - getReal(s); }*/
+
 /** @brief Abstract linear interpolation; see bezier, etc. */
 template<class S, class T>
 S lerp(S const& u, S const& v, T const& t)
