@@ -60,6 +60,9 @@ auto get_value_type(S && s, T &&... t)
 template<bool RECURSE, class... T>
 using CommonValueType_t = std::common_type_t<ValueType_t<RECURSE, T>...>;
 
+template<class S, class T>
+using Compatible_t = std::enable_if_t<std::is_convertible<T,S>::value, T>;
+
 template<class S, class... T> struct SumType { typedef S value_type; };
 template<class S, class... T> struct DifferenceType { typedef S value_type; };
 template<class S, class... T> struct ProductType { typedef S value_type; };
