@@ -60,6 +60,12 @@ template<class S> struct Quaternion {
 	template<class T, class ST = std::common_type_t<S,T>>
 	Quaternion<ST> operator+(Quaternion<T> const& r) const
 		{ return { w+r.w, x+r.x, y+r.y, z+r.z }; }
+	template<class T, class ST = std::common_type_t<S, T>>
+	Quaternion<ST> operator+(T const& t) const
+		{ return {w+t, x, y, z}; }
+	template<class T, class ST = std::common_type_t<S, T>>
+	friend Quaternion<ST> operator+(T const& t, Quaternion const& q)
+		{ return {t + q.w, q.x, q.y, q.z}; }
 
 	Quaternion normalize(void) const {
 		auto len = length();
@@ -80,6 +86,10 @@ template<class S> struct Quaternion {
 		ST t0 = acos(normed.w), c0 = cos(t0), s0 = sin(t0),
 			t1 = t0 * t, c1 = cos(t1), s1 = sin(t1), scale = len * s1 / s0;
 		return { r * c1, normed.x * scale, normed.y * scale, normed.z * scale };
+	}
+	template<class T, class ST = std::common_type_t<S,T>>
+	Quaternion<ST> operator^(Quaternion<T> const& q) const {
+		return q * *this * *q;
 	}
 
 	template<class U, class US = std::common_type_t<S,U>>
@@ -150,17 +160,20 @@ Quaternion<L2> const& l2, Quaternion<R2> const& r2,
 		S const& s, T const& t, bool normalize = false)
 	{ return slerp(slerp(l1, r1, s), slerp(l2, r2, s), t); }
 
-template<class S>
-Quaternion<S> exp(Quaternion<S> const& q) {
-	// e^(a+bi+cj+dk) = e^a e^bi ... = (e^a)(cb+sbi)(...)
-	auto a = exp(q.w),
-		cb = cos(q.x), sb = sin(q.x),
-		cc = cos(q.y), sc = sin(q.y),
-		cd = cos(q.z), sd = sin(q.z);
-	return {a * cb * cc * cd,
-		a * (sb * cc * cd + cb * sc * sd),
-		a * (cb * sc * cd - sb * cc * sd),
-		a * (cb * cc * sd + sb * sc * cd)};
+template<class S, class T = S>
+Quaternion<T> exp(Quaternion<S> const& q) {
+	T a = q.w;
+	Quaternion<T> v = {0, q.x, q.y, q.z};
+	auto r = v.length();
+	return exp(a) * (cos(r) + v.normalize() * sin(r));
+}
+template<class S, class T = S>
+Quaternion<T> log(Quaternion<S> const& q) {
+	Quaternion<T> v = {0, q.x, q.y, q.z};
+	T vr = v.length();
+	if(vr == 0) return {log(q.w)};
+	T qr = q.length(), lqr = log(qr), lvr = log(vr), t = acos(q.w / qr);
+	return lqr + v / vr * t;
 }
 
 // Generate user-defined literals for likely parameter types
