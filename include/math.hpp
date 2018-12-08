@@ -79,19 +79,26 @@ to_unit_string(S s, char i, T &&... t) {
 	return out + i;
 }
 
+/** @brief Named conjugate (for types/contexts where unary * may not be the conjugate) */
+template<class S> S conjugate(S const& s);
+/** @brief Expected specialization of named conjugate (equivalent to unary *) */
+template<class S> DualQuaternion<S> conjugate(DualQuaternion<S> const& d) { return *d; }
+/** @brief Expected specialization of named conjugate (equivalent to unary *) */
+template<class S> DualQuaternion<S> conjugate(Quaternion<S> const& q) { return *q; }
+
 template<class S, class T, class ST = std::common_type_t<S,T>>
 DualQuaternion<ST> operator*(Point<S> const& p, DualQuaternion<T> const& d);
 template<class S, class T, class ST = std::common_type_t<S,T>>
 DualQuaternion<ST> operator*(DualQuaternion<S> const& l, Point<T> const& p);
 
+/** @brief Abstract linear interpolation; see bezier, etc. */
 template<class S, class T>
-S lerp(S const& u, S const& v, T const& t) {
-	return u + (v-u)*t;
-}
+S lerp(S const& u, S const& v, T const& t)
+	{ return u + (v-u)*t; }
+/** @brief Abstract bilinear interpolation; see bezier, etc. */
 template<class S, class T>
-S lerp(S const& u0, S const& u1, S const& v0, S const& v1, T t0, T t1) {
-	return (u0*(1-t0)+u1*t0)*(1-t1) + (v0*(1-t0)+v1*t0)*t1;
-}
+S lerp(S const& u0, S const& u1, S const& v0, S const& v1, T t0, T t1)
+	{ return (u0*(1-t0)+u1*t0)*(1-t1) + (v0*(1-t0)+v1*t0)*t1; }
 
 /** Abstract comparison to zero (mainly intended for floating point types) */
 template<class L, class R = L>
