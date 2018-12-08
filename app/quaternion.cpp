@@ -7,9 +7,11 @@
 
 int main(int argc, const char *argv[]) {
 	using namespace std;
+	using namespace Streams;
 
 	using T = float;
-	unsigned N = 2;
+	using Q = Quaternion<T>;
+	unsigned N = 2, prec = 2, hiPrec = 3, wprec = prec + 3;
 	if(argc == 1) {
 		T angle = M_PI / 2, scale1 = 2, scale2 = sqrt(2);
 		string bord(N, ' '), sep(1, ' '), pad(N, ' '),
@@ -17,81 +19,80 @@ int main(int argc, const char *argv[]) {
 		tpad[1] = 'x';
 		bord[1] = '|';
 
-		vector<Quaternion<T>> LHS = {{1}, {0,1}, {0,0,1}, {0,0,0,1}},
-			RHS = {rotation(angle, 1, 0, 0),
-					rotation(angle, 0, 1, 0),
-					rotation(angle, 0, 0, 1)};
+		vector<Q> basis = {{1}, {0,1}, {0,0,1}, {0,0,0,1}}, xforms;
+		vector<pair<pair<T,T>, Q>> axes = {
+				{{1, 0}, 1_i},
+				{{1, M_PI/4}, 1_i},
+				{{1, M_PI/3}, 1_i},
+				{{1, M_PI/2}, 1_i},
+				{{1, M_PI}, 1_i},
+				{{2, 0}, 1_i},
+				{{2, M_PI/4}, 1_i},
+				{{2, M_PI/3}, 1_i},
+				{{2, M_PI/2}, 1_i},
+				{{2, M_PI}, 1_i}
+		};
+		for(auto const& axis : axes) {
+			auto const& r = axis.first.first, t = axis.first.second/2;
+			xforms.emplace_back(r*(cos(t)*1_e + sin(t)*axis.second));
+		}
+			/*xforms = {rotation(angle, 1, 0, 0), rotation(angle, 1, 0, 0)*2,
+					rotation(angle, 0, 1, 0), rotation(angle, 0, 0, 1)};*/
+		unsigned nBases = basis.size(), nXforms = xforms.size();
+		vector<string> rows(nXforms+1, "");
 
-		vector<string> rows(LHS.size());
+		vector<pair<string, Q (*)(Q const&)>> cols = {
+			{"1 / u", [] (Q const& q) -> Q { return 1/q; }},
+			{"u / |u|", [] (Q const& q) -> Q { return q.normalize(); }},
+			{"e ^ u", [] (Q const& q) -> Q { return exp(q); }},
+			{"ln u", [] (Q const& q) -> Q { return log(q); }},
+			{"e ^ ln u", [] (Q const& q) -> Q { return exp(log(q)); }},
+		};
+		rows[0] += "r";
+		for(unsigned i = 0; i < nXforms; i++)
+			rows[i+1] += to_string(axes[i].first.first, prec, false);
+		level_insert(rows, sep);
+		rows[0] += "t";
+		for(unsigned i = 0; i < nXforms; i++)
+			rows[i+1] += to_string(axes[i].first.second/M_PI, prec, false) + "pi";
+		level_insert(rows, sep);
+		rows[0] += "n";
+		for(unsigned i = 0; i < nXforms; i++)
+			rows[i+1] += to_string(axes[i].second, prec, false);
+		level_insert(rows, pad);
+		rows[0] += "u = re^nt";
+		for(unsigned i = 0; i < nXforms; i++)
+			rows[i+1] += to_string(xforms[i], prec, false);
+		level_insert(rows, pad);
+
+		for(auto const& col : cols) {
+			unsigned i = 0;
+			rows[i++] += col.first;
+			for(unsigned i = 0; i < nXforms; i++) {
+				rows[i+1] += to_string(col.second(xforms[i]), prec, false);
+			}
+			level_insert(rows, sep);
+		}
+		for(auto & row : rows) {
+			cout << row << endl;
+			row = "";
+		}
+
+
 		unsigned i = 0;
-		for(auto const& lhs : LHS) {
-			if(i) {
-				long j = i-1, N = RHS.size();
-				if(j < N)
-					rows[i] += to_string(RHS[j], 2);
-			}
-			else rows[i] += tpad;
-			i++;
-		}
-		Streams::level_insert(rows, bord);
-		i = 0;
-		for(auto const& rhs : RHS) {
-			//rows[i++] += to_string(rhs, 2);
-			for(auto const& lhs : LHS) {
-				rows[i++] += to_string(lhs * rhs, 2);
-			}
+		rows[i++] += tpad;
+		for(auto const& rhs : xforms)
+			rows[i++] += to_string(rhs, prec, false);
+		level_insert(rows, bord + sep);
+		for(auto const& lhs : basis) {
 			i = 0;
-			Streams::level_insert(rows, sep);
+			rows[i++] += to_string(lhs, prec, false);
+			for(auto const& rhs : xforms)
+				rows[i++] += to_string(lhs ^ rhs, prec, false);
+			level_insert(rows, sep);
 		}
-		for(auto & row : rows) {
+		for(auto const& row : rows)
 			cout << row << endl;
-			row = "";
-		}
-		endl(cout);
-		i = 0;
-		for(auto const& lhs : LHS) {
-			if(i) {
-				long j = i-1, N = RHS.size();
-				if(j < N)
-					rows[i] += to_string(RHS[j], 2);
-			}
-			else rows[i] += tpad;
-			i++;
-		}
-		Streams::level_insert(rows, bord);
-		i = 0;
-		for(auto const& rhs : RHS) {
-			//rows[i++] += to_string(rhs, 2);
-			for(auto const& lhs : LHS) {
-				rows[i++] += to_string(lhs / rhs, 2);
-			}
-			i = 0;
-			Streams::level_insert(rows, sep);
-		}
-		for(auto & row : rows) {
-			cout << row << endl;
-			row = "";
-		}
-		endl(cout);
-
-		for(auto const& rhs : RHS) {
-			auto const& q = rhs;
-			//auto q = scale2 * rhs;
-			cout << "For u = " << to_string(q, 3) << ": u/u = " << to_string(q/q, 3) << "; "
-					"u/|u| = " << to_string(q.normalize(), 3) << "; "
-					"1/u = " << to_string(1/q, 3) << '.' << endl;
-		}
-		endl(cout);
-		for(auto const& rhs : RHS) {
-			cout << "For u = " << std::string(rhs) << ": ";
-			bool met = false;
-			for(auto const& lhs : LHS) {
-				if(met) cout << "; ";
-				met = true;
-				cout << "u(" << 10*lhs << ")u* = " << (rhs*10*lhs**rhs);
-			}
-			cout << endl;
-		}
 		return 0;
 	}
 
@@ -121,9 +122,8 @@ int main(int argc, const char *argv[]) {
 		}
 		if(!hit) enabled[e_slerp] = true;
 	//}
-	auto prec = 2, wprec = prec + 3;
 	cout << fixed << setprecision(prec);
-	auto printq = [=] (ostream& os, Quaternion<T> const& q) -> ostream& {
+	auto printq = [=] (ostream& os, Q const& q) -> ostream& {
 		auto f = os.flags();
 		for(auto i : {'1', 'i', 'j', 'k'}) {
 			if(i != 1) os << ' ';
@@ -145,7 +145,7 @@ int main(int argc, const char *argv[]) {
 		l.str(""), r.str("");
 		return dest;
 	};
-	auto stringq = [=] (Quaternion<T> const& q) -> string {
+	auto stringq = [=] (Q const& q) -> string {
 		ostringstream oss;
 		oss << setprecision(prec) << right
 			<< setw(wprec) << q.w << ' ' << setw(wprec) << q.x << ' '
