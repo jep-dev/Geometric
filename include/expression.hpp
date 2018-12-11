@@ -16,7 +16,7 @@ typedef enum {
 	e_undefined = 0,
 	e_value, e_variable,
 	e_negative, e_conjugate, e_exp, e_log, e_inverse,
-	e_sum, e_product, // e_difference, e_quotient,
+	e_sum, e_difference, e_product, //e_quotient,
 	// e_power,
 	// e_cosine, e_sine, e_tangent,
 	// e_cosh, e_sinh, e_tanh
@@ -160,6 +160,27 @@ SymbolPtr<S> mkSum(SymbolPtr<S> const& lhs, SymbolPtr<S> const& rhs) {
 }
 	//{ return (SymbolPtr<S>) std::make_shared<Sum<S>>(p, q); }
 
+template<class> struct Difference;
+template<class S> SymbolPtr<S> reduce(Difference<S> const& s);
+template<class S>
+SymbolPtr<S> mkDifference(SymbolPtr<S> const& lhs, SymbolPtr<S> const& rhs) {
+	auto p = reduce(lhs), q = reduce(rhs);
+	auto pt = p -> type(), qt = q -> type();
+	if(pt == e_value) {
+		auto vp = getValue(p);
+		if(vp == vp*0)
+			return q;
+	}
+	if(qt == e_value) {
+		auto vq = getValue(q);
+		if(vq == vq*0)
+			return p;
+	}
+	if(pt == e_value && pt == qt)
+		return mkVal<S>(getValue(p) + getValue(q));
+	return (SymbolPtr<S>) std::make_shared<Difference<S>>(p, q);
+}
+
 template<class> struct Product;
 template<class S> SymbolPtr<S> reduce(Product<S> const& p);
 template<class S>
@@ -250,6 +271,18 @@ template<class S> struct Sum: BinarySymbol<S>, Shareable<Sum<S>> {
 	}
 	virtual ~Sum(void) {}
 };
+
+template<class S> struct Difference: BinarySymbol<S>, Shareable<Difference<S>> {
+	using BinarySymbol<S>::BinarySymbol;
+	virtual EType type(void) const { return e_difference; }
+	virtual const char *infix(void) const { return "-"; }
+	virtual SymbolPtr<S> derive(char c) const {
+		return reduce(mkDifference(getFirst(*this) -> derive(c),
+				getSecond(*this) -> derive(c)));
+	}
+	virtual ~Difference(void) {}
+};
+
 template<class S> struct Product: BinarySymbol<S>, Shareable<Product<S>> {
 	using BinarySymbol<S>::BinarySymbol;
 	virtual EType type(void) const { return e_product; }
@@ -323,19 +356,44 @@ SymbolPtr<S> getSecond(SymbolPtr<S> const& p) {
 }
 
 template<class S, class... T>
+std::string to_paren_string(S const& value, T &&... t) {
+	using namespace std;
+	auto strValue = to_string(value, forward<T>(t)...),
+		parenValue = strValue;
+
+	if(strValue.find('+') != string::npos
+			|| strValue.find('-', 1) != string::npos) {
+		parenValue = "(" + parenValue + ")";
+	}
+	return parenValue;
+}
+
+template<class S, class... T>
 std::string to_string(SymbolPtr<S> const& p, T &&... t) {
 	using namespace std;
+	auto value = getValue(p);
+	S fVal = getValue(p), sVal = fVal;
+	if(p -> nary() > 0) {
+		fVal = getValue(getFirst(p));
+		if(p -> nary() > 1) sVal = getValue(getSecond(p));
+		else sVal = fVal * 0;
+	} else fVal = getValue(p), sVal = fVal;
+
+	string fStr = to_paren_string(fVal, forward<T>(t)...),
+			sStr = to_paren_string(fVal, forward<T>(t)...);
+
+
 	switch(p -> type()) {
 		//case e_value: return to_string(((Value<S> const&) *p).value, forward<T>(t)...);
-		case e_value: return to_string(getValue(p), forward<T>(t)...);
-		case e_variable: return "(" + to_string(getValue(p), forward<T>(t)...) + ")" + getName(p);
+		case e_value: return fStr;
+		case e_variable: return fStr + getName(p);
 		case e_negative: case e_conjugate:
 		case e_exp: case e_log: case e_inverse:
-			return getPrefix(p) + ("(" + to_string(getFirst(p), forward<T>(t)...) + ")");
-		case e_sum: // case e_difference:
+			return getPrefix(p) + string((fStr.find("(") != string::npos)
+					? "" : " ") + fStr;
+		case e_sum: case e_difference:
 		case e_product: // case e_quotient:
-			return "(" + to_string(getFirst(p), forward<T>(t)...) + ")"
-				+ getInfix(p) + "(" + to_string(getSecond(p), forward<T>(t)...) + ")";
+			return fStr + getInfix(p) + sStr; // TODO review parenthesis strat
 		default: return "?";
 	}
 }
