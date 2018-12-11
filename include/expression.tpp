@@ -137,6 +137,86 @@ SymbolPtr<S> reduce(Sum<S> const& s) {
 	return neg ? mkNeg(out) : out;
 }
 
+template<class S> // TODO
+SymbolPtr<S> reduce(Difference<S> const& s) {
+	SymbolPtr<S> first = getFirst(s), second = getSecond(s);
+	auto tfirst = first -> type(), tsecond = second -> type();
+
+	/*bool neg = false, lconj = false, rconj = false;
+	while(tfirst == e_negative || tfirst == e_conjugate) {
+		if(tfirst == e_negative)
+			neg = !neg, first = getFirst(first), tfirst = first -> type();
+		if(tfirst == e_conjugate)
+			lconj = !lconj, first = getFirst(first), tfirst = first -> type();
+	}
+	while(tfirst == e_negative || tfirst == e_conjugate) {
+		if(tsecond == e_negative)
+			neg = !neg, second = getFirst(second), tsecond = second -> type();
+		if(tsecond == e_conjugate)
+			rconj = !rconj, second = getFirst(second), tsecond = second -> type();
+	}*/
+	if(tsecond == e_negative)
+		return reduce(mkSum(getFirst(s), getSecond(s)));
+
+	if(tfirst == e_value && tsecond == e_value) {
+		S vf = getValue(first), vs = getValue(second);
+		//if(lconj) vf = conjugate(vf);
+		//if(rconj) vs = conjugate(vs);
+		//if(neg) vf = -vf, vs = -vs;
+		return mkVal<S>(vf - vs);
+	}
+	if(tfirst == e_value) {
+		auto vfirst = getValue(first);
+		if(vfirst == vfirst*0)
+			return second;
+		if(tsecond == e_variable) {
+			auto vsecond = getValue(second);
+			if(vfirst == vsecond) {
+				//return mkProduct<S>(first, mkDifference<S>(mkOne<S>(),
+				return mkProduct(first, mkDifference(mkOne<S>(),
+						mkVar<S>(getName(second))));
+			}
+		}
+	}
+	if(tsecond == e_value) {
+		auto vsecond = getValue(second);
+		if(vsecond == vsecond*0)
+			return second;
+		if(tfirst == e_variable) {
+			auto vfirst = getValue(first);
+			if(vsecond == vfirst) {
+				//return mkProduct<S>(second, mkDifference<S>(mkOne<S>(),
+				return mkProduct(second, mkDifference(mkOne<S>(),
+						mkVar<S>(getName(first))));
+			}
+		}
+	}
+	if(tfirst == e_variable && tsecond == e_variable) {
+		auto nfirst = getName(first), nsecond = getName(second);
+		if(nfirst == nsecond) {
+			auto lval = getValue(first), rval = getValue(second);
+			//if(lconj) lval = conjugate(lval);
+			//if(rconj) rval = conjugate(rval);
+			auto val = lval - rval;
+			if(val == val*0) return mkZero<S>();
+			//if(neg) val = -val;
+			return mkVar<S>(nfirst, val);
+		}
+		if(nfirst > nsecond)
+			return mkDifference(second, first);
+		return mkDifference(first, second);
+	}
+	/*if(lconj && rconj) {
+		auto out = mkConj(mkDifference(first, second));
+		return neg ? mkNeg(out) : out;
+	}
+	if(lconj) first = mkConj(first);
+	if(rconj) second = mkConj(second);
+	auto out = mkDifference(first, second);
+	return neg ? mkNeg(out) : out;*/
+	return mkDifference(first, second);
+}
+
 template<class S>
 SymbolPtr<S> reduce(Product<S> const& p) {
 	auto first = getFirst(p), second = getSecond(p);
@@ -186,7 +266,7 @@ SymbolPtr<S> reduce(SymbolPtr<S> const& p) {
 		case e_log: return reduce((Log<S> const&) *p);
 		case e_inverse: return reduce((Inverse<S> const&) *p);
 		case e_sum: return reduce((Sum<S> const&) *p);
-		//case e_difference: return reduce((Difference<S> const&) *p);
+		case e_difference: return reduce((Difference<S> const&) *p);
 		case e_product: return reduce((Product<S> const&) *p);
 		//case e_quotient: return reduce((Quotient<S> const&) *p);
 		default: return p;
