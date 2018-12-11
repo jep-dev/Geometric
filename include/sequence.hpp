@@ -32,6 +32,7 @@ template<char... I> using SeqC = Seq<char, I...>;
 template<unsigned... I> using SeqU = Seq<unsigned, I...>;
 template<int... I> using SeqI = Seq<int, I...>;
 template<long... I> using SeqL = Seq<long, I...>;
+template<std::size_t... I> using SeqSz = Seq<std::size_t, I...>;
 //template<unsigned char... I> using SeqUC = Seq<unsigned char, I...>;
 //template<unsigned short... I> using SeqUS = Seq<unsigned short, I...>;
 //template<unsigned long... I> using SeqUL = Seq<unsigned long, I...>;
@@ -59,10 +60,15 @@ constexpr auto append(Detail::Seq<T, IN...> = {})
 template<class T, T... I0, T I1, T... IN>
 constexpr auto prepend(Detail::Seq<T, I0...> = {}, Detail::Seq<T, I1, IN...> = {})
 	-> Detail::Seq<T, I0..., I1, IN...> { return {}; }
+/*template<class S, S I0, class T> constexpr auto prepend(T const& t)
+	-> decltype(prepend(Detail::Seq<S, I0>{}, t)) { return {}; }*/
+
 /** Appends a sequence to another. */
 template<class T, T... I0, T I1, T... IN>
 constexpr auto append(Detail::Seq<T, I0...> = {}, Detail::Seq<T, I1, IN...> = {})
 	-> Detail::Seq<T, I1, IN..., I0...> { return {}; }
+/*template<class S, S I0, class T> constexpr auto append(T const& t)
+	-> decltype(append(Detail::Seq<S, I0>{}, t)) { return {}; }*/
 
 template<class T, T... IN>
 constexpr std::size_t getSize(Detail::Seq<T, IN...> = {}) { return sizeof...(IN); }
