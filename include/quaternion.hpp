@@ -29,14 +29,12 @@ template<class S> struct Quaternion {
 		}
 	}
 
-	operator DualQuaternion<S>(void) const { return {w, x, y, z}; }
 	template<class T> bool operator==(Quaternion<T> const& rhs) const
 		{ return w == rhs.w && x == rhs.x && y == rhs.y && z == rhs.z; }
 
-	template<class T>
-	operator DualQuaternion<T>(void) const {
-		return {w, x, y, z};
-	}
+	//operator DualQuaternion<S>(void) const { return {w, x, y, z}; }
+	template<class T = S>
+	operator DualQuaternion<T>(void) const { return {T(w), T(x), T(y), T(z)}; }
 
 	/** Square, as in product with itself. */
 	S square(void) const { return w*w - x*x - y*y - z*z; }
