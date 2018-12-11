@@ -44,7 +44,13 @@ int main(int argc, const char *argv[]) {
 		u, mkNeg(u), mkConj(u), mkExp(u), mkLog(u), //1/u,
 		v, mkNeg(v), mkConj(v), mkExp(v), mkLog(v), //1/u,
 		w, mkNeg(w), mkConj(w), mkExp(w), mkLog(w), //1/u,
-		x, mkNeg(x), mkConj(x), mkExp(x), mkLog(x), //1/x
+		// x, mkNeg(x), mkConj(x), mkExp(x), mkLog(x), //1/x
+		mkSum(x, x),
+		mkSum(u, u), mkSum(u, x), mkSum(x, u),
+		mkSum(u, v),
+		mkDifference(x, x),
+		mkDifference(u, u), mkDifference(u, x), mkDifference(x, u),
+		mkDifference(u, v),
 	};
 	unsigned prec = 2, N = symbols.size();
 	vector<string> lines(N+1, "");
@@ -83,7 +89,7 @@ int main(int argc, const char *argv[]) {
 		Streams::level_insert(lines, "  ");
 		lines[0] += string("d/d") + ch;
 		for(unsigned i = 0; i < N; i++) {
-			lines[i+1] += to_string(symbols[i] -> derive(ch), prec);
+			lines[i+1] += to_string(reduce(reduce(symbols[i]) -> derive(ch)), prec);
 		}
 		Streams::level_insert(lines, "  ");
 	}
@@ -95,7 +101,12 @@ int main(int argc, const char *argv[]) {
 		}
 		Streams::level_insert(lines, "  ");
 	}*/
+	cout << "Functions, reductions, dependence on "
+			"and derivation with respect to variables" << endl;
+	cout << "  Note that exponent is written exp "
+			"and that e is an operator like i.\n" << endl;
 	for(auto const& line : lines)
 		cout << line << endl;
+
 
 }
