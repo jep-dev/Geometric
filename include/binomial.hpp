@@ -3,23 +3,48 @@
 
 #include "sequence.hpp"
 
-template<unsigned D, class S = unsigned>
-struct Binomial: Binomial<D-1, S> {
-	typedef Binomial<D-1, S> base_type;
-	typedef typename base_type::value_type prev_type;
-	typedef decltype(Detail::prepend<S, 0>(prev_type{})
-			+ Detail::append<S, 0>(prev_type{})) value_type;
-};
-template<class S>
-struct Binomial<0, S> {
-	typedef Binomial<0, S> base_type;
-	typedef Detail::Seq<S, 1> value_type;
+namespace Detail {
+
+using Size = std::size_t;
+
+template<Size N> struct Binomial;
+template<Size N> struct Binomial: Binomial<N-1> {
+	typedef Binomial<N-1> base_type;
+	//typedef typename base_type::value_type next_type;
+	typedef ValueType_t<false, base_type> next_type;
+	typedef decltype(prepend<Size, 0>(next_type{})
+			+ append<Size, 0>(next_type{})) value_type;
 };
 
-template<class S, unsigned D, class T>
-S& operator<<(S &os, Binomial<D, T> const&) {
-	typedef typename Binomial<D, T>::value_type value_type;
+template<>
+struct Binomial<0> {
+	typedef Binomial<0> base_type;
+	typedef SeqSz<1> value_type;
+};
+
+/*template<class C, class T, class S = ValueType_t<false, C>, class U = void>
+struct SeqInit;
+
+// template<class C, class S, class T, T... I>
+// struct SeqInit<C, S, Seq<T, I...>>
+template<class C, class S, class T, T... I>
+struct SeqInit<C, Seq<T, I...>, S, Void_t<decltype(C{I...})>> {
+private:
+	C m_value = {I...};
+public:
+	// This will not work for array types! Should I care?
+	operator C && (void) { return std::move(m_value); }
+	static C && get(void) { return std::move(SeqInit()); }
+	virtual ~SeqInit(void) {}
+};
+*/
+
+template<class OS, std::size_t N>
+OS& operator<<(OS &os, Binomial<N> const&) {
+	typedef ValueType_t<false, Binomial<N>> value_type;
 	return os << value_type{}, os;
+}
+
 }
 
 #endif
