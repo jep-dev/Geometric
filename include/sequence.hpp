@@ -9,16 +9,28 @@ namespace Detail {
 template<class T = void, T... I> struct Seq {
 	typedef T type;
 };
-template<class T, T T0, T... TN> struct Seq<T, T0, TN...> {
+template<class T, T I0, T... IN> struct Seq<T, I0, IN...> {
 	typedef T type;
-	template<unsigned I>
-	static constexpr T nth(std::integral_constant<unsigned, I> = {}) {
-		return Seq<T, TN...>::nth(std::integral_constant<unsigned, I-1>{});
-	}
-	static constexpr T nth(std::integral_constant<unsigned, 0>) {
-		return T0;
-	}
+	template<std::size_t N>
+	static constexpr T get(std::integral_constant<std::size_t, N> = {})
+		{ return Seq<T, IN...>::get(std::integral_constant<std::size_t, N-1>{}); }
+	static constexpr T get(std::integral_constant<std::size_t, 0>)
+		{ return I0; }
+	template<std::size_t N>
+	static constexpr T get(Seq<std::size_t, N>)
+		{ return std::integral_constant<std::size_t, get<N>()>::value; }
+
+	template<std::size_t N>
+	using nth_type = Seq<T, get<N>()>;
 };
+
+template<std::size_t N, class T, T... I>
+constexpr T get(Seq<T, I...>) {
+	return Seq<T, I...>::get(Seq<std::size_t, N>{});
+}
+
+
+
 template<class T> struct SeqArray;
 template<class T, T... I> struct SeqArray<Seq<T, I...>> {
 	static constexpr T value[sizeof...(I)] = {I...};
@@ -161,6 +173,141 @@ template<unsigned N, class S = unsigned, S A = 1, S B = 1, S... C>
 struct Fibonacci: Fibonacci<N-1, S, A+B, A, B, C...> {};
 template<class S, S A, S B, S... C>
 struct Fibonacci<0, S, A, B, C...>: std::integral_constant<S, A> {};
+
+
+
+template<class S, S A, S B>
+struct LexSortConstant {
+	using value_type = S;
+	// static constexpr int value = A < B;
+	static constexpr bool lt = A<B, eq = A==B, gt = A>B, le = A<=B, ge = A>=B;
+	static constexpr S first = lt ? A : B, second = lt ? B : A;
+};
+
+
+template<class S, S A, S B = A, S... C>
+struct MinimaxSeq: std::conditional_t< A<B, Seq<S, A, B>, Seq<S, B, A> > {
+	using type = std::conditional_t< A<B, Seq<S, A, B>, Seq<S, B, A> >;
+	static constexpr S minimum = get<0>(type{}), maximum = get<1>(type{});
+};
+
+template<class S, S A, S B, S C, S... D>
+struct MinimaxSeq<S, A, B, C, D...>:
+	MinimaxSeq<S, (A < B) ? ((A < C) ? A : C) : ((B < C) ? B : C),
+		(A > B) ? ((A > C) ? A : C) : ((B < C) ? B : C), D...> {};
+
+template<class S, S... A, class T = S>
+constexpr auto min(Seq<S, A...>, Tag<T> = {})
+	-> typename MinimaxSeq<S, A...>::type { return {}; }
+template<class S, S... A, class T = S>
+constexpr auto max(Seq<S, A...>, Tag<T> = {})
+	-> typename MinimaxSeq<S, A...>::type { return {}; }
+
+/*
+ * Note - inserting at point N, popping N off the head, reversing all N elements, etc.
+ * incur linear costs. Something like sorting that could be done in O(N log N) may only be
+ * possible in O(N^2) without O(1) splicing, random access, etc.
+ *
+ * Assume that's correct, sorting is O(N^2).
+ * If you have two sequences a0<...<aM and b0<...<bN, you can merge sort in O(M+N).
+ * Sorting A and B independently then merge sorting is O(M^2 + N^2 + M + N) = O(M^2 + N^2).
+ * If A and B are unsorted, merging A and B is just sorting the concatenation of both,
+ * so that's O((M + N)^2) = O(M^2 + N^2). 
+ * It does hint that the average case is significantly better with conventional
+ */
+
+/* Can you represent a deque?
+Rev({}) = {}
+Rev({a, b ...}) = Rev({b ...}) + {a}
+		= {[z] ... b, a}
+// Rev({a, b, c ...}) = Rev({c ...}) + {b, a}
+// Rev({a, b, c, d ...}) = Rev({d ...}) + {c, b, a}
+// etc. - you don't need the commented lines, but
+// these decrease the average case performance (stack size).
+*/
+
+/*template<class S, S A>
+auto reverse(Seq<S, A> = {}) -> Seq<S, A> { return {}; }
+template<class S, S A, S B, S... C>
+auto reverse(Seq<S, A, B, C...> = {})
+	-> decltype(reverse(Seq<S, B, C...>{}) + Seq<S,A>{}) { return {}; }
+
+// template<template<class, class> class CMP>
+// auto reverse(Tag<> = {}, Tag<CMP> = {}) -> Tag<> { return {}; }
+
+
+// template<class S, S A, S... B>
+// struct RevSeq: decltype(reverse<S, A, B...>()) {};
+*/
+
+/*
+Pop<0>({a ...}) = {a ...}
+Pop<N>({a, b ...}) = Pop<N-1>({b ...})
+// Pop<3>({abcdef})
+// Pop<2>({bcdef})
+// Pop<1>({cdef})
+// {def}
+
+Head<0>({a ...}) = {}
+Head<N>({a, b ...}) = {a} + Head<N-1>(Pop<1>({b ...}))
+// Head<3>({abcdef})
+// {a}+Head<2>(Pop<1>({abcdef}))
+// {a}+Head<2>({bcdef})
+// {a}+{b}+Head<1>(Pop<1>({bcdef}))
+// {ab}+Head<1>({cdef})
+// {ab}+{c}
+// {abc}
+
+RevHead<0>({a ...}) = {}
+RevHead<N>({a, b ...}) = RevHead<N-1>({b ...}) + {a}
+// RevHead<N>({a ...}) = Rev(Head<N>({a ...}))
+//
+// RH<3>({abcdef})
+// RH<2>({bcdef})+{a}
+// RH<1>({cdef})+{b}+{a}
+// RH<0>({def})+{c}+{ba}
+// {}+{cba}
+
+make_tail_seq<N>({a ...}) = make_head_seq<N>(make_rev_seq({a...}))
+make_rev_tail_seq<N>({a ...}) = make_rev_seq(make_tail_seq<N>({a...}))
+
+
+Now, if a deque of N elements should be split at point M,
+{I...} -> {RevHead<N>({I...}), Pop<N>({I...})
+   .-[N-1, ..., 0] = first_type = RevHead<N>({I...})
+   '--[N, ..., M-1] = second_type = Pop<N>({I...})
+template<class S, S... A, S... B>
+DequeSeq<Seq<S, A...>, Seq<S, B...>> { ... }
+
+template<int N, class S, S... A>
+make_head_seq(Seq<S, A...> a = {})
+	-> Head<N, S, A...> { ... }
+template<int N, class S, S... A>
+make_rev_head_seq(Seq<S, A...> a = {})
+	-> RevHead<N, S, A...> { ... }
+template<int N, class S, S... A>
+make_deque_seq(Seq<S, A...> a = {})
+	-> Deque<ValueType_t<RevHead<N,S,A...>>, ValueType_t<Pop<N,S,A...>>>
+
+template<int N, class S, S... A, S... B>
+shift(Deque<Seq<S,A...>,Seq<S,B...>> = {})
+
+template<int N, class S, S... A, S... B>
+shift(Deque<Seq<S,A...>,Seq<S,B...>> = {})
+-> conditional_t<N >= 0,
+	Deque<Pop<N,S,A...>,
+		decltype(RevHead<N,S,A...>{}+Seq<S,B...>{})>,
+	Deque<decltype(RevHead<N,S,B...>{}+Seq<S,A...>{}),
+		Pop<N,S,B...>>
+> { ... }
+
+If a queue of N elements should be split at point M,
+   .-[0, ..., N-1] = first_type = Head<N>({I...})
+   '--[N, ..., M-1] = second_type = Pop<N>({I...})
+
+*/
+
+
 
 }
 
