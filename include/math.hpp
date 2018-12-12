@@ -16,7 +16,7 @@ template<class L, class S> L& operator<<(L&, Quaternion<S> const&);
 template<class L, class S> L& operator<<(L&, DualQuaternion<S> const&);
 
 template<class S, class DELIM = const char*>
-std::enable_if_t<std::is_arithmetic<S>::value, std::string>
+std::enable_if_t<std::is_scalar<S>::value, std::string>
 to_string(S s, unsigned prec = 0, bool show_zero = true, bool fill_zeroes = false) {
 	using namespace std;
 	if(isnan(s))
