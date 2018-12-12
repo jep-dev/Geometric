@@ -12,6 +12,8 @@ using std::enable_if_t;
 using std::is_convertible;
 using std::is_default_constructible;
 using std::is_constructible;
+template<class T, T V>
+using Constexpr = std::integral_constant<T, V>;
 
 template<class S> static constexpr bool isScalar(Tag<S> = {}) { return is_scalar<S>::value; }
 template<class S> static constexpr bool isClass(Tag<S> = {}) { return is_class<S>::value; }
@@ -78,39 +80,59 @@ struct Unit {
 	constexpr Unit(void) {}
 };
 
-template<int SQ, int CO, class... U> struct Units;
+template<int SQ, int CO, class U> struct Units;
 template<int SQ, int CO, char... C, int... POW>
-struct Units<SQ, CO, Unit<C,POW>...> {
+struct Units<SQ, CO, Tag<Unit<C,POW>...>> {
 	static constexpr int square = SQ,
 			coefficient = SumSeq<SeqI<((POW&2) ? SQ : 1)...>>::value;
-	template<int N> static constexpr auto pow(Units const& u, std::integral_constant<int, N> n = {}) {
-		return Units<SQ, SumSeq<SeqI<(((POW*N) & 2) ? SQ : 1)...> >::value,
-			decltype(Unit<C, POW>{} ^ N)...> {};
-	}
-	template<int N> static constexpr auto pow(Units const& u, Seq<int, N> n = {}) {
-		return Units<SQ, SumSeq<SeqI<(((POW*N) & 2) ? SQ : 1)...> >::value,
-			decltype(Unit<C, POW>{} ^ N)...> {};
-	}
-	template<class S>
-	constexpr auto operator^(S const& s) const { return pow(*this, s); }
+	using value_type = Units<square, coefficient, Tag<Unit<C,POW & 1>...>>;
 	template<char C1, int POW1>
 	constexpr auto operator*(Unit<C1, POW1>)
 		-> Units<SQ, CO * ((POW1 & 2) ? SQ : 1),
-			Unit<C,POW>..., Unit<C1, POW1>> { return {}; }
+			Tag<Unit<C,POW>..., Unit<C1, POW1>>> { return {}; }
 };
+
 template<int SQ, int CO, char C1, char... C, int POW1, int... POW>
 constexpr auto operator*(Unit<C1, POW1> const&,
 		Units<SQ, CO, Unit<C,POW>...> const&)
 	-> Units<SQ, CO * ((POW1 & 2) ? SQ : 1),
 		Unit<C1, POW1>, Unit<C,POW>...> { return {}; }
 
-template<int SQ = -1, int CO = 1, char... C>
-Units<SQ, CO, Unit<C, 1>...>
-units(SeqC<C...> = {}) { return {}; }
+template<int SQ = -1, int CO = 1, char... C, class... T>
+Units<SQ, CO, Tag<Unit<C, 1>...>>
+units(SeqC<C...> = {}, T...) { return {}; }
+
+template<int SQ = -1, int CO = 1, char... C, int... POW>
+Units<SQ, CO, Unit<C, POW>...> // Replace CO with calculated coefficient
+units(Tag<SeqC<C...>, SeqI<POW...>> = {}) { return {}; }
+template<int SQ = -1, int CO  = 1, char... C, int... POW>
+auto units(SeqC<C...>, SeqI<POW...> = {})
+	-> decltype(units(Tag<SeqC<C...>, SeqI<POW...>>{})) { return {}; }
 
 template<int SQ = -1, int CO = 1, char... C>
 Units<SQ, CO, Unit<C, 1>...>
 units(std::integral_constant<char, C> ...) { return {}; }
+
+
+
+/*template<int N, int SQ, int CO, char... C>
+static constexpr auto pow(Units<SQ, CO, SeqC<C...>> const& u, Constexpr<int, N> n = {}) {
+	return Units<SQ, SumSeq<SeqI<((N & 2) ? SQ : 1)...> >::value,
+		decltype(Unit<C>{} ^ N)...> {};
+}*/
+template<int N, int SQ, int CO, char... C, int... POW>
+static constexpr auto pow(Units<SQ, CO, SeqC<C...>> const& u, Constexpr<int, N> n = {}) {
+	return Units<SQ, SumSeq<SeqI<(((N*POW) & 2) ? SQ : 1)...> >::value,
+		decltype(Unit<C>{} ^ N)...> {};
+}
+/*template<int N> static constexpr auto pow(Units const& u, Seq<int, N> n = {}) {
+	return Units<SQ, SumSeq<SeqI<(((POW*N) & 2) ? SQ : 1)...> >::value,
+		decltype(Unit<C, POW>{} ^ N)...> {};
+}
+template<class S>
+constexpr auto operator^(S const& s) const { return pow(*this, s); }*/
+
+
 
 }
 
