@@ -85,8 +85,7 @@ template<class S> SymbolPtr<S> reduce(Value<S> const& v);
 template<class S> using ValuePtr = std::shared_ptr<Value<S>>;
 template<class S, class... T> SymbolPtr<S> mkVal(T &&... t)
 	{ return (SymbolPtr<S>) std::make_shared<Value<S>>(std::forward<T>(t)...); }
-//template<class S, class T, class E = std::enable_if_t<std::is_convertible<T,S>::value, T>>
-template<class S, class T, class E = Detail::Compatible_t<S,T>>
+template<class S, class T, class E = Detail::ConvertibleFrom_t<S,T>>
 SymbolPtr<S> mkVal(E const& e)
 	{ return (SymbolPtr<S>) std::make_shared<Value<S>>((S) e); }
 
@@ -100,8 +99,7 @@ template<class S> SymbolPtr<S> reduce(Variable<S> const& v);
 template<class S> using VariablePtr = std::shared_ptr<Variable<S>>;
 template<class S, class... T> SymbolPtr<S> mkVar(T &&... t)
 	{ return (SymbolPtr<S>) std::make_shared<Variable<S>>(std::forward<T>(t)...); }
-//template<class S, class T, class E = std::enable_if_t<std::is_convertible<T,S>::value, T>>
-template<class S, class T, class E = Detail::Compatible_t<S,T>>
+template<class S, class T, class E = Detail::ConvertibleFrom_t<S,T>>
 SymbolPtr<S> mkVar(char name, E const& e)
 	{ return (SymbolPtr<S>) std::make_shared<Variable<S>>(name, (S) e); }
 
