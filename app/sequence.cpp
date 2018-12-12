@@ -1,11 +1,26 @@
 #include <iostream>
 //#include <iomanip>
-//#include <sstream>
+#include <sstream>
 
 #include "binomial.hpp"
 #include "dual.hpp"
 
 using namespace Detail;
+
+template<class S, class T, T T0, T... TN>
+S& operator<<(S& os, Seq<T, T0, TN...> const&)
+	{ return os << T0, os; }
+template<class S, class T, T T0, T T1, T... TN>
+S& operator<<(S& os, Seq<T, T0, T1, TN...> const&)
+	{ return os << T0 << ", " << Seq<T, T1, TN...>{}, os; }
+
+template<class T, T... TN>
+std::string to_string(Seq<T, TN...> const& seq) {
+	std::ostringstream oss;
+	oss << seq;
+	return "{" + oss.str() + "}";
+}
+
 
 template<class S>
 S& testBinomial(S &s) { return s; }
@@ -41,4 +56,6 @@ int main(int argc, const char *argv[]) {
 
 	cout << "Binomial coefficients: " << endl;
 	testBinomial<ostream&, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9>(cout) << endl;
+
+	//
 }
