@@ -67,94 +67,55 @@ template<class S, class T>
 using ConvertibleTo_t = std::enable_if_t<std::is_convertible<T,S>::value, S>;
 
 template<class S, class... T> struct SumType { typedef S value_type; };
+template<class R, class S, class... T> struct SumType<R,S,T...> {
+	using value_type = decltype(declval<R>()
+		+ declval<Value_t<false, SumType<S,T...>>>());
+};
 template<class S, class... T> struct DifferenceType { typedef S value_type; };
+template<class R, class S, class... T> struct DifferenceType<R,S,T...> {
+	using value_type = decltype(declval<R>()
+		* declval<Value_t<false, DifferenceType<S,T...>>>());
+};
 template<class S, class... T> struct ProductType { typedef S value_type; };
+template<class R, class S, class... T> struct ProductType<R,S,T...> {
+	using value_type = decltype(declval<R>()
+		* declval<Value_t<false, ProductType<S,T...>>>());
+};
 template<class S, class... T> struct QuotientType { typedef S value_type; };
-template<bool RECURSE, class S, class... U>
-struct SumValueType { typedef Value_t<RECURSE, S> value_type; };
-template<bool RECURSE, class S, class... U>
-struct DifferenceValueType { typedef Value_t<RECURSE, S> value_type; };
-template<bool RECURSE, class S, class... U>
-struct ProductValueType { typedef Value_t<RECURSE, S> value_type; };
-template<bool RECURSE, class S, class... U>
-struct QuotientValueType { typedef Value_t<RECURSE, S> value_type; };
-
-//using SumType_t = typename SumType<T...>::value_type;
-//using DifferenceType_t = typename DifferenceType<T...>::value_type;
-//using ProductType_t = typename ProductType<T...>::value_type;
-//using QuotientType_t = typename QuotientType<T...>::value_type;
-//using SumValue_t = typename SumValueType<R, T...>::value_type;
-//using DifferenceValue_t = typename DifferenceValueType<R, T...>::value_type;
-//using ProductValue_t = typename ProductValueType<R, T...>::value_type;
-//using QuotientValue_t = typename QuotientValueType<R, T...>::value_type;
-
-template<bool R, class... T>
-using SumValue_t = Value_t<false, SumValueType<R, T...>>;
-template<class... T>
-using SumType_t = Value_t<false, SumType<T...>>;
-template<bool R, class... T>
-using DifferenceValue_t = Value_t<false, DifferenceValueType<R, T...>>;
-template<class... T>
-using DifferenceType_t = Value_t<false, DifferenceType<T...>>;
-template<bool R, class... T>
-using ProductValue_t = Value_t<false, ProductValueType<R, T...>>;
-template<class... T>
-using ProductType_t = Value_t<false, ProductType<T...>>;
-template<bool R, class... T>
-using QuotientValue_t = Value_t<false, QuotientValueType<R, T...>>;
-template<class... T>
-using QuotientType_t = Value_t<false, QuotientType<T...>>;
-
-// template<bool R, class... T> using DifferenceValue_t = Value_t<R, DifferenceType<T...>>;
-// template<class... T> using DifferenceType_t = DifferenceValue_t<false, T...>;
-// template<bool R, class... T> using ProductValue_t = Value_t<R, ProductType<T...>>;
-// template<class... T> using ProductType_t = ProductValue_t<false, T...>;
-// template<class... T>
-// using QuotientType_t = Value_t<false, QuotientType<T...>>;
-// template<bool R, class... T>
-// using SumValue_t = Value_t<false, SumValueType<R, T...>>;
-// template<bool R, class... T>
-// using DifferenceValue_t = Value_t<false, DifferenceValueType<R, T...>>;
-// template<bool R, class... T>
-// using ProductValue_t = Value_t<false, ProductValueType<R, T...>>;
-// template<bool R, class... T>
-// using QuotientValue_t = Value_t<false, QuotientValueType<R, T...>>;
-
-template<class S, class T, class... U> struct SumType<S, T, U...> {
-	typedef decltype(declval<S>() + declval<SumType_t<T, U...>>()) value_type;
-};
-template<bool R, class S, class T, class... U>
-struct SumValueType<R, S, T, U...> {
-	typedef decltype(declval<Value_t<R, S>>()
-		+ declval<Value_t<R, T, U...>>()) value_type;
+template<class R, class S, class... T> struct QuotientType<R,S,T...> {
+	using value_type = decltype(declval<R>()
+		/ declval<Value_t<false, QuotientType<S,T...>>>());
 };
 
-template<class S, class T, class... U> struct DifferenceType<S, T, U...> {
-	typedef decltype(declval<S>() - declval<DifferenceType_t<T, U...>>()) value_type;
+template<bool R, class... S> struct SumValue {
+	using value_type = Value_t<false, SumType<Value_t<R, S>...>>;
+};
+template<bool R, class... S> struct DifferenceValue {
+	using value_type = Value_t<false, DifferenceType<Value_t<R, S>...>>;
+};
+template<bool R, class... S> struct ProductValue {
+	using value_type = Value_t<false, ProductType<Value_t<R, S>...>>;
+};
+template<bool R, class... S> struct QuotientValue {
+	using value_type = Value_t<false, QuotientType<Value_t<R, S>...>>;
 };
 
-template<bool R, class S, class T, class... U>
-struct DifferenceValueType<R, S, T, U...>
-	{ typedef decltype(declval<Value_t<R, S>>()
-		- declval<Value_t<R, T, U...>>()) value_type; };
-
-template<class S, class T, class... U> struct ProductType<S, T, U...> {
-	typedef decltype(declval<S>() * declval<ProductType_t<T, U...>>()) value_type;
-};
-template<bool R, class S, class T, class... U>
-struct ProductValueType<R, S, T, U...> {
-	typedef decltype(declval<Value_t<R, S>>()
-		* declval<Value_t<R, T, U...>>()) value_type;
-};
-
-template<class S, class T, class... U> struct QuotientType<S, T, U...> {
-	typedef decltype(declval<S>() / declval<QuotientType_t<T, U...>>()) value_type;
-};
-template<bool R, class S, class T, class... U>
-struct QuotientValueType<R, S, T, U...> {
-	typedef decltype(declval<Value_t<R, S>>()
-		/ declval<Value_t<R, T, U...>>()) value_type;
-};
+template<class... S>
+using SumType_t = Value_t<false, SumType<S...>>;
+template<class... S>
+using DifferenceType_t = Value_t<false, DifferenceType<S...>>;
+template<class... S>
+using ProductType_t = Value_t<false, ProductType<S...>>;
+template<class... S>
+using QuotientType_t = Value_t<false, QuotientType<S...>>;
+template<bool R, class... S>
+using SumValue_t = Value_t<false, SumValue<R, S...>>;
+template<bool R, class... S>
+using DifferenceValue_t = Value_t<false, DifferenceValue<R, S...>>;
+template<bool R, class... S>
+using ProductValue_t = Value_t<false, ProductValue<R, S...>>;
+template<bool R, class... S>
+using QuotientValue_t = Value_t<false, QuotientValue<R, S...>>;
 
 }
 
