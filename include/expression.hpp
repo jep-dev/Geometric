@@ -49,7 +49,7 @@ template<class S, unsigned N> struct NarySymbol: Symbol<S> {
 template<class S> struct NullarySymbol: NarySymbol<S, 0> {
 	S value = {1};
 
-	template<class T0, class... T, class SV = Detail::ValueType_t<true, S>,
+	template<class T0, class... T, class SV = Detail::Value_t<true, S>,
 		class TN = std::enable_if_t<std::is_arithmetic<T0>::value
 			&& std::is_convertible<T0, SV>::value, T0>>
 	NullarySymbol(T0 t0, T ... t): value{SV(t0), SV(t)...} {}
