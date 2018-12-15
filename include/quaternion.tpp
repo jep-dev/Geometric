@@ -10,8 +10,8 @@ std::string to_string(Quaternion<S> const& qin, T &&... t) {
 	std::string out;
 
 	for(auto i : {'e', 'i', 'j', 'k'}) {
-		auto const& v = qin[i];
-		auto stringified = to_string(v, std::forward<T>(t)...);
+		S const& v = qin[i];
+		auto stringified = to_string((S) v, std::forward<T>(t)...);
 		if(stringified == "0") continue;
 		if(v > 0 && nz) out += '+';
 		if(out == "1") {}
