@@ -34,10 +34,7 @@ S& print_valueTypes(S& s, T const& rhs) {
 			s << "deep " << prettyTrunc<VTR_T>();
 		}
 	}
-	return s << std::endl, s;
-	/*s << ", contains shallow ";
-	s << prettyTrunc<Value_t<false, T>>() << " and deep "
-	return print_types(s, rhs, Value_t<false, T>(), Value_t<true, T>());*/
+	return endl(s), s;
 }
 template<class S, class T, class U>
 std::ostream& print_sumValueTypes(S &s, T const& t, U const& u) {
@@ -63,12 +60,6 @@ std::ostream& print_sumValueTypes(S &s, T const& t, U const& u) {
 
 template<class T> struct T1 { typedef T value_type; };
 template<class T> using T2 = T1<T1<T>>;
-//template<class T> struct T2 { typedef T1<T> value_type; };
-// template<class T> struct T3 : T1<T> { };
-
-/*template<class S, class T>
-auto operator+(S const& lhs, T const& rhs)
-	-> T3<T1<Detail::SumValue_t<true, S, T>>> { return {}; }*/
 
 template<class T> using VAL = Detail::Value_t<false, T>;
 template<class T> using VALR = Detail::Value_t<true, T>;
