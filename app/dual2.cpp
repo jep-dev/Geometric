@@ -16,35 +16,50 @@ int main(int argc, const char *argv[]) {
 	using namespace Dual2;
 	using namespace std;
 
+/*
+template<class S, class DELIM = const char*>
+std::enable_if_t<std::is_scalar<S>::value, std::string>
+to_string(S s, unsigned prec = 0, bool show_zero = true, bool fill_zeroes = false)
+*/
 	typedef float T;
+	unsigned prec = 3;
+	bool show_zero = false, fill_zeroes = false;
+	auto toStr = [=] (auto x) -> string
+		{ return to_string(x, prec, show_zero, fill_zeroes); };
+
+	T pi = M_PI;
+	auto strPi = "(" + toStr(pi) + ")";
 	typedef Quaternion<T> Q;
 
 	std::ostringstream oss;
-
 	Wrapper<T> wtDef;
 	decltype(auto) tDef = unwrap(wtDef);
 	oss << Pretty<decltype(wtDef)>() << " -> "
-			<< Pretty<decltype(tDef)>() << " -> " << tDef << endl;
-	// Dual2::Wrapper<float, void> -> float& -> 0
+			<< Pretty<decltype(move(tDef))>() << " -> "
+			<< toStr(tDef) << endl;
+	// Dual2::Wrapper<float, void> -> float&& -> 0
 
-	Wrapper<T> wtVal = wrap(T(M_PI));
+	Wrapper<T> wtVal = wrap(pi);
 	decltype(auto) tVal = unwrap(wtVal);
-	oss << Pretty<decltype(wtVal)>() << " -> "
-			<< Pretty<decltype(tVal)>() << " -> " << tVal << endl;
-	// Dual2::Wrapper<float, void> -> float& -> 3.14159
+	oss << Pretty<decltype(wtVal)>() << ' ' << strPi << " -> "
+			<< Pretty<decltype(move(tVal))>() << " -> "
+			<< toStr(tVal) << endl;
+	// Wrapper<float, void> -> float&& -> 3.141
 
 	Wrapper<Q> wsDef;
 	decltype(auto) sDef = unwrap(wsDef);
-	oss << Pretty<decltype(wsDef)>() << " -> "
-			<< Pretty<decltype(sDef)>() << " -> " << sDef << endl;
-	// Dual2::Wrapper<Quaternion<float>, void> -> Quaternion<float>& -> 0
+	oss << Pretty<decltype(move(wsDef))>() << " -> "
+			<< Pretty<decltype(move(sDef))>() << " -> "
+			<< toStr(sDef) << endl;
+	// Wrapper<Quaternion<float>, void> -> Quaternion<float>&& -> 0
 
 	Wrapper<Q> wsVal(T(M_PI));    // OK
 	// Wrapper<Q> wsVal{T(M_PI)}; // OK
 	decltype(auto) sVal = unwrap(wsVal);
-	oss << Pretty<decltype(wsVal)>() << " -> "
-			<< Pretty<decltype(sVal)>() << " -> " << sVal << endl;
-	// Dual2::Wrapper<Quaternion<float>, void> -> Quaternion<float>& -> 3.141e
+	oss << Pretty<decltype(wsVal)>() << ' ' << strPi << " -> "
+			<< Pretty<decltype(move(sVal))>() << " -> "
+			<< toStr(sVal) << endl;
+	// Wrapper<Quaternion<float>, void> -> Quaternion<float>&& -> 3.141e
 
 
 	typedef Unit<> R;
@@ -61,41 +76,12 @@ int main(int argc, const char *argv[]) {
 	oss << Pretty<decltype(xy)>() << " * " << Pretty<decltype(z)>() << "\n"
 			"     = " << Pretty<decltype(xyz)>() << endl;
 
-	//Xi xi(1); Yj yj(2); Zk zk(3);
-	//QE qE(S{0, 1, 2, 3});
-	//QE qE = S{0, 1, 2, 3};
-	//  QE qE = QE(0, 1, 2, 3); // No Unit(int...)
-	//  QE qE{0, 1, 2, 3};      // No Unit(<brace-list>)
-	//  QE qE = {0, 1, 2, 3};
-
-	/*typedef Unit<S, ID> id_t;
-	typedef Unit<S, BETA> beta_t;
-	typedef Unit<S, EPS> eps_t;
-
-	const id_t id = {1};
-	const beta_t beta = {0, 4, 5, 6};
-	const eps_t eps = {0, 2, 3, 4};
-
-	auto id1 = id.get<ID>(), // idB = id.get<BETA>(), idE = id.get<EPS>(),
-		betaB = beta.get<BETA>(), // beta1 = beta.get<ID>(), betaE = beta.get<EPS>(),
-		epsE = eps.get<EPS>(), // eps1 = eps.get<ID>(), epsB = eps.get<BETA>(),
-		fId1 = get<ID>(id),
-		fBetaB = get<BETA>(beta),
-		fEpsE = get<EPS>(eps);*/
-	/*oss << id1 << ", " << betaB << ", " << epsE << endl;
-	oss << boolalpha << (id1 == fId1) << ", " << (betaB == fBetaB)
-		<< ", " << (epsE == fEpsE) << endl;*/
-
 	auto str = oss.str();
-	//for(pair<string, string> strip : {{"Dual2::", ""}, {"Detail::", ""}}) {
-	//for(auto && strip : std::vector<std::pair<std::string, std::string>>
 	for(pair<string,string> strip :
 			{make_pair("Dual2::", ""), {"Detail::", ""}, {"> >", ">>"}}) {
 		auto pos = str.find(strip.first);
-		while((pos = str.find(strip.first, pos)) != string::npos) {
-			str.replace(pos, strip.first.length(), strip.second);
-			pos++;
-		}
+		while((pos = str.find(strip.first, pos)) != string::npos)
+			str.replace(pos++, strip.first.length(), strip.second);
 	}
 	cout << str << endl;
 }
