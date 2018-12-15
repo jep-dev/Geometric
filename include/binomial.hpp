@@ -11,7 +11,7 @@ template<Size N> struct Binomial;
 template<Size N> struct Binomial: Binomial<N-1> {
 	typedef Binomial<N-1> base_type;
 	//typedef typename base_type::value_type next_type;
-	typedef ValueType_t<false, base_type> next_type;
+	typedef Value_t<false, base_type> next_type;
 	typedef decltype(prepend<Size, 0>(next_type{})
 			+ append<Size, 0>(next_type{})) value_type;
 };
@@ -22,7 +22,7 @@ struct Binomial<0> {
 	typedef SeqSz<1> value_type;
 };
 
-/*template<class C, class T, class S = ValueType_t<false, C>, class U = void>
+/*template<class C, class T, class S = Value_t<false, C>, class U = void>
 struct SeqInit;
 
 // template<class C, class S, class T, T... I>
@@ -41,7 +41,7 @@ public:
 
 template<class OS, std::size_t N>
 OS& operator<<(OS &os, Binomial<N> const&) {
-	typedef ValueType_t<false, Binomial<N>> value_type;
+	typedef Value_t<false, Binomial<N>> value_type;
 	return os << value_type{}, os;
 }
 
