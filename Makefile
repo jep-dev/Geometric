@@ -103,22 +103,22 @@ $(call PAT_D,$(NAMES_SO)): $(DIR_O)%.d: $(DIR_SRC)%.cpp; $(BUILD_DEP)
 
 $(call PAT_EXE,$(NAMES_EXE)): $(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d $(FILES_SO) $(DEPS_$*)
 	$(CXX) $(LDFLAGS)\
-		-o $@ $< $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*)))
+		$(strip -o $@ $< $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*))))
 
 $(call PAT_O,$(NAMES_EXE)): $(DIR_O)%.o: \
 	$(DIR_APP)%.cpp $(DIR_O)%.d $(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
 	$(CXX) $(CXXFLAGS) $(CXXFLAGS_$*) $(sort $(call CONFIG_O,$(REQ_$*))) -c\
-		-o $@ $<
+		$(strip -o $@ $<)
 
 $(call PAT_SO,$(NAMES_SO)): $(DIR_SO)lib%.so: $(DIR_O)%.o
 	$(CXX) $(LDFLAGS) $< -shared\
-		-o $@ $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*)))
+		$(strip -o $@ $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*))))
 
 $(call PAT_O,$(NAMES_SO)): \
 $(DIR_O)%.o: $(DIR_SRC)%.cpp $(DIR_DEP)%.d \
 	$(foreach N,CPP O SO,$(call $N_EXTRACT,$*))
 	$(CXX) $(CXXFLAGS) $(CXXFLAGS_$*) $(sort $(call CONFIG_O,$(REQ_$*))) -fPIC -c \
-		-o $@ $(call PAT_SRC,$*) $<
+		$(strip -o $@ $(call PAT_SRC,$*) $<)
 
 # Generate auto-dep injection - what could go wrong?
 #-include $(call PAT_D,$(NAMES_EXE) $(NAMES_SO))
