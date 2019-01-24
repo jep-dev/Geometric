@@ -124,7 +124,7 @@ struct GlslAttribute {
 
 	GlslAttribute& setPointer(GLuint count, GLenum type, GLboolean normalized,
 		GLsizei stride, const void* ptr) {
-		glVertexAttribPointer(location, count, type, normalized, stride, ptr);
+		return glVertexAttribPointer(location, count, type, normalized, stride, ptr), *this;
 	}
 
 	GlslAttribute& setLocation(GLuint program, GLint loc) {
