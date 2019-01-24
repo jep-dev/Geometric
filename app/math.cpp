@@ -76,11 +76,11 @@ void test_to_string(std::vector<T> vals, unsigned minPrec = 0,
 	string sep = " ";
 	unsigned n = vals.size(), w = (cols - 8 - sep.length()*(n-1)) / (maxPrec + 2);
 	std::string titles[] = {"Zeroes", "Digits"},
-			labels[] = {"none", "pre", "post", "both"};
+			labels[] = {"none", "post", "pre", "both"};
 	std::size_t titleLens[] = {titles[0].length(), titles[1].length()};
 	std::cout << titles[0] << "  " << titles[1] << std::endl;
 	for(unsigned zeroes = 0; zeroes < 4; zeroes++) {
-		bool show_zero = zeroes & 1, fill_zeroes = zeroes & 2;
+		bool fill_zeroes = zeroes & 1, show_zero = zeroes & 2;
 		for(unsigned prec = minPrec; prec <= maxPrec; prec++) {
 			cout << std::right << setw(titleLens[0]) << labels[zeroes] << "  "
 				<< std::left << setw(titleLens[1]) << prec << "  ";
