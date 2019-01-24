@@ -2,34 +2,71 @@
 #define SEQUENCE_HPP
 
 #include "utility.hpp"
-#include "geometric.hpp"
+#include "tag.hpp"
 
 namespace Detail {
 
 /** A variadic unsigned sequence, useful for indexing Tag/Val. */
-template<class T = void, T... I> struct Seq {
+template<class T, T... I> struct Seq;
+
+template<class S, S I, S... J>
+constexpr bool contains(Seq<S, J...> = {}, Seq<S, I> = {}) {
+	constexpr S values[] = {J...};
+	for(auto j : values)
+		if(j==I) return true;
+	return false;
+}
+
+template<class T, T... I> struct Seq {
 	typedef T type;
+	static constexpr std::size_t size = 0;
+
+	//static constexpr T value[] = {I...};
+
+	/*template<class S>
+	constexpr explicit operator std::integral_constant<S, 0>(void) const { return {}; }*/
+
+	template<class S, S... J>
+	static constexpr Seq<S, J...> prepend(Seq<S, J...> = {}) { return {}; }
+	template<class S, S... J>
+	static constexpr Seq<S, J...> append(Seq<S, J...> = {}) { return {}; }
+
+	template<T J>
+	static constexpr bool contains(void) { return false; }
+
 };
 template<class T, T I0, T... IN> struct Seq<T, I0, IN...> {
 	typedef T type;
+	static constexpr std::size_t size = 1 + sizeof...(IN);
+
+	//static constexpr T value[] = {I0, IN...};
+
 	template<std::size_t N>
 	static constexpr T get(std::integral_constant<std::size_t, N> = {})
 		{ return Seq<T, IN...>::get(std::integral_constant<std::size_t, N-1>{}); }
-	static constexpr T get(std::integral_constant<std::size_t, 0>)
-		{ return I0; }
+	static constexpr T get(std::integral_constant<std::size_t, 0>) { return I0; }
 	template<std::size_t N>
 	static constexpr T get(Seq<std::size_t, N>)
-		{ return std::integral_constant<std::size_t, get<N>()>::value; }
+		{ return Seq<T, IN...>::get(std::integral_constant<std::size_t, N>{}); }
+
+	template<class S, S... J, class ST = std::common_type_t<S, T>>
+	static constexpr auto prepend(Seq<S, J...> = {})
+			-> Seq<ST, (ST)J..., (ST)I0, (ST)IN...> { return {}; }
+	template<class S, S... J, class ST = std::common_type_t<S, T>>
+	static constexpr auto append(Seq<S, J...> = {})
+			-> Seq<ST, (ST)I0, (ST)IN..., (ST)J...> { return {}; }
+
+	template<T J>
+	static constexpr bool contains(void)
+		{ return Detail::contains(Seq<T, I0, IN...>{}, Seq<T, J>{}); }
 
 	template<std::size_t N>
 	using nth_type = Seq<T, get<N>()>;
 };
 
 template<std::size_t N, class T, T... I>
-constexpr T get(Seq<T, I...>)
-	{ return Seq<T, I...>::get(Seq<std::size_t, N>{}); }
-
-
+constexpr auto get(Seq<T, I...>)
+		{ return Seq<T, I...>::get(std::integral_constant<std::size_t, N>{}); }
 
 template<class T> struct SeqArray;
 template<class T, T... I> struct SeqArray<Seq<T, I...>> {
@@ -39,6 +76,7 @@ template<class T, T... I>
 constexpr T SeqArray<Seq<T, I...>>::value [sizeof...(I)];
 
 // Enable more if you need them.
+template<bool... I> using SeqB = Seq<bool, I...>;
 template<char... I> using SeqC = Seq<char, I...>;
 //template<short... I> using SeqS = Seq<short, I...>;
 template<unsigned... I> using SeqU = Seq<unsigned, I...>;
@@ -60,26 +98,9 @@ template<std::size_t... I> using SeqSz = Seq<std::size_t, I...>;
  * or undefined in general, which might suggest Seq*<> should be undefined after all.
  */
 
-/** Prepends a value to a sequence. */
-template<class T, T I0, T... IN>
-constexpr auto prepend(Detail::Seq<T, IN...> = {})
-	-> Detail::Seq<T, I0, IN...> { return {}; }
-/** Appends a value to a sequence (same as prepend in reverse order) */
-template<class T, T I0, T... IN>
-constexpr auto append(Detail::Seq<T, IN...> = {})
-	-> Detail::Seq<T, IN..., I0> { return {}; }
-/** Prepends a sequence to another. */
-template<class T, T... I0, T I1, T... IN>
-constexpr auto prepend(Detail::Seq<T, I0...> = {}, Detail::Seq<T, I1, IN...> = {})
-	-> Detail::Seq<T, I0..., I1, IN...> { return {}; }
-
-/** Appends a sequence to another. */
-template<class T, T... I0, T I1, T... IN>
-constexpr auto append(Detail::Seq<T, I0...> = {}, Detail::Seq<T, I1, IN...> = {})
-	-> Detail::Seq<T, I1, IN..., I0...> { return {}; }
-
 template<class T, T... IN>
 constexpr std::size_t getSize(Detail::Seq<T, IN...> = {}) { return sizeof...(IN); }
+
 /** Pairwise sum of sequences */
 template<class TI, TI... I, class TJ, TJ... J,
 		class T = SumType_t<TI, TJ>>
@@ -100,11 +121,34 @@ template<class TI, TI... I, class TJ, TJ... J,
 		class T = QuotientType_t<TI, TJ>>
 constexpr auto operator/(Seq<TI, I...>, Seq<TJ, J...>) -> Seq<T, I/J...> { return {}; }
 
+/** Pairwise insertion/shift of sequences */
+template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() << declval<T>())>
+constexpr Seq<ST, (I << J)...> operator<<(Seq<S, I...>, Seq<T, J...>) { return {}; }
+/** Pairwise extraction/shift of sequences */
+template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() >> declval<T>())>
+constexpr Seq<ST, (I >> J)...> operator>>(Seq<S, I...>, Seq<T, J...>) { return {}; }
+/** Pairwise XOR/power of sequences */
+template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() ^ declval<T>())>
+constexpr Seq<ST, (I ^ J)...> operator^(Seq<S, I...>, Seq<T, J...>) { return {}; }
+/** Pairwise (bitwise) and of sequences */
+template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() & declval<T>())>
+constexpr Seq<ST, (I & J)...> operator&(Seq<S, I...>, Seq<T, J...>) { return {}; }
+/** Pairwise (bitwise) or of sequences */
+template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() | declval<T>())>
+constexpr Seq<ST, (I | J)...> operator|(Seq<S, I...>, Seq<T, J...>) { return {}; }
+/** Pairwise (boolean) and of sequences */
+template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() && declval<T>())>
+constexpr Seq<ST, (I && J)...> operator&&(Seq<S, I...>, Seq<T, J...>) { return {}; }
+/** Pairwise (boolean) or of sequences */
+template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() || declval<T>())>
+constexpr Seq<ST, (I || J)...> operator||(Seq<S, I...>, Seq<T, J...>) { return {}; }
+
 template<class OS, class S, S... I>
 OS& operator<<(OS &os, Detail::Seq<S, I...> const&) {
 	bool first = true;
 	os << '{';
-	for(auto i : {I...}) {
+	static constexpr S V[] = {I...};
+	for(S i : V) {
 		if(!first) os << ", ";
 		first = false;
 		os << i;
@@ -112,6 +156,28 @@ OS& operator<<(OS &os, Detail::Seq<S, I...> const&) {
 	os << '}';
 	return os;
 }
+
+template<bool I = true, bool... J> struct BoolAndSeq: std::integral_constant<bool, I> {};
+template<bool I, bool J, bool... K> struct BoolAndSeq<I, J, K...>: BoolAndSeq<I && J, K...> {};
+
+template<class S, S I, S... J, class BAS = BoolAndSeq<bool(I), bool(J)...>>
+constexpr auto boolAndSeq(Seq<S, I, J...> = {}) -> Value_t<BAS> { return BAS::value; }
+
+template<class S, S I, S... J> struct BitAndSeq: std::integral_constant<S, I> {};
+template<class S, S I, S J, S... K> struct BitAndSeq<S, I, J, K...>: BitAndSeq<S, I & J, K...> {};
+
+template<class S, S I, S... J, class BAS = BitAndSeq<S, I, J...>>
+constexpr auto bitAndSeq(Seq<S, I, J...> = {}) -> Value_t<BAS> { return BAS::value; }
+
+template<bool I = true, bool... J> struct BoolOrSeq: std::integral_constant<bool, I> {};
+template<bool I, bool J, bool... K> struct BoolOrSeq<I, J, K...>: BoolOrSeq<I || J, K...> {};
+template<class S, S I, S... J, class BOS = BoolOrSeq<bool(I), bool(J)...>>
+constexpr auto boolOrSeq(Seq<S, I, J...> = {}) -> Value_t<BOS> { return BOS::value; }
+
+template<class S, S I, S... J> struct BitOrSeq: std::integral_constant<S, I> {};
+template<class S, S I, S J, S... K> struct BitOrSeq<S, I, J, K...>: BitOrSeq<S, I | J, K...> {};
+template<class S, S I, S... J, class BOS = BitOrSeq<S, I, J...>>
+constexpr auto bitOrSeq(Seq<S, I, J...> = {}) -> Value_t<BOS> { return BOS::value; }
 
 /** @brief Defines value as the sum of all {I0, IN...}.
  * Not to be confused with pairwise sum, etc. */
@@ -123,9 +189,9 @@ struct SumSeq<Seq<S, I0, I1, IN...>>: SumSeq<Seq<S, I0+I1, IN...>> {};
 
 /** @brief Represents N copies of I as a Seq. */
 template<unsigned N, class T, T I>
-struct RepeatSeq: decltype(prepend<T, I>(typename RepeatSeq<N-1, T, I>::value_type{})) {
+struct RepeatSeq: RemoveCVRef_t<decltype(Seq<T,I>{}.append(RepeatSeq<N-1,T,I>{}))> {
 	typedef typename RepeatSeq<N-1, T, I>::value_type prev_type;
-	typedef decltype(prepend<T, I>(prev_type{})) value_type;
+	typedef decltype(Seq<T, I>{}.append(prev_type{})) value_type;
 	constexpr operator value_type(void) const { return {}; }
 };
 template<class T, T I>
@@ -139,20 +205,17 @@ struct RepeatSeq<1, T, I>: Seq<T, I> {
 /** @brief Represents the partial sum of a Seq. */
 template<class T> struct PartialSumSeq;
 template<class T, T I0>
-struct PartialSumSeq<Seq<T, I0>>: Seq<T, I0> {
-	typedef Seq<T, I0> value_type;
-};
+struct PartialSumSeq<Seq<T, I0>>:
+	Seq<T, I0> { typedef Seq<T, I0> value_type; };
 template<class T>
-struct PartialSumSeq: PartialSumSeq<Value_t<true, T>> {
-	using PartialSumSeq<Value_t<true, T>>::value_type;
-};
+struct PartialSumSeq: PartialSumSeq<InnerValue_t<T>>
+	{ using PartialSumSeq<InnerValue_t<T>>::value_type; };
 template<class T, T I0, T I1, T... IN>
 struct PartialSumSeq<Seq<T, I0, I1, IN...>>:
-		decltype(prepend<T, I0>(PartialSumSeq<Seq<T, I0+I1, IN...>>{})) {
-	// I hate repeating myself, but my usual method (adding a trailing default template arg
-	// and using it as a superclass and a member) doesn't work with specializations.
-	typedef Value_t<false, decltype(prepend<T, I0>(
-		PartialSumSeq<Seq<T, I0+I1, IN...>>{}))> value_type;
+	RemoveCVRef_t<decltype(Seq<T,I0>{}
+			.append(PartialSumSeq<Seq<T, I0+I1, IN...>>{}))> {
+	using value_type = RemoveCVRef_t<decltype(Seq<T,I0>{}
+			.append(PartialSumSeq<Seq<T, I0+I1, IN...>>{}))>;
 };
 
 /** @brief Defines value as the product of all of {I0, IN...}.
@@ -162,180 +225,69 @@ template<class S, S I0>
 struct ProductSeq<Seq<S, I0>>: std::integral_constant<S, I0> {};
 template<class S, S I0, S I1, S... IN>
 struct ProductSeq<Seq<S, I0, I1, IN...>>: ProductSeq<Seq<S, I0*I1, IN...>> {};
+template<class T> struct PartialProductSeq;
+template<class T, T I0>
+struct PartialProductSeq<Seq<T, I0>>:
+	Seq<T, I0> { typedef Seq<T, I0> value_type; };
+template<class T>
+struct PartialProductSeq: PartialProductSeq<InnerValue_t<T>>
+	{ using PartialProductSeq<InnerValue_t<T>>::value_type; };
+template<class T, T I0, T I1, T... IN>
+struct PartialProductSeq<Seq<T, I0, I1, IN...>>:
+	RemoveCVRef_t<decltype(Seq<T,I0>{}
+			.append(PartialProductSeq<Seq<T, I0*I1, IN...>>{}))> {
+	using value_type = RemoveCVRef_t<decltype(Seq<T,I0>{}
+			.append(PartialProductSeq<Seq<T, I0*I1, IN...>>{}))>;
+};
+
 
 template<unsigned N, class S = unsigned, S A = 1, S B = 1, S... C>
 struct Fibonacci: Fibonacci<N-1, S, A+B, A, B, C...> {};
 template<class S, S A, S B, S... C>
 struct Fibonacci<0, S, A, B, C...>: std::integral_constant<S, A> {};
 
-
-
-template<class S, S A, S B>
-struct LexSortConstant {
-	using value_type = S;
-	// static constexpr int value = A < B;
-	static constexpr bool lt = A<B, eq = A==B, gt = A>B, le = A<=B, ge = A>=B;
-	static constexpr S first = lt ? A : B, second = lt ? B : A;
-};
-
-/*template<class S, class R = std::false_type>
-constexpr auto get_value(S && s, R && r = {})
-	-> Value_t<R::value, S> { return {}; }*/
-
-/*
- * remove_reference_t and remove_const_t fail to handle arrays
- * Replace them with a series of specializations:
- *
- * <S> RemoveRef_t<S> = S
- * <S> RemoveRef_t<S&> = S
- * <S> RemoveRef_t<S const&> = S
- * <S,N> RemoveRef_t<S [N]> = S [N]
- * <S,N> RemoveRef_t<const S (&) [N]> = S [N]
- * <S,N> RemoveRef_t<S (&&) [N]> = S [N]
- * Don't recursively apply RemoveRef_t (as in, to the S in the array expressions).
- */
-
 template<class S, class T, std::size_t N = 0> struct Find;
 
 template<class S, std::size_t N> struct Find<S, Tag<>, N> {};
 template<class S, class... TN, std::size_t N>
-struct Find<S, Tag<S, TN...>, N>:
-	std::integral_constant<std::size_t, N> {};
+struct Find<S, Tag<S, TN...>, N>: std::integral_constant<std::size_t, N> {};
 template<class S, std::size_t N, class T0, class... TN>
-struct Find<S, Tag<T0, TN...>, N>:
-	std::conditional_t<std::is_same<S, T0>::value,
-		std::integral_constant<std::size_t, N>,
-		Find<S, Tag<TN...>, N+1>> {};
+struct Find<S, Tag<T0, TN...>, N>: std::conditional_t<std::is_same<S, T0>::value,
+		std::integral_constant<std::size_t, N>, Find<S, Tag<TN...>, N+1>> {};
 
-/*template<class S, class T, std::size_t N = 0>
-struct Find;
-template<class S, class... T, std::size_t N>
-struct Find<S, Tag<S, T...>, N>:
-	std::integral_constant<std::size_t, N> {};
-template<class S, class T0, class... TN, std::size_t N>
-struct Find<S, Tag<T0, TN...>, N>:
-	Find<S, Tag<TN...>, N+1> {};*/
+template<class S, S V, std::size_t N>
+constexpr auto decompose(Seq<S, V> = {}, SeqSz<N> = {}) {
+	/* static_assert((N > 0) && (V == (((S(1) << N) - 1) & V)),
+		"V contains more than N binary diigts");*/
+	//typedef Value_t<RepeatSeq<N-1, S, 1>> N0;        // N0  = {1, 1, ...}
+	typedef RepeatSeq<N-1, S, 1> N0;        // N0  = {1, 1, ...}
+	typedef PartialSumSeq<N0> P;            // P   = {1, 2, ...}
+	typedef decltype(N0{}.prepend(Seq<S,1>{})) N1; // N1  = {1, 1, 1, ...}
+	typedef decltype(P{}.prepend(Seq<S,0>{})) P1;  // P1  = {0, 1, 2, ...}
+	typedef decltype(N1{} << P1{}) S1;      // S1  = {1, 2, 4, ...}
+	typedef RepeatSeq<N, S, V> NV;          // NV  = {V, V, V, ...}
+	return NV{} & S1{};                     //    -> {V&1, V&2, V&4, ...}
+}
 
-/*template<class S, class T> struct Find;
-// template<class S, S I, class T> struct FindSeq;
-template<class S, class T> struct Find: Find<S, Value_t<false, T>> {};
+template<class S, S... I, S... J>
+auto reverse(Seq<S, I...>, Seq<S, J...> = {}) -> Seq<S, J...> { return {}; }
+template<class S, S I0, S... I, S... J>
+auto reverse(Seq<S, I0, I...>, Seq<S, J...> = {})
+	-> decltype(reverse(Seq<S, I...>{}, Seq<S, I0, J...>{})) { return {}; }
 
+template<unsigned N, class T = unsigned>
+using OnesSeq = RepeatSeq<N, T, 1>;
 
-// template<class S, S I, S... TI>
-// struct FindSeq<S, I, Seq<S, I, TI...>>: std::integral_constant<S, I> {};
-template<class S, class... T>
-struct Find<S, Tag<S, T...>>: Tag<S> {};
-
-template<class S, S T0, S... TI, S I>
-struct FindSeq<S, I, Seq<S, T0, TI...>>: FindSeq<S, I, Seq<S, TI...>> {};
-template<class S, class T0, class... TN>
-struct Find<S, Tag<T0, TN...>>: Find<S, Tag<TN...>> {};*/
-
-
-/*
- * Note - inserting at point N, popping N off the head, reversing all N elements, etc.
- * incur linear costs. Something like sorting that could be done in O(N log N) may only be
- * possible in O(N^2) without O(1) splicing, random access, etc.
- *
- * Assume that's correct, sorting is O(N^2).
- * If you have two sequences a0<...<aM and b0<...<bN, you can merge sort in O(M+N).
- * Sorting A and B independently then merge sorting is O(M^2 + N^2 + M + N) = O(M^2 + N^2).
- * If A and B are unsorted, merging A and B is just sorting the concatenation of both,
- * so that's O((M + N)^2) = O(M^2 + N^2). 
- * It does hint that the average case is significantly better with conventional
- */
-
-/* Can you represent a deque?
-Rev({}) = {}
-Rev({a, b ...}) = Rev({b ...}) + {a}
-		= {[z] ... b, a}
-// Rev({a, b, c ...}) = Rev({c ...}) + {b, a}
-// Rev({a, b, c, d ...}) = Rev({d ...}) + {c, b, a}
-// etc. - you don't need the commented lines, but
-// these decrease the average case performance (stack size).
-*/
-
-/*template<class S, S A>
-auto reverse(Seq<S, A> = {}) -> Seq<S, A> { return {}; }
-template<class S, S A, S B, S... C>
-auto reverse(Seq<S, A, B, C...> = {})
-	-> decltype(reverse(Seq<S, B, C...>{}) + Seq<S,A>{}) { return {}; }
-
-// template<template<class, class> class CMP>
-// auto reverse(Tag<> = {}, Tag<CMP> = {}) -> Tag<> { return {}; }
-
-
-// template<class S, S A, S... B>
-// struct RevSeq: decltype(reverse<S, A, B...>()) {};
-*/
-
-/*
-Pop<0>({a ...}) = {a ...}
-Pop<N>({a, b ...}) = Pop<N-1>({b ...})
-// Pop<3>({abcdef})
-// Pop<2>({bcdef})
-// Pop<1>({cdef})
-// {def}
-
-Head<0>({a ...}) = {}
-Head<N>({a, b ...}) = {a} + Head<N-1>(Pop<1>({b ...}))
-// Head<3>({abcdef})
-// {a}+Head<2>(Pop<1>({abcdef}))
-// {a}+Head<2>({bcdef})
-// {a}+{b}+Head<1>(Pop<1>({bcdef}))
-// {ab}+Head<1>({cdef})
-// {ab}+{c}
-// {abc}
-
-RevHead<0>({a ...}) = {}
-RevHead<N>({a, b ...}) = RevHead<N-1>({b ...}) + {a}
-// RevHead<N>({a ...}) = Rev(Head<N>({a ...}))
-//
-// RH<3>({abcdef})
-// RH<2>({bcdef})+{a}
-// RH<1>({cdef})+{b}+{a}
-// RH<0>({def})+{c}+{ba}
-// {}+{cba}
-
-make_tail_seq<N>({a ...}) = make_head_seq<N>(make_rev_seq({a...}))
-make_rev_tail_seq<N>({a ...}) = make_rev_seq(make_tail_seq<N>({a...}))
-
-
-Now, if a deque of N elements should be split at point M,
-{I...} -> {RevHead<N>({I...}), Pop<N>({I...})
-   .-[N-1, ..., 0] = first_type = RevHead<N>({I...})
-   '--[N, ..., M-1] = second_type = Pop<N>({I...})
-template<class S, S... A, S... B>
-DequeSeq<Seq<S, A...>, Seq<S, B...>> { ... }
-
-template<int N, class S, S... A>
-make_head_seq(Seq<S, A...> a = {})
-	-> Head<N, S, A...> { ... }
-template<int N, class S, S... A>
-make_rev_head_seq(Seq<S, A...> a = {})
-	-> RevHead<N, S, A...> { ... }
-template<int N, class S, S... A>
-make_deque_seq(Seq<S, A...> a = {})
-	-> Deque<Value_t<RevHead<N,S,A...>>, Value_t<Pop<N,S,A...>>>
-
-template<int N, class S, S... A, S... B>
-shift(Deque<Seq<S,A...>,Seq<S,B...>> = {})
-
-template<int N, class S, S... A, S... B>
-shift(Deque<Seq<S,A...>,Seq<S,B...>> = {})
--> conditional_t<N >= 0,
-	Deque<Pop<N,S,A...>,
-		decltype(RevHead<N,S,A...>{}+Seq<S,B...>{})>,
-	Deque<decltype(RevHead<N,S,B...>{}+Seq<S,A...>{}),
-		Pop<N,S,B...>>
-> { ... }
-
-If a queue of N elements should be split at point M,
-   .-[0, ..., N-1] = first_type = Head<N>({I...})
-   '--[N, ..., M-1] = second_type = Pop<N>({I...})
-
-*/
-
+template<unsigned N, bool zero_indexed = true, class T = unsigned>
+struct IncSeq: decltype(PartialSumSeq<OnesSeq<N, T>>{}
+	- std::conditional_t<zero_indexed, OnesSeq<N, T>, RepeatSeq<N, T, 0>>{}) {
+	typedef decltype(PartialSumSeq<OnesSeq<N, T>>{}
+		- std::conditional_t<zero_indexed, OnesSeq<N, T>, RepeatSeq<N, T, 0>>{}) value_type;
+};
+template<unsigned N, bool zero_indexed = true, class T = unsigned>
+struct DecSeq: decltype(reverse(IncSeq<N, zero_indexed, T>{})) {
+	typedef decltype(reverse(IncSeq<N, zero_indexed, T>{})) value_type;
+};
 
 
 }
