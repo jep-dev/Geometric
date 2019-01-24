@@ -6,13 +6,49 @@
 template<class S>
 struct Point {
 	S x = 0, y = 0, z = 0;
+	const S& operator[](char c) const {
+		switch(c) {
+			case 'i': case 'x': return x;
+			case 'j': case 'y': return y;
+			case 'k': case 'z': return z;
+			default: return x;
+		}
+	}
+	S& operator[](char c) {
+		switch(c) {
+			case 'i': case 'x': return x;
+			case 'j': case 'y': return y;
+			case 'k': case 'z': return z;
+			default: return x;
+		}
+	}
+	/*const S& operator[](unsigned u) const {
+		switch(u) {
+			case 0: return x;
+			case 1: return y;
+			case 2: return z;
+			default: return x;
+		}
+	}
+	S& operator[](unsigned u) {
+		switch(u) {
+			case 0: return x;
+			case 1: return y;
+			case 2: return z;
+			default: return x;
+		}
+	}*/
+	template<class T = S>
+	bool operator==(Point<T> const& p) const {
+		return x == p.x && y == p.y && z == p.z;
+	}
 	template<class T, class ST = std::common_type_t<S,T>>
 	Point<ST> operator+(Point<T> const& p) const { return {x+p.x, y+p.y, z+p.z}; }
 	template<class T>
 	Point<S>& operator+=(Point<T> const& p)
 		{ return x += S(p.x), y += S(p.y), z += S(p.z), *this; }
 	Point<S> operator-(void) const { return {-x, -y, -z}; }
-	template<class T, class ST = std::common_type_t<S,T>>
+	template<class T, class ST = std::enable_if_t<std::is_arithmetic<T>::value, std::common_type_t<S,T>>>
 	friend Point<ST> operator*(T const& t, Point<S> const& p)
 		{ return {t*p.x, t*p.y, t*p.z}; }
 	template<class T, class ST = std::common_type_t<S,T>>
@@ -30,7 +66,8 @@ struct Point {
 	Point normalize(void) const {
 		auto len = length();
 		if(len == 0) return {0}; // TODO
-		return *this * (1 / len);
+		return *this / len;
+		//return *this * (1 / len);
 	}
 
 	template<class T, class ST = std::common_type_t<S,T>>
@@ -72,7 +109,7 @@ struct Point {
 	operator DualQuaternion<T>(void) const { return {1, 0, 0, 0, 0, x, y, z}; }
 	template<class T>
 	friend T& operator<<(T &t, Point const& p) { return t << to_string(p), t; }
-	operator std::string(void) const { return to_string((DualQuaternion<S>) *this); }
+	operator std::string(void) const { return to_string((DualQuaternion<S>) *this, 2, false); }
 };
 template<class S, class T, class ST = std::common_type_t<S,T>>
 ST dot(Point<S> const& s, Point<T> const& t)
@@ -90,28 +127,33 @@ std::pair<Point<U>, Point<U>> perpendicular(Point<U> const& p, bool norm = false
 	typedef Point<U> Pt;
 	Pt i = {1, 0, 0}, j = {0, 1, 0}, k = {0, 0, 1},
 		u = i, w = norm ? p.normalize() : p, v = j;
-	auto wi = dot(w, i), wi2 = wi*wi, wu = wi,
+		//u = i, w = p, v = j;
+	auto wi = dot(w, i), wi2 = wi*wi, // wu = wi,
 		wj = dot(w, j), wj2 = wj*wj,
 		wk = dot(w, k), wk2 = wk*wk;
 	if(wi2 > wj2) {
-		if(wj2 > wk2) u = k, wu = wk;
-		else u = j, wu = wj;
-	} else if(wi2 > wk2) u = k, wu = wk;
-	v = normalize(cross(w, u));
+		if(wj2 > wk2) u = k; // wu = wk;
+		else u = j; // wu = wj;
+	} else if(wi2 > wk2) u = k; // wu = wk;
+	//v = normalize(cross(w, u));
+	//u = normalize(cross(v, w));
+	v = cross(w, u);
 	u = cross(v, w);
-	auto uvw = dot(cross(u, v), w);
-	//return std::make_pair(u/uvw, v/uvw);
+	if(norm) u = u.normalize(), v = v.normalize();
 	return std::make_pair(u, v);
+
+	/*auto uvw = dot(cross(u, v), w);
+	return std::make_pair(u/uvw, v/uvw);*/
 }
 
 template<class S>
 Point<S> normalize(Point<S> const& p) { return p.normalize(); }
 
-template<class S, class DELIM, class... T>
-std::string to_string(Point<S> const& p, unsigned prec, DELIM delim, T &&... t) {
-	return "(" + to_string(p.x, prec, std::forward<T>(t)...) + delim
-			+ to_string(p.y, prec, std::forward<T>(t)...) + delim
-			+ to_string(p.z, prec, std::forward<T>(t)...) + ")";
+template<class S, class... T>
+std::string to_string(Point<S> const& p, T &&... t) {
+	return "(" + to_string(p.x, std::forward<T>(t)...) + ", "
+			+ to_string(p.y, std::forward<T>(t)...) + ", "
+			+ to_string(p.z, std::forward<T>(t)...) + ")";
 }
 
 #define USERDEF_TEMPLATE(CLASS,PARAM,UD,X,Y,Z) \
