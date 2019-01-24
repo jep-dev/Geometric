@@ -6,147 +6,32 @@
 #include <vector>
 #include <set>
 
-#include "math.tpp"
-#include "parse.hpp"
-#include "streams.tpp"
 #include "dual.tpp"
-
+#include "math.tpp"
+#include "parse.tpp"
+#include "streams.tpp"
+#include "tag.hpp"
 #include "utility.hpp"
-#include "geometric.hpp"
 
-/*void print_split(std::vector<std::string> const& in) {
-	bool met = false;
-	for(auto const& s : in) {
-		auto split = Streams::split_outer(s);
-		if(met) std::cout << ", ";
-		met = true;
-		switch(split.size()) {
-			case 0:
-				break;
-			case 1:
-				std::cout << split[0];
-				break;
-			default:
-				std::cout << '{';
-				print_split(split);
-				std::cout << '}';
-				break;
-		}
-	}
-}
-
-std::vector<std::string> split_sum(std::string const& line) {
-	std::vector<std::string> split;
-	std::string cur;
-	for(unsigned i = 0, n = line.length(); i < n; i++) {
-		char c = line[i];
-		switch(c) {
-			case '+':
-				if(cur != "") {
-					split.emplace_back(cur);
-					cur = "";
-				}
-				break;
-			case '-':
-				if(cur != "") {
-					split.emplace_back(cur);
-					cur = "";
-				}
-				cur += c;
-				break;
-			default:
-				cur += c;
-				break;
-		}
-	}
-	if(cur != "") split.emplace_back(cur);
-	return split;
-}*/
-
-template<class T>
-constexpr bool has_quiet_NaN(void)
-	{ return std::is_arithmetic<T>::value && std::numeric_limits<T>::has_quiet_NaN; }
-template<class T>
-using QuietNaN = std::enable_if_t<has_quiet_NaN<T>(),
-	std::integral_constant<T, std::numeric_limits<T>::quiet_NaN()>>;
-
-template<class T>
-constexpr bool has_loud_NaN(void)
-	{ return std::is_arithmetic<T>::value && std::numeric_limits<T>::has_signaling_NaN; }
-template<class T>
-using LoudNaN = std::enable_if<has_loud_NaN<T>(),
-	std::integral_constant<T, std::numeric_limits<T>::signaling_NaN()>>;
-
-template<class S>
-std::enable_if<has_quiet_NaN<S>(),S>
-make_NaN(Detail::Tag<QuietNaN<S>> = {})
-	{ return QuietNaN<S>::value; }
-template<class S>
-std::enable_if<has_loud_NaN<S>() && !has_quiet_NaN<S>(),S>
-make_NaN(Detail::Tag<LoudNaN<S>> = {}) {
-	return LoudNaN<S>::value;
-}
-template<class K, class V>
-bool contains(std::map<K, V> const& m, K const& k)
-	{ return m.find(k) != m.cend(); }
-
-bool isvar(std::string const& line, bool trimmed = false) {
-	auto s = line;
-	if(!trimmed) s = Streams::trim(s);
-	if(!s.length() || !std::isalpha(s[0])) return false;
-	for(auto const& c : s) {
+template<class I>
+bool isvar(I const& beg, I const& end, bool trimmed = false) {
+	unsigned alpha = 0;
+	for(auto i = beg; i < end; i++) {
+		auto c = *i;
 		if(c == '_') continue;
-		if(std::isalnum(c)) continue;
-		return false;
+		if(std::isalpha(c)) alpha++;
+		if(!alpha && std::isdigit(c)) return false;
 	}
-	return true;
+	return alpha;
 }
-bool isvar(std::string::const_iterator beg, std::string::const_iterator end,
-		bool trimmed = false) {
-	std::string s;
-	for(auto cur = beg; cur < end; cur++) {
-		s += *cur;
-	}
-	if(!trimmed) return isvar(Streams::trim(s), true);
-	return isvar(s, true);
+bool isvar(std::string const& line, bool trimmed = false) {
+	return isvar(line.cbegin(), line.cend(), trimmed);
 }
 
-
-template<class T = float>
-T parse_value(std::string const& word) {
-	T out = make_NaN<T>();
-	std::string value;
-	bool neg = false, major = false, minor = false, pt = false;
-	char prev = '\0';
-	for(auto c : word) {
-		// TODO better criteria for value characters?
-		if(std::isdigit(c)) {
-			// if(!major && c == '0') ??
-			if(pt) minor = true;
-			else major = true;
-			value += c;
-		} else if(c == '.') {
-			if(pt) return out;
-			pt = major = true;
-			value += c;
-		} else if(c == '-') {
-			if(major) return out;
-			neg = !neg;
-		} else break;
-	}
-	if(pt && !minor || value == "")
-		return make_NaN<T>();
-	if(neg && value == "") return -1;
-	std::istringstream iss(value);
-	iss >> out;
-	if(iss.fail())
-		return make_NaN<T>();
-	return neg ? -out : out;
-}
 template<class T = float>
 std::pair<T, std::string> parse_coefficient(std::string const& word) {
 	std::pair<T, std::string> out;
-	out.first = parse_value(word);
+	out.first = Streams::parse_value(word);
 	// Should this function participate in name validation?
 	bool start = false;
 	for(auto const& c : word)
@@ -233,7 +118,7 @@ std::pair<bool, DualQuaternion<T>> parse_dual(std::vector<std::string> const& wo
 		out += parsed.second;
 	}
 	return {valid, out};
-}*/
+}
 
 template<class S>
 S& help_dual(S& s) {
@@ -252,7 +137,7 @@ template<class S>
 S& help(S& s) {
 	return s << "Inputs may be assignments (<variable> = <expression>) "
 			"or free (<expression>).\n", s;
-}
+}*/
 
 /*template<class T>
 void test_interactive(std::map<std::string, DualQuaternion<T>> &symbols) {
@@ -315,292 +200,236 @@ void test_interactive(std::map<std::string, DualQuaternion<T>> &symbols) {
 	test_interactive(symbols);
 }*/
 
-std::vector<std::string> parse_add(std::string const& expr) {
-	using std::string;
-	std::vector<string> out;
-	string cur;
-	int parens = 0;
-	for(auto const& c : expr) {
+std::vector<std::string>
+parse_assign(std::string const& line, bool trimmed = false) {
+	using namespace std;
+	if(!trimmed) return parse_assign(Streams::trim(line), true);
+	vector<string> out;
+	vector<char> levels;
+	auto p0 = line.cbegin(), p1 = line.cend();
+	for(auto i = p0; i < p1; i++) {
+		char c = *i, b = 0;
+		if(levels.size()) b = levels.size();
 		switch(c) {
-			case '+':
-				if(parens) cur += "+";
-				else if(cur.length())
-					out.emplace_back(cur), cur = "";
-				break;
-			case '-':
-				if(parens) cur += "-";
-				else if(cur.length())
-					out.emplace_back(cur), cur = "-";
-				break;
-			case '(':
-				parens++;
-				cur += "(";
-				break;
-			case ')':
-				parens--;
-				cur += ")";
-				break;
-			default:
-				cur += c;
-				break;
+			case '(': case '{': case '[': case '<':
+				levels.emplace_back(c);
+				continue;
+			case '=':
+				if(levels.size()) continue;
+				if(*p0 == '=') {
+					p0++;
+					// == is not assignment
+					if(p0 == i) return {};
+				}
+				out.emplace_back(Streams::trim(string(p0, i)));
+				p0 = i;
+				continue;
+			case ')': if(b != '(') return {}; break;
+			case '}': if(b != '{') return {}; break;
+			case ']': if(b != '[') return {}; break;
+			case '>': if(b != '<') return {}; break;
+			default: continue;
 		}
+		levels.pop_back();
 	}
-	if(cur.length())
-		out.emplace_back(cur);
+	if(*p0 == '=') {
+		p0++;
+		if(p0 == p1) return {};
+		out.emplace_back(Streams::trim(string(p0, p1)));
+	} else {
+		out.emplace_back(Streams::trim(string(p0, p1)));
+	}
 	return out;
 }
 
-
-std::vector<std::string> parse_mul(std::string const& expr) {
-	using std::string;
-	std::vector<string> out;
-	string cur;
-	int parens = 0;
-	bool num = false, alpha = false;
-	for(auto const& c : expr) {
-		if(std::isdigit(c) || c == '.') {
-			if(alpha && cur.length()) {
-				out.emplace_back(cur);
-				cur = "";
-			}
-			alpha = false;
-			num = true;
-			cur += c;
-		} else if(std::isalpha(c) || c == '_') {
-			if(num && cur.length()) {
-				out.emplace_back(cur);
-				cur = "";
-			}
-			alpha = true;
-			num = false;
-			cur += c;
-		} else {
-			switch(c) {
-			case '(':
-				if(parens == 0 && cur.length()) {
-					out.emplace_back(cur);
-					cur = "";
-				}
-				cur += '(';
-				parens++;
-				num = false;
-				alpha = false;
-				break;
-			case ')':
-				parens--;
-				cur += ')';
-				if(parens == 0) {
-					out.emplace_back(cur);
-					cur = "";
-				}
-				num = false;
-				alpha = false;
-				break;
-			}
-		}
-	}
-	if(cur.length()) out.emplace_back(cur);
-	return out;
-}
-
-/*  Operators in parse order (reverse order of ops)
- *            A  S  M  U  P
- *  Addition     1  2  3  4
- *  Sandwich        1  2  3
- *  Mult.     1        2  3
- *  Unary              1  2
- *  Parens    1  2  3  4
- *  This places '^' (sandwich) much later in the oerder of ops, but informally,
- *  people write and read e^3pi/4 as 'e^(3pi/4)' and not '(e^3)pi/4'.
- */
-
-template<class T, class C = std::map<std::string, T>, class V = C>
-T eval_add(C & constants, V & variables, std::string const& expr) {
-	auto terms = parse_add(expr);
-	T out = {};
-	if(!terms.size())
-		return out;
-	for(auto const& term : terms) {
-		if(contains(constants, term)) out += constants[term];
-		else if(contains(variables, term)) out += variables[term];
-		else {
-			T termval = {1};
-			auto factors = parse_mul(term);
-			for(auto const& factor : factors) {
-				auto copair = parse_coefficient(factor);
-				if(contains(constants, copair.second))
-					termval *= copair.first * constants[copair.second];
-				else if(contains(variables, copair.second))
-					termval *= copair.second * variables[term];
-				else {
-					/* TODO iron out NaN handling (and var name equiv) */
-					termval *= copair.first;
-				}
-			}
-		}
-	}
-}
-
-std::pair<std::string, std::string> parse_assign(std::string const& line) {
-	auto s = Streams::trim(line);
-	auto pos = s.find('=');
-	if(pos == std::string::npos) return std::make_pair(s, "");
-	return std::make_pair(Streams::trim(s.substr(0, pos)), Streams::trim(s.substr(pos+1)));
-}
-
+/** @brief A map from keys (variable names) to values */
 template<class T = float>
-using Duals = std::map<std::string, DualQuaternion<T>>;
-
+using Vars = std::map<std::string, T>;
+/** @brief An entry in Vars; maps one variable name to its value */
 template<class T = float>
-struct System {
-	Duals<T> vars = {}, cvars = {};
+using Var = Detail::Value_t<Vars<T>>;
 
-	bool assign(std::string const& s) {
-		if(!s.length()) return false;
-		auto assign = parse_assign(s);
-		std::string lhs = assign.first, rhs = assign.second;
-		if(!lhs.length() || !rhs.length()) return false;
-		bool lhs_isvar = isvar(lhs), rhs_isvar = isvar(rhs),
-				lhs_iscdef = lhs_isvar && contains(cvars, lhs),
-				rhs_iscdef = rhs_isvar && contains(cvars, rhs),
-				lhs_isdef = lhs_isvar && contains(vars, lhs),
-				rhs_isdef = rhs_isvar && contains(vars, rhs);
-		if(lhs_iscdef) return false;
-		if(rhs_iscdef) vars[lhs] = cvars[rhs];
-		else if(rhs_isdef) vars[lhs] = vars[rhs];
-		else { /* TODO Actually parse here */ }
-		return true;
+///** @brief An expression consisting of Var, values, and operators */
+// using Expr = std::string;
+///** @brief A map from expressions to subexpressions */
+//using Exprs = std::map<Expr, Expr>;
+// b := a + 1
+// a := 5
+// eval(b) = eval(a)+1 = 6
+
+template<class C, class... T>
+struct PolyVars {
+	//PolyVars& last(void) { return *this; }
+	//const PolyVars& last(void) { return *this; }
+	C& crtp(void) { return static_cast<C&>(*this); }
+	const C& crtp(void) const { return static_cast<const C&>(*this); }
+
+	std::set<std::string> m_keys, m_reserved;
+
+	bool contains(std::string const& k) const { return m_keys.find(k) != m_keys.cend(); }
+	bool reserved(std::string const& k) const { return m_reserved.find(k) != m_reserved.cend(); }
+	bool available(std::string const& k) const { return !contains(k) && !reserved(k); }
+	bool add_key(std::string const& k) { return !reserved(k) && m_keys.emplace(k).second; }
+	bool reserve(std::string const& k) { return m_reserved.emplace(k).second; }
+
+	PolyVars(void) {}
+	PolyVars(std::set<std::string> const& r): m_reserved(r) {}
+	template<class V0, class... KV>
+	PolyVars(std::string const& k, V0 && v, KV &&... kv):
+			PolyVars(std::forward<KV>(kv)...) {
+		crtp().emplace(k, v);
 	}
+	virtual ~PolyVars(void) {}
 };
+template<class C, class S, class... T>
+struct PolyVars<C, S, T...>: PolyVars<C, T...> {
+	typedef PolyVars<C, S, T...> cur_type;
+	typedef PolyVars<C, T...> next_type;
+	typedef PolyVars<C> last_type;
+
+	using next_type::crtp;
+	//using next_type::last;
+	using next_type::add_key;
+	using next_type::reserve;
+	using next_type::reserved;
+	using next_type::contains;
+
+	Vars<S> vars;
+
+	next_type& next(void) { return static_cast<next_type&>(*this); }
+	const next_type& next(void) const { return static_cast<const next_type&>(*this); }
+
+	/*void insert(Vars<S> && v) {
+		for(auto && kv : v)
+			add_key(kv.first);
+		for(auto && kv : v)
+			vars.emplace(std::move(kv.first), std::move(kv.second));
+	}*/
+	void emplace(Var<S> const& kv) { emplace(kv.first, kv.second); }
+	void emplace(Var<S> && kv) { emplace(std::move(kv.first), std::move(kv.second)); }
+	template<class... V>
+	void emplace(std::string const& k, V &&... v) {
+		add_key(k);
+		vars.emplace(k, std::forward<V>(v)...);
+	}
+	template<class... V>
+	void emplace(std::string && k, V &&... v) {
+		add_key(k);
+		vars.emplace(std::move(k), std::forward<V>(v)...);
+	}
+	template<class M>
+	void insert(M && m) { for(auto && kv : m) emplace(std::forward<decltype(kv)>(kv)); }
+
+	PolyVars(void): next_type() {}
+	template<class K, class... V>
+	PolyVars(K && k, V &&... v): PolyVars(std::forward<V>(v)...) { emplace(std::forward<K>(k)); }
+	template<class... V>
+	PolyVars(std::string const& k, S const& s, V &&... v):
+		PolyVars(std::forward<V>(v)...) { emplace(k, std::forward<S>(s)); }
+	template<class... V>
+	PolyVars(std::string && k, S && s, V &&... v):
+		PolyVars(std::forward<V>(v)...) { emplace(std::move(k), std::move(s)); }
+	template<class... V>
+	PolyVars(Vars<S> const& m, V &&... v):
+		next_type(std::forward<V>(v)...) { insert(m); }
+	template<class... V>
+	PolyVars(Vars<S> && m, V &&... v):
+		next_type(std::forward<V>(v)...) { insert(std::forward<Vars<S>>(m)); }
+	virtual ~PolyVars(void) {}
+};
+
+//
+///** @brief The type of an unevaluated expression */
+//using Expr = std::string;
+///** @brief A map from unevaluated expressions to subexpressions */
+//using Exprs = std::map<Expr, Expr>;
 
 int main(int argc, const char *argv[]) {
 	using namespace std;
+	using namespace Detail;
 	typedef float T;
 	typedef DualQuaternion<T> DQ;
 
-	Duals<T> vars = {}, cvars = {
-		{"pi", T(M_PI)*1_e}, {"PI", T(M_PI)*1_e},
-		{"e", 1_e}, {"i", 1_i}, {"j", 1_j}, {"k", 1_k},
-			{"ij", 1_k}, {"jk", 1_i}, {"ki", 1_j},
-		{"E", 1_E}, {"I", 1_I}, {"J", 1_J}, {"K", 1_K},
-			{"Ei", 1_I}, {"Ej", 1_J}, {"Ek", 1_K}
-	};
+	//PolyVars<T, DQ> vars(std::make_pair(std::string("pi"), M_PI), std::make_pair(std::string("E"), 1_E));
+	//PolyVars<T, DQ> vars(Var<T>("pi", T(M_PI)));
+	struct Poly;
+	struct Poly: PolyVars<Poly, T, DQ> { using PolyVars<Poly, T, DQ>::PolyVars; };
+	Poly vars(Vars<T>{{"pi", T(M_PI)}}, Vars<DQ>{{"E", 1_E}});
+	vars = Poly(Var<T>{"pi", T(M_PI)});
+	//vars = Poly("pi", T(M_PI));
+	/*VarMap<T> tmap ( "pi", M_PI );
+	VarMap<DQ> dmap (
+		"e", 1_e, "i", 1_i, "j", 1_j, "k", 1_k,
+		"E", 1_E, "I", 1_I, "J", 1_J, "K", 1_K,
+		"A", 1_i, 1_j, 1_k
+	);
+
 
 	string line;
+	auto prefix = "";
+	unsigned prec = 2;
 	while(getline(cin, line)) {
 		if(!line.length()) break;
-		auto assign = parse_assign(line);
-		auto lhs = assign.first, rhs = assign.second;
-		bool lisempty = !lhs.length(),
-				lisvar = !lisempty && isvar(lhs),
-				lvar = lisvar && contains(vars, lhs),
-				lconst = lisvar && !lvar && contains(cvars, lhs),
-			risempty = !rhs.length(),
-				risvar = !risempty && isvar(rhs),
-				rvar = risvar && contains(vars, rhs),
-				rconst = risvar && contains(cvars, rhs);
-		if(lisempty) {
-			cout << "There was some kind of error parsing " << line << "." << endl;
+		if(line == "dump") {
+			for(auto const& v : tmap.vars) {
+				prefix = "";
+				cout << v.first << " = {";
+				for(auto const& vv : tmap[v.first]) {
+					cout << prefix << to_string(vv, prec);
+					prefix = ", ";
+				}
+				cout << "}" << endl;
+			}
+			for(auto const& v : dmap.vars) {
+				prefix = "";
+				cout << v.first << " = {";
+				for(auto const& vv : dmap[v.first]) {
+					cout << prefix << to_string(vv, prec);
+					prefix = ", ";
+				}
+				cout << "}" << endl;
+			}
 			continue;
 		}
-		DQ out = {0};
-		/*if(risempty) {
-			rhs = lhs; // TODO something else?
-		}*/
-		//if(lisvar) {
-			bool cont = true;
-			if(risempty) {
-				cout << lhs << " = ";
-				if(lconst) cont = false, cout << cvars[lhs];
-				else if(lvar) cout << vars[lhs];
-				else rhs = lhs;
+		auto assign = parse_assign(line);
+		auto na = assign.size();
+		if(!na) {
+			cout << "Parse error" << endl;
+			continue;
+		}
+		cout << "Parsed: ";
+		if(na > 1) cout << "{";
+		prefix = "'";
+		for(auto const& a : assign) {
+			cout << prefix << a;
+			prefix = "', '";
+		}
+		cout << "'";
+		if(na > 1) cout << "}";
+		cout << endl;
+
+		prefix = "";
+
+		if(na == 1) {
+			auto a = assign[0];
+			bool isa = contains(tsys.vars, a), isd = contains(dsys.vars, a);
+			if(!isa && !isd) {
+				cout << a << " is not defined" << endl;
+				continue;
 			}
-			//if(!risempty) {
-				if(cont && lconst) cout << lhs << " is constant" << endl;
-				else if(rconst) vars[lhs] = cvars[rhs];
-				else if(contains(vars, rhs)) vars[lhs] = vars[rhs];
-				else {
-					//cout << lhs << " = ";
-					bool first_add = true;
-					for(auto term : parse_add(rhs)) {
-						if(!first_add) cout << " + ";
-						first_add = false;
-						//cout << '[';
-						auto factors = parse_mul(term);
-						if(factors.size() > 1) {
-							cout << "*[";
-							bool first_mul = true;
-							for(auto const& f : factors) {
-								if(!first_mul) cout << ", ";
-								first_mul = false;
-								cout << f;
-							}
-							cout << ']';
-						} else if(factors.size() == 1) {
-							cout << factors[0];
-						} else {
-							cout << "<?>";
-						}
-						//cout << ']';
-					}
-					cout << endl;
-
-					/* TODO evaluate and set vars[lhs] */
-
-					/*for(long i = 0, N = add.size(); i < N; i++) {
-						if(i) cout << ", ";
-						cout << add[i];
-					}*/
-					//cout << "]" << endl;
+			cout << " = ";
+			if(isa)
+				for(auto v : tsys[a]) {
+					cout << prefix << to_string(v, prec);
+					prefix = ", ";
 				}
-				//cout << lhs << " = " << vars[lhs] << endl;
-		//} else {
-			//cout << '"' << lhs << "\" is not a valid variable name" << endl;
-		//}
-		/*if(risempty) {
-			if(isvar(lhs)) {
-				if(!contains(cvars, lhs)) {
-					if(isvar(rhs)) {
-						if(contains(cvars, rhs)) {
-							vars[lhs] = cvars[rhs];
-							cout << lhs << " := " << vars[lhs] << endl;
-						} else if(contains(vars, rhs)) {
-							vars[lhs] = vars[rhs];
-							cout << lhs << " := " << vars[lhs] << endl;
-						} else {
-							cout << lhs << " := (evaluation of " << rhs << ")" << endl;
-						}
-					} else {
-						cout << lhs << " := (evaluation of " << rhs << ")" << endl;
-					}
-				} else if(contains(cvars, lhs)) {
-					cout << "Cannot assign " << lhs << " from " << cvars[lhs]
-							<< " to (evaluation of " << rhs << ")" << endl;
-				} else {
-					if(isvar(rhs)) {
-						cout << lhs << " := ";
-						if(contains(cvars, rhs)) cout << cvars[rhs] << endl;
-						else cout << "(evaluation of " << rhs << ")" << endl;
-					} else {
-						cout << lhs << " := (evaluation of " << rhs << ")" << endl;
-					}
+			else if(isd)
+				for(auto v : dsys[a]) {
+					cout << prefix << to_string(v, prec);
+					prefix = ", ";
 				}
-			} else {
-				cout << "The left hand side of assignment must be a variable name" << endl;
-			}
-		} else {
-			if(isvar(lhs)) {
-				cout << lhs << " = ";
-				if(contains(cvars, lhs)) cout << cvars[lhs] << endl;
-				else if(contains(vars, lhs)) cout << vars[lhs] << endl;
-				else cout << "(evaluation of " << lhs << ")" << endl;
-			} else cout << "(evaluation of " << lhs << ")" << endl;
-		}*/
-	}
+			cout << endl;
+		}
+	}*/
 
-	/*map<string, DQ> symbols;
-	test_interactive(symbols);
-	cout << "At exit, symbols are:" << endl;
-	for(auto const& s : symbols)
-		cout << "\t" << s.first << " = " << s.second << endl;*/
 }
