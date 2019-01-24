@@ -8,7 +8,7 @@
 ///@endcond
 
 #include "math.hpp"
-#include "geometric.hpp"
+#include "tag.hpp"
 
 namespace Timing {
 
@@ -17,10 +17,10 @@ using std::ratio;
 using clock = high_resolution_clock;
 
 /** Gets the time elapsed between two measurements */
-template<class T = double>
-T elapsed(T t0, T t1) {
+template<class S, class T>
+S elapsed(T && t0, T && t1) {
 	using namespace std::chrono;
-	return duration_cast<duration<T>>(t1-t0).count();
+	return duration_cast<duration<S>>(t1-t0);
 }
 /** Gets the time according to the high resolution clock */
 template<class T = double, class... R>
@@ -83,7 +83,7 @@ struct Delta {
 		auto t0 = clock::now();
 		d.action(N, x);
 		auto t1 = clock::now();
-		return Timing::elapsed(t0, t1);
+		return Timing::elapsed<double>(t0, t1);
 	}
 protected:
 	Iterations iterations;
