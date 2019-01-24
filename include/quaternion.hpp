@@ -32,7 +32,6 @@ template<class S> struct Quaternion {
 	template<class T> bool operator==(Quaternion<T> const& rhs) const
 		{ return w == rhs.w && x == rhs.x && y == rhs.y && z == rhs.z; }
 
-	//operator DualQuaternion<S>(void) const { return {w, x, y, z}; }
 	template<class T = S>
 	operator DualQuaternion<T>(void) const { return {T(w), T(x), T(y), T(z)}; }
 
@@ -64,6 +63,9 @@ template<class S> struct Quaternion {
 	template<class T, class ST = std::common_type_t<S, T>>
 	friend Quaternion<ST> operator+(T const& t, Quaternion const& q)
 		{ return {t + q.w, q.x, q.y, q.z}; }
+	template<class T, class ST = std::common_type_t<S, T>>
+	friend Quaternion<ST> operator+(Quaternion<T> const& l, Quaternion const& r)
+		{ return {l.w + r.w, l.x + r.x, l.y + r.y, l.z + r.z}; }
 
 	Quaternion normalize(void) const {
 		auto len = length();
@@ -103,6 +105,18 @@ template<class S> struct Quaternion {
 		{ return lhs * *rhs / rhs.lengthSquared(); }
 
 	operator std::string(void) const;
+
+	template<class T>
+	Quaternion(Quaternion<T> const& q):
+		w(q.w), x(q.x), y(q.y), z(q.z) {}
+	template<class T>
+	Quaternion(Quaternion<T> && q):
+		w(std::move(q.w)), x(std::move(q.x)), y(std::move(q.y)), z(std::move(q.z)) {}
+	Quaternion(S const& w, S const& x, S const& y, S const& z):
+		w(w), x(x), y(y), z(z) {}
+	Quaternion(S && w = 0, S && x = 0, S && y = 0, S && z = 0):
+		w(std::move(w)), x(std::move(x)), y(std::move(y)), z(std::move(z)) {}
+	virtual ~Quaternion(void) {}
 };
 
 template<class S, unsigned M, class T = S>
@@ -110,9 +124,14 @@ Quaternion<T>& operator>>(const S (&s)[M], Quaternion<T> &q) {
 	static_assert(M >= 4, "The source array must (at least) 4 elements long");
 	return q.w = s[0], q.x = s[1], q.y = s[2], q.z = s[3], q;
 }
-template<class S, class T, class ST = std::common_type_t<S,T>>
-Quaternion<ST> operator*(Quaternion<S> const& l, T const& r)
+template<class S, class T>
+auto operator*(Quaternion<S> const& l, T const& r)
+-> std::enable_if_t<std::is_arithmetic<T>::value, Quaternion<std::common_type_t<S,T>>>
 	{ return {l.w*r, l.x*r, l.y*r, l.z*r}; }
+template<class S, class T>
+auto operator*(S const& l, Quaternion<T> const& r)
+-> std::enable_if_t<std::is_arithmetic<T>::value, Quaternion<std::common_type_t<S,T>>>
+	{ return {l * r.w, l * r.x, l * r.y, l * r.z}; }
 template<class S, class T, class ST = std::common_type_t<S,T>>
 Quaternion<ST> operator*(Quaternion<S> const& l, Quaternion<T> const& r) {
 	return {
@@ -120,9 +139,6 @@ Quaternion<ST> operator*(Quaternion<S> const& l, Quaternion<T> const& r) {
 		l.w*r.y + l.y*r.w - l.x*r.z + l.z*r.x,  l.w*r.z + l.z*r.w + l.x*r.y - l.y*r.x
 	};
 }
-template<class S, class T, class ST = std::common_type_t<S,T>>
-Quaternion<ST> operator*(S && l, Quaternion<T> const& r)
-	{ return {l * r.w, l * r.x, l * r.y, l * r.z}; }
 
 template<class L, class R>
 std::common_type_t<L,R> dot(Quaternion<L> const& l, Quaternion<R> const& r)
