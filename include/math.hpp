@@ -47,9 +47,14 @@ to_string(S s, unsigned prec = 0, bool show_zero = true, bool fill_zeroes = fals
 	auto z0 = major.find('0'), nz0 = major.find_first_not_of('0'),
 		z1 = minor.find_last_of('0'), nz1 = minor.find_last_not_of('0');
 	if(nz0 == string::npos) {
-		if(show_zero || (nz1 == string::npos)) major = "0";
+		if(show_zero) major = "0";
+		if(show_zero && (nz0 == string::npos) && (nz1 == string::npos)) major = "0";
+		//if(show_zero || (nz1 == string::npos)) major = "0";
 		else major = "";
 	}
+	if(!fill_zeroes && (nz0 == string::npos)) major = "0";
+	if(show_zero && (nz0 == string::npos)) major = "0";
+
 	if(fill_zeroes || (nz1 != string::npos))
 		point = ".";
 	if(nz1 == string::npos) {
