@@ -240,7 +240,9 @@ int main(int argc, const char *argv[]) {
 		{"cylinder", false},
 		{"surface", false},
 		{"surface2", false},
-		{"surface3", false}
+		{"surface3", false},
+		{"field", false},
+		{"fieldcube", false}
 	};
 	string nos[] = {"--no-", "-n"};
 	bool met_yes = false;
@@ -269,7 +271,7 @@ int main(int argc, const char *argv[]) {
 			mid = (near + far)/2,
 			right = width/2, left = -right,
 			top = height/2, bottom = -top;
-	int wmesh = 15, hmesh = wmesh;
+	int wmesh = 64, hmesh = wmesh;
 	auto scale = right;
 
 	std::vector<GLfloat> points;
@@ -325,6 +327,36 @@ int main(int argc, const char *argv[]) {
 			{scale*-1_x, 0_x, scale*1_x},
 			{scale*(-1_x-1_y), scale*-1_y, scale*(1_x-1_y)}}, p,
 			wmesh, hmesh, offset);
+	}
+	if(models["field"]) {
+		/*auto fn = [=] (float u, float v) -> DualQuaternion<float> {
+			return translation<float>(u*scale, v*scale,
+					//scale/4*sin(float(8*M_PI*sqrt(u*u+v*v))));
+					scale/4*sin(8*M_PI*sqrt(u*u+v*v)));
+		};*/
+		auto fn = [=] (float u, float v, float w) -> DualQuaternion<float> {
+			return translation<float>(u*4*scale, v*4*scale, //w*scale);
+					//scale/4*sin(float(8*M_PI*sqrt(u*u+v*v))));
+					scale/4*sin(8*M_PI*sqrt(u*u+v*v)));
+		};
+		offset = field(points, indices, fn,
+				Point<float>{-1, -1, 0}, Point<float>{2, 0, 0}, Point<float>{0, 2, 0},
+				p, wmesh, hmesh, offset);
+	}
+	if(models["fieldCube"]) {
+		auto fn = [=] (float u, float v, float w) -> DualQuaternion<float> {
+			Point<float> a = {scale*u, scale*v, scale*w};
+			a = a ^ rotation<float>(M_PI/4, 0, 1, 0);
+			a = a ^ rotation<float>(M_PI/8, 1, 0, 0);
+			a = a ^ rotation<float>(v*M_PI/8, 0, 1, 0);
+			return translation<float>(a.x, a.y, a.z);
+			//auto a = (cos(M_PI*2*(u+v+w))+3)/4;
+			//return trans_rotation<float>(u*scale, v*scale, w*scale, M_PI/16*(u+v+w), 0, 0, 1);
+			//return translation<float>(u*scale, v*scale, w*scale);
+		};
+		offset = fieldCube(points, indices, fn, Point<float>{-1, -1, -1},
+				Point<float>{2, 0, 0}, Point<float>{0, 2, 0}, Point<float>{0, 0, 2},
+				p, wmesh, hmesh, offset);
 	}
 	indicesSize = indices.size();
 
