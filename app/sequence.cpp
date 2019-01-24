@@ -2,10 +2,10 @@
 //#include <iomanip>
 #include <sstream>
 
-#include "geometric.hpp"
 #include "binomial.hpp"
 #include "dual.hpp"
-#include "pretty.tpp"
+#include "pretty.hpp"
+#include "tag.hpp"
 
 using namespace Detail;
 
@@ -78,10 +78,10 @@ int main(int argc, const char *argv[]) {
 	// all disappear in abstract elimination.
 	static constexpr unsigned N = 10, I = 4;
 	typedef RepeatSeq<N, unsigned, 1> ones_t;                 // {1, 1, ..., 1, 1}
-	typedef SumSeq<Value_t<false, ones_t>> sum_t;         // 10
+	typedef SumSeq<Value_t<ones_t>> sum_t;         // 10
 	typedef PartialSumSeq<ones_t> inc_t;                      // {1, 2, ..., 9, 10}
-	typedef ProductSeq<Value_t<false, inc_t>> product_t;  // 3628800
-	typedef PartialSumSeq<Value_t<false, inc_t>> inc2_t;  // {1, 3, ..., 45, 55}
+	typedef ProductSeq<Value_t<inc_t>> product_t;  // 3628800
+	typedef PartialSumSeq<Value_t<inc_t>> inc2_t;  // {1, 3, ..., 45, 55}
 	std::string subs[][2] = {{"Detail::", ""}, {"std::", ""}};
 	// noDetail[] = {"Detail::", ""}, noStd[] = {"std::", ""};
 	// auto toStr = [=] (auto a) { return to_string(a, noDetail, noStd); };
@@ -101,12 +101,14 @@ int main(int argc, const char *argv[]) {
 	oss << "10 1's: " << to_string(ones_t{}) << "\n"
 		"  - Sum: " << to_string(sum_t{}) << "\n"
 	"  - Partial sum: " << to_string(inc_t{}) << "\n"
+	"    - Evens: " << to_string(inc_t{}+inc_t{}) << "\n"
 	"    - Product: " << to_string(product_t{}) << "\n"
 	"    - Partial sum: " << to_string(inc2_t{}) << "\n"
 	"    - Nth for N=" << I << ": " << get<I>(inc2_t{}) << "\n\n";
 
-	oss << "Fibonacci<10> = " << Fibonacci<10>::value << endl;
-	oss << '\n';
+	oss << "Decompose<91> = " << decompose<int, 91, 7>() << '\n' << endl;
+
+	oss << "Fibonacci<10> = " << Fibonacci<10>::value << '\n' << endl;
 
 	typedef Integral<int, 5> ce_t;
 	typedef std::integral_constant<int, ce_t{}.value> cei_t; // or...
