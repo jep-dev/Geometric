@@ -1,5 +1,5 @@
-#ifndef GEOMETRIC_HPP
-#define GEOMETRIC_HPP
+#ifndef TAG_HPP
+#define TAG_HPP
 
 #include "utility.hpp"
 
@@ -9,12 +9,21 @@ template<class...> struct Tag {
 	typedef Tag<> head_type;
 	typedef Tag<> tail_type;
 	static constexpr unsigned size = 0;
+	template<class R> constexpr bool contains(Tag<R> = {}) const { return false; }
+	template<class R> constexpr bool contains_base(Tag<R> = {}) const { return false; }
+	template<class R> constexpr bool contains_derived(Tag<R> = {}) const { return false; }
 };
 
 template<class HEAD, class... REST> struct Tag<HEAD, REST...> {
 	typedef Tag<HEAD> head_type;
 	typedef Tag<REST...> tail_type;
 	static constexpr unsigned size = 1 + sizeof...(REST);
+	template<class R> constexpr bool contains(void) const
+		{ return std::is_same<HEAD, R>::value || Tag<REST...>{}.contains(Tag<R>{}); }
+	template<class R> constexpr bool contains_base(void) const
+		{ return std::is_base_of<HEAD, R>::value || Tag<REST...>{}.contains_base(Tag<R>{}); }
+	template<class R> constexpr bool contains_derived(void) const
+		{ return std::is_base_of<R, HEAD>::value || Tag<REST...>{}.contains_derived(Tag<R>{}); }
 };
 
 /** Direct sum (treats LHS and RHS as orthogonal) */
@@ -146,6 +155,12 @@ auto collapse(Tag<U...>)
 template<class U, class... V>
 auto collapse(Tag<U, V...>) -> Tag<decltype(collapse(std::declval<U>())),
 		decltype(collapse(std::declval<V>()))...> { return {}; }
+
+template<class... T>
+Tag<T...> tuple_to_tag(std::tuple<T...> const&) { return {}; }
+template<class... T>
+auto tag_to_tuple(T &&... t) -> decltype(std::make_tuple(std::forward<T>(t)...))
+	{ return std::make_tuple(std::forward<T>(t)...); }
 
 
 }
