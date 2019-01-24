@@ -32,7 +32,7 @@ void main(){
 			sxy = nsin(xy*M_PI*2), syz = nsin(yz*M_PI*2), sxz = nsin(xz*M_PI*2),
 		xyz = sqrt(xyz2), cxyz = ncos(xyz*M_PI*2),
 		h = M_PI*(cos(x)+cos(y)+cos(z)),
-		b = cos(2*atan2(cx,(cx*cx+cy*cy+cz*cz))*(cos(uv.x*2*M_PI)+sin(uv.y*2*M_PI)));
+		b = .5+.5*log(ncos(z)+1); //b = cos(2*atan2(cx,(cx*cx+cy*cy+cz*cz)));//*(cos(uv.x*2*M_PI)+sin(uv.y*2*M_PI)));
 	//color = vec4(uv.x, uv.y, sqrt(uv.x*uv.x+uv.y*uv.y), 1);
 	color = vec4(ncos(h)*b, ncos(h+M_PI*2/3)*b, ncos(h+M_PI*4/3)*b, 1);
 	//color = vec4(ncos(h), ncos(h+M_PI*2/3), ncos(h+M_PI*4/3), 1);
