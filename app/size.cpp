@@ -5,7 +5,7 @@
 #include <tuple>
 #include <vector>
 
-#include "pretty.tpp"
+#include "pretty.hpp"
 #include "utility.hpp"
 #include "size.hpp"
 
@@ -83,7 +83,7 @@ struct Printer {
 	}
 	template<class S, class T>
 	S& operator()(S& s, unsigned line, std::string const& name, T && t) {
-		std::string realName = prettyTrunc<T>();
+		std::string realName = pretty_abbrev<T>();
 		return s << std::setw(nameCol) << ((name.length() && name != realName) ? name : "") << pad
 			<< std::setw(whichCol) << whichSize(std::forward<T>(t)) << pad
 			<< std::setw(sizeCol) << getSize(std::forward<T>(t)) << pad
