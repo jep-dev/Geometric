@@ -103,7 +103,7 @@ struct ShaderTable {
 		if(it2 == sources.end()) return { Events::StatusError };
 		if(!is_sourced(*it))
 			if(!(it -> set_source(*it2)))
-				return false;
+				return { Events::StatusError };
 		return it -> compile();
 	}
 	template<class U>
