@@ -8,7 +8,7 @@
 #include "quaternion.tpp"
 #include "dual.tpp"
 
-#include "geometric.hpp"
+#include "tag.hpp"
 
 namespace Expressions {
 
@@ -37,7 +37,6 @@ struct Symbol: std::enable_shared_from_this<Symbol<S>> {
 	virtual EType type(void) const = 0;
 	virtual bool varies(char c) const = 0;
 	virtual SymbolPtr<S> derive(char c) const = 0;
-	//template<class S> bool operator==(S const& s) const { return false; }
 	friend std::ostream& operator<<(std::ostream &lhs, Symbol const& rhs) {
 		return lhs << to_string(rhs, 2, false), lhs;
 	}
@@ -47,9 +46,10 @@ template<class S, unsigned N> struct NarySymbol: Symbol<S> {
 	constexpr unsigned nary(void) const { return N; }
 };
 template<class S> struct NullarySymbol: NarySymbol<S, 0> {
-	S value = {1};
+	S value;
+	//S value = {1};
 
-	template<class T0, class... T, class SV = Detail::Value_t<true, S>,
+	/*template<class T0, class... T, class SV = Detail::InnerValue_t<S>,
 		class TN = std::enable_if_t<std::is_arithmetic<T0>::value
 			&& std::is_convertible<T0, SV>::value, T0>>
 	NullarySymbol(T0 t0, T ... t): value{SV(t0), SV(t)...} {}
@@ -58,7 +58,12 @@ template<class S> struct NullarySymbol: NarySymbol<S, 0> {
 			&& std::is_convertible<T0, S>::value, T0>>
 	NullarySymbol(T0 const& t): value((S) t) {}
 	NullarySymbol(S && value = {1}): value(std::move(value)) {}
-	NullarySymbol(S const& value): value(value) {}
+	NullarySymbol(S const& value): value(value) {}*/
+	template<class T>
+	NullarySymbol(T && t): value{S(std::forward<T>(t))} {}
+	template<class T0, class T1, class... T>
+	NullarySymbol(T0 && t0, T1 && t1, T &&... t):
+		value(std::forward<T0>(t0), std::forward<T1>(t1), std::forward<T>(t)...) {}
 	virtual ~NullarySymbol(void) {}
 };
 template<class S> struct UnarySymbol: NarySymbol<S, 1> {

@@ -2,11 +2,11 @@
 #define STREAMS_HPP
 
 #include <algorithm>
+#include <iosfwd>
 #include <string>
 #include <vector>
 
-#include <iosfwd>
-#include "geometric.hpp"
+#include "tag.hpp"
 
 #ifndef INDENT
 #define INDENT "\t"
