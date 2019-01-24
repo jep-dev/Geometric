@@ -4,7 +4,7 @@
 
 #include "expression.tpp"
 #include "pretty.hpp"
-#include "pretty.tpp"
+#include "pretty.hpp"
 #include "math.tpp"
 #include "streams.hpp"
 #include "streams.tpp"
@@ -16,6 +16,7 @@ std::ostream& print_derivatives(std::ostream &os, Expressions::SymbolPtr<S> cons
 	using namespace Expressions;
 	for(auto it : {t...})
 		os << "d/d" << it << " " << *s << " = "
+			<< *(s -> derive(it)) << " = "
 			<< *(simplify(s -> derive(it))) << endl;
 			// << *(s -> derive(it) -> simplify()) << endl;
 	return os;
@@ -28,9 +29,14 @@ int main(int argc, const char *argv[]) {
 
 	using T = float;
 	using DQ = DualQuaternion<T>;
+	DQ a{1}, b{1_e}, c{1_E};
 	//DQ const_dual = trans_rotation<T>(1, 0, 0, M_PI/2, 0, 1, 0);
 	DQ const_dual = rotation<T>(M_PI/2, 0, 1, 0);
+	SymbolPtr<DQ> u = mkVar<DQ>('u', 1_E),
+		v = mkVar<DQ>('v', 1_e),
+		w = mkVar<DQ>('w', 1, 0, 0, 0, 0, 1, 0, 0);
 
+	/*
 	// Variable/value construction is almost entirely type agnostic:
 	// 1. Arithmetic vargs that convert to dest::value_type (if it exists)
 	SymbolPtr<DQ> u = mkVar<DQ>('u', 1), // -> {1, 0, ..., 0}
@@ -94,19 +100,13 @@ int main(int argc, const char *argv[]) {
 		Streams::level_insert(lines, "  ");
 	}
 
-	/*for(char ch : {'u', 'v'}) {
-		lines[0] += string("d/d") + ch;
-		for(unsigned i = 0; i < N; i++) {
-			lines[i+1] += to_string(symbols[i] -> derive(ch), prec);
-		}
-		Streams::level_insert(lines, "  ");
-	}*/
 	cout << "Functions, reductions, dependence on "
 			"and derivation with respect to variables" << endl;
 	cout << "  Note that exponent is written exp "
 			"and that e is an operator like i.\n" << endl;
 	for(auto const& line : lines)
 		cout << line << endl;
+	*/
 
 
 }
