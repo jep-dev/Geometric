@@ -19,51 +19,64 @@ template<class S, class DELIM = const char*>
 std::enable_if_t<std::is_scalar<S>::value, std::string>
 to_string(S s, unsigned prec = 0, bool show_zero = true, bool fill_zeroes = false) {
 	using namespace std;
-	if(isnan(s))
-		return "NaN";
-	bool bSign = s < 0;
-	// s= abs(s);
-	if(bSign) s = -s;
 
-	string out;
-	unsigned uFactor = 0, uMajor = s, uDec = uMajor,
-			nMajor = 0, nMinor = 0, nZeroes = 0;
-	while(uDec) {
-		unsigned uCur = uDec % 10, uNext = uDec / 10;
-		out = char('0' + uCur) + out;
-		uDec = uNext;
-		if(uCur) nMajor++;
+	// TODO isnan, isinf fallback for non-floats
+	// if(isnan(s)) return "NaN";
+	// if(isinf(s)) return "Inf";
+
+	bool neg = false;
+	if(s == -0.f) s = 0;
+	else if(s < 0) neg = true, s = -s;
+
+	unsigned p10 = pow(10, prec);
+	s = round(s*p10) / p10;
+
+	if(!prec) {
+		unsigned u = s;
+		auto ustr = std::to_string(u);
+		return ((neg && u) ? "-" : "") + ustr;
 	}
-	if((show_zero && !nMajor)) {
-		out = "0";
+
+	auto tostr = std::to_string(s);
+	auto len = tostr.length();
+	if(!len) tostr = "0", len = 1;
+
+	auto decimal = tostr.find('.');
+	string major = tostr.substr(0, decimal), point = "", minor;
+	if(decimal+1 < len) minor = tostr.substr(decimal+1);
+	auto z0 = major.find('0'), nz0 = major.find_first_not_of('0'),
+		z1 = minor.find_last_of('0'), nz1 = minor.find_last_not_of('0');
+	if(nz0 == string::npos) {
+		if(show_zero || (nz1 == string::npos)) major = "0";
+		else major = "";
 	}
-	s -= uMajor;
-	while(prec) {
-		s *= 10;
-		unsigned uCur = s;
-		if(uCur || fill_zeroes) {
-			s -= uCur;
-			if(!nMinor) out += '.';
-			nMinor++;
-			if(nZeroes) {
-				out += string(nZeroes, '0');
-				nZeroes = 0;
-			}
-			out += char('0' + uCur);
-		} else {
-			nZeroes++;
+	if(fill_zeroes || (nz1 != string::npos))
+		point = ".";
+	if(nz1 == string::npos) {
+		if(fill_zeroes) point = ".", minor = string(prec, '0');
+		else point = minor = "";
+	} else {
+		if(z1 != string::npos) {
+			if(!fill_zeroes && (z1 > nz1))
+				minor = minor.substr(0, nz1+1);
 		}
-		prec--;
 	}
-	if(!show_zero && out.find("0.") != string::npos)
-		out = out.substr(1);
-	if(!out.length()) out = "0";
-	if(bSign && (nMajor || nMinor))
-		return '-' + out;
+
+	len = minor.length();
+	int dlen = prec - len;
+	if(dlen < 0) minor = minor.substr(0, prec);
+	else if(fill_zeroes && (dlen > 0))
+		minor += string(dlen, '0');
+	if(!minor.length()) point = "";
+
+	auto out = major + point + minor;
+	if(neg && (out.find_first_not_of("0.") != string::npos))
+		return "-" + out;
 	return out;
 }
-template<class S, class DELIM = const char*, class... T>
-std::string to_string(Point<S> const& d, unsigned prec = 2, DELIM delim = ", ", T &&... t);
+
+template<class S, class... T>
+std::string to_string(Point<S> const& d, T &&... t);
 template<class S, class... T>
 std::string to_string(Quaternion<S> const& d, T &&... t);
 template<class S, class... T>

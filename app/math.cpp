@@ -1,8 +1,8 @@
-//#include <ctype>
 #include <limits>
 
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 #include <map>
 #include <vector>
 #include <set>
@@ -65,8 +65,50 @@ void test_near(void) {
 	hrule(cout) << endl;
 }
 
+template<class T>
+void test_to_string(std::vector<T> vals, unsigned minPrec = 0,
+		unsigned maxPrec = 3, unsigned cols = 80) {
+	using std::string;
+	using std::cout;
+	using std::endl;
+	using std::setw;
 
+	string sep = " ";
+	unsigned n = vals.size(), w = (cols - 8 - sep.length()*(n-1)) / (maxPrec + 2);
+	std::string titles[] = {"Zeroes", "Digits"},
+			labels[] = {"none", "pre", "post", "both"};
+	std::size_t titleLens[] = {titles[0].length(), titles[1].length()};
+	std::cout << titles[0] << "  " << titles[1] << std::endl;
+	for(unsigned zeroes = 0; zeroes < 4; zeroes++) {
+		bool show_zero = zeroes & 1, fill_zeroes = zeroes & 2;
+		for(unsigned prec = minPrec; prec <= maxPrec; prec++) {
+			cout << std::right << setw(titleLens[0]) << labels[zeroes] << "  "
+				<< std::left << setw(titleLens[1]) << prec << "  ";
+			std::string prefix;
+			for(auto val : vals) {
+				std::cout << prefix << std::setw(maxPrec+4) << std::right
+						<< to_string(-val, prec, show_zero, fill_zeroes)
+						<< ' ' << sep << ' ' << setw(maxPrec+4) << std::left
+						<< to_string(val, prec, show_zero, fill_zeroes);
+				prefix = sep;
+			}
+			endl(std::cout);
+		}
+		//endl(std::cout);
+	}
+}
 
 int main(int argc, const char *argv[]) {
-	test_near<float>();
+	//test_near<float>();
+	using namespace std;
+
+	test_to_string<float>({0.f, 2.f/3, 1000.f/81});
+	/*cout << "No leading/trailing zeroes" << endl;
+	test_to_string(false, false);
+	cout << "\nOnly leading zero" << endl;
+	test_to_string(true, false);
+	cout << "\nOnly trailing zeroes" << endl;
+	test_to_string(false, true);
+	cout << "\nLeading and trailing zeroes" << endl;
+	test_to_string(true, true);*/
 }
