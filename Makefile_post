@@ -1,0 +1,2 @@
+$(call PAT_O,frame): $(call PAT_SO,context)
+$(call PAT_O,view): $(call PAT_SO,context shader frame)

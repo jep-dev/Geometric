@@ -101,7 +101,7 @@ BUILD_DEP=$(CXX) $(CXXFLAGS) -MM $(BR) -MT '$(DIR_O)$*.o' $< -MF $@
 $(call PAT_D,$(NAMES_EXE)): $(DIR_O)%.d: $(DIR_APP)%.cpp; $(BUILD_DEP)
 $(call PAT_D,$(NAMES_SO)): $(DIR_O)%.d: $(DIR_SRC)%.cpp; $(BUILD_DEP)
 
-$(call PAT_EXE,$(NAMES_EXE)): $(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d $(FILES_SO) $(DEPS_$*)
+$(call PAT_EXE,$(NAMES_EXE)): $(DIR_BIN)%: $(DIR_O)%.o $(DIR_O)%.d $(DEPS_$*) #$(FILES_SO) $(DEPS_$*)
 	$(CXX) $(LDFLAGS)\
 		$(strip -o $@ $< $(LDLIBS) $(LDLIBS_$*) $(sort $(call CONFIG_SO,$(REQ_$*))))
 
@@ -120,9 +120,10 @@ $(DIR_O)%.o: $(DIR_SRC)%.cpp $(DIR_DEP)%.d \
 	$(CXX) $(CXXFLAGS) $(CXXFLAGS_$*) $(sort $(call CONFIG_O,$(REQ_$*))) -fPIC -c \
 		$(strip -o $@ $(call PAT_SRC,$*) $<)
 
+#SOS_view=$(call REPAT,CPP,SO,$(wildcard $(call PAT_CPP,$(patsubst -l%,%,$(filter -l%,$(LDLIBS_view))))))
 # Generate auto-dep injection - what could go wrong?
 #-include $(call PAT_D,$(NAMES_EXE) $(NAMES_SO))
-include $(wildcard $(DEPS_EXE) $(DEPS_SO)) Doxygen.mk
+include $(wildcard $(DEPS_EXE) $(DEPS_SO)) Doxygen.mk $(wildcard $(POST))
 
 debug: override CXXFLAGS+=-Og -ggdb -g3 -fno-omit-frame-pointer
 debug: clean default
