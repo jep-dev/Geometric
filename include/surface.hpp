@@ -16,9 +16,8 @@ R& emplace_vertices(R &vertices) { return vertices; }
 
 template<class R, class S, class... T>
 std::enable_if_t<std::is_arithmetic<S>::value, R&>
-emplace_vertices(R & vertices, S const& s, T &&... t) {
-	typedef typename R::value_type V;
-	vertices.emplace_back(V(s));
+emplace_vertices(R & vertices, S s, T &&... t) {
+	vertices.emplace_back(s);
 	return emplace_vertices(vertices, std::forward<T>(t)...);
 }
 template<class R, template<class> class C, class S, class... T>
@@ -33,8 +32,8 @@ R& emplace_vertices(R & vertices, C<S> const& s, T &&... t) {
 template<class R>
 R& emplace_indices(R & indices) { return indices; }
 template<class R, class S, class... T>
-R& emplace_indices(R & indices, S const& s, T &&... t) {
-	indices.emplace_back(s);
+R& emplace_indices(R & indices, S && s, T &&... t) {
+	indices.emplace_back(std::forward<S>(s));
 	return emplace_indices(indices, std::forward<T>(t)...);
 }
 
@@ -179,7 +178,7 @@ unsigned surface2(V & vertices, W & indices,
 }
 template<class V, class W, class U>
 unsigned surface3(V & vertices, W & indices,
-		const Point<U> (&rowMajor)[3][3], Point<U> const& center,
+		Point<U> const (&rowMajor)[3][3], Point<U> const& center,
 		unsigned M = 100, unsigned N = 100, unsigned offset = 0, bool uv = true) {
 	typedef DualQuaternion<U> Dq;
 	typedef Point<U> Pt;
@@ -201,6 +200,50 @@ unsigned surface3(V & vertices, W & indices,
 			}
 		}
 	}
+	return offset + M*N;
+}
+
+template<class V, class W, class U, class FN>
+unsigned field(V& vertices, W& indices, FN xform,
+		Point<U> u0, Point<U> du, Point<U> dv, Point<U> center = {0, 0, 0},
+		unsigned wmesh = 100, unsigned hmesh = 100, unsigned offset = 0, bool uv = true) {
+	for(unsigned i = 0; i < hmesh; i++) {
+		Point<U> v = u0 + U(i)*dv/hmesh;
+		for(unsigned j = 0; j < wmesh; j++) {
+			Point<U> u = v + U(j)*du/wmesh;
+			emplace_vertices(vertices, center ^ xform(u.x, u.y, u.z));
+			if(uv) emplace_vertices(vertices, u.x, u.y);
+		}
+	}
+	for(unsigned i = 0; i < hmesh; i++) {
+		for(unsigned j = 0; j < wmesh; j++) {
+			auto index = offset + i*wmesh + j;
+			emplace_indices(indices, index, index+1, index+1+wmesh,
+					index+1+wmesh, index+wmesh, index);
+		}
+	}
+	return offset + hmesh * wmesh;
+}
+template<class V, class W, class U, class FN>
+unsigned fieldCube(V& vertices, W& indices, FN xform,
+		Point<U> u0, Point<U> du, Point<U> dv, Point<U> dw, Point<U> center = {0, 0, 0},
+		unsigned wmesh = 100, unsigned hmesh = 100, unsigned offset = 0, bool uv = true) {
+	typedef Point<U> Pt;
+	Pt north[] = {u0+du+dv, -du, dw}, east[] = {u0+du, dv, dw}, south[] = {u0, du, dw},
+		west[] = {u0+dv, -dv, dw}, top[] = {u0+dw, du, dv}, bottom[] = {u0+dv, du, -dv};
+	offset = field(vertices, indices, xform, north[0], north[1], north[2],
+			center, wmesh, hmesh, offset, uv);
+	offset = field(vertices, indices, xform, east[0], east[1], east[2],
+			center, wmesh, hmesh, offset, uv);
+	offset = field(vertices, indices, xform, south[0], south[1], south[2],
+			center, wmesh, hmesh, offset, uv);
+	offset = field(vertices, indices, xform, west[0], west[1], west[2],
+			center, wmesh, hmesh, offset, uv);
+	offset = field(vertices, indices, xform, top[0], top[1], top[2],
+			center, wmesh, hmesh, offset, uv);
+	offset = field(vertices, indices, xform, bottom[0], bottom[1], bottom[2],
+			center, wmesh, hmesh, offset, uv);
+	return offset;
 }
 
 #endif
