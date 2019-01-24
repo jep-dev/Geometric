@@ -76,13 +76,6 @@ template<class S> struct DualQuaternion {
 	DualQuaternion<SC> operator-(DualQuaternion<C> const& r) const
 		{ return {s - r.s, t - r.t, u - r.u, v - r.v, w - r.w, x - r.x, y - r.y, z - r.z}; }
 
-	template<class C, class SC = std::common_type_t<S,C>>
-	DualQuaternion<SC> operator/(Quaternion<C> const& c)
-		{ return *this * *c / c.lengthSquared(); }
-	template<class C, class SC = std::common_type_t<S,C>>
-	DualQuaternion<SC> operator/(C const& c)
-		{ return {s/c, t/c, u/c, v/c, w/c, x/c, y/c, z/c}; }
-
 	template<class T>
 	operator DualQuaternion<T>(void) {
 		return {T(s), T(t), T(u), T(v), T(w), T(x), T(y), T(z)};
@@ -98,10 +91,6 @@ template<class S> struct DualQuaternion {
 	DualQuaternion& operator*=(DualQuaternion<C> const& c) {
 		return *this = *this * c;
 	}
-	/*template<class T>
-	DualQuaternion& operator*=(DualQuaternion<T> const& t) {
-		return *this = *this * DualQuaternion<S>{t.s, t.t, t.u, t.v, t.w, t.x, t.y, t.z};
-	}*/
 
 	template<class T>
 	DualQuaternion& operator+=(DualQuaternion<T> const& t)
@@ -121,14 +110,6 @@ template<class S> struct DualQuaternion {
 	template<class T>
 	DualQuaternion& operator-=(DualQuaternion<T> const& t)
 		{ return *this = *this - DualQuaternion<S>{t.s, t.t, t.u, t.v, t.w, t.x, t.y, t.z}; }
-	template<class T>
-	DualQuaternion& operator/=(Quaternion<T> const& q)
-		{ return *this = *this / Quaternion<S>{q.w, q.x, q.y, q.z}; }
-
-	// TODO investigate why (i+Ei) * 1/(i+Ei) = 1+2E != 1 = (i+Ei)/(i+Ei)
-	template<class T, class ST = std::common_type_t<S,T>>
-	friend DualQuaternion<ST> operator/(T const& l, DualQuaternion const& r)
-		{ return l * inverse(r); }
 
 	template<class T, class V = typename T::value_type, class SV = std::common_type_t<S,V>>
 	DualQuaternion<SV> operator^(T const& r) const { return r * *this * *r; }
@@ -138,6 +119,25 @@ template<class S> struct DualQuaternion {
 		{ return s == d.s && t == d.t && u == d.u && v == d.v
 				&& w == d.w && x == d.x && y == d.y && z == d.z; }
 	operator std::string(void) const;
+
+	DualQuaternion(S s = 0, S t = 0, S u = 0, S v = 0, S w = 0, S x = 0, S y = 0, S z = 0):
+		s(s), t(t), u(u), v(v), w(w), x(x), y(y), z(z) {}
+	template<class T>
+	DualQuaternion(DualQuaternion<T> && d):
+		s(std::move(d.s)), t(std::move(d.t)), u(std::move(d.u)), v(std::move(d.v)),
+		w(std::move(d.w)), x(std::move(d.x)), y(std::move(d.y)), z(std::move(d.z)) {}
+	template<class T>
+	DualQuaternion(Quaternion<T> && q):
+		s(std::move(q.w)), t(std::move(q.x)), u(std::move(q.y)), v(std::move(q.z)),
+		w(0), x(0), y(0), z(0) {}
+	template<class T>
+	DualQuaternion(DualQuaternion<T> const& d):
+		s(d.s), t(d.t), u(d.u), v(d.v), w(d.w), x(d.x), y(d.y), z(d.z) {}
+	template<class T>
+	DualQuaternion(Quaternion<T> const& q):
+		s(q.w), t(q.x), u(q.y), v(q.z), w(0), x(0), y(0), z(0) {}
+
+	virtual ~DualQuaternion(void) {}
 };
 
 template<class S, class T = S>
@@ -168,28 +168,29 @@ DualQuaternion<ST> to_dual(const S (&s)[SN], const T (&t)[TN]) {
 	static_assert(SN >= 4 && TN >= 4, "Components must contain (at least) 4 elements");
 	return {s[0], s[1], s[2], s[3], t[0], t[1], t[2], t[3]};
 }
-template<class XYZ, class X = XYZ, class Y = X, class Z = X>
-DualQuaternion<XYZ> point(X && x, Y && y, Z && z)
-	{ return {1.f, 0.f, 0.f, 0.f, 0.f, XYZ(x), XYZ(y), XYZ(z)}; }
-template<class XYZ, class X = XYZ, class Y = X, class Z = X>
-DualQuaternion<XYZ> translation(X && x, Y && y, Z && z)
-	{ return point<XYZ>(XYZ(x)/2, XYZ(y)/2, XYZ(z)/2); }
+template<class R, class X = R, class Y = X, class Z = X>
+DualQuaternion<R> point(X x = 0, Y y = 0, Z z = 0)
+	{ return {1, 0, 0, 0, 0, x, y, z}; }
+template<class R, class X = R, class Y = X, class Z = X>
+DualQuaternion<R> translation(X x = 0, Y y = 0, Z z = 0)
+	{ return point<R>(R(x)/2, R(y)/2, R(z)/2); }
 
-template<class X, class Y = X>
-DualQuaternion<Y> trans_rotation(X && x, X && y, X && z, X && t, X && u, X && v, X && w) {
+template<class R, class X = R, class Y = X, class Z = X,
+		class S = X, class T = X, class U = X, class V = X>
+DualQuaternion<R> trans_rotation(X x = 0, Y y = 0, Z z = 0, S s = 0, T t = 1, U u = 0, V v = 0) {
 	// (1+Et)(r)=r+Etr
 	// (r)(1+Et)=r+Ert
-	/*auto rot = rotation<Y>(t, u, v, w);
-	return {rot.w, rot.x, rot.y, rot.z, 0, x, y, z};*/
-	auto rot = rotation<Y>(t, u, v, w);
+	auto rot = rotation<R>(s, t, u, v);
 	//auto pt = Point<Y>(x/2, y/2, z/2) * rot;
-	auto pt = Quaternion<Y>{0, x/2, y/2, z/2} * rot;
+	auto pt = Quaternion<R>{R(0), R(x)/2, R(y)/2, R(z)/2} * rot;
+	//auto pt = Quaternion<Y>{0, x/2, y/2, z/2} * rot;
 	return {rot.w, rot.x, rot.y, rot.z, pt.w, pt.x, pt.y, pt.z};
 }
-template<class X, class Y = X>
-DualQuaternion<Y> rot_translation(X && t, X && u, X && v, X && w, X && x, X && y, X && z) {
-	auto rot = rotation<Y>(t, u, v, w);
-	auto pt = rot * Point<Y>{x/2, y/2, z/2};
+template<class R, class S = R, class T = S, class U = S, class V = S,
+		class X = S, class Y = S, class Z = S>
+DualQuaternion<R> rot_translation(S s = 0, T t = 0, U u = 0, V v = 0, X x = 0, Y y = 0, Z z = 0) {
+	auto rot = rotation<R>(R(s), R(t), R(u), R(v));
+	auto pt = rot * Point<R>{R(x)/2, R(y)/2, R(z)/2};
 	return {rot.w, rot.x, rot.y, rot.z, pt.w, pt.x, pt.y, pt.z};
 }
 
@@ -204,6 +205,22 @@ DualQuaternion<Z> operator*(Quaternion<X> const& l, Point<Y> const& r) {
 	return {l.w, l.x, l.y, l.z,
 		-l.x*r.x-l.y*r.y-l.z*r.z, l.w*r.x+l.y*r.z-l.z*r.y,
 		l.w*r.y-l.x*r.z+l.z*r.x, l.w*r.z+l.x*r.y-l.y*r.z};
+}
+template<class X, class Y = X, class Z = std::common_type_t<X,Y>>
+DualQuaternion<Z> operator/(DualQuaternion<X> const& l, Y const& r) {
+	return {l.s/r, l.t/r, l.u/r, l.v/r, l.w/r, l.x/r, l.y/r, l.z/r};
+}
+template<class X, class Y = X, class Z = std::common_type_t<X,Y>>
+DualQuaternion<Z> operator/(X const& l, DualQuaternion<Y> const& r) {
+	return l * inverse(r);
+}
+template<class X, class Y = X, class Z = std::common_type_t<X,Y>>
+DualQuaternion<Z> operator/(Quaternion<X> const& l, DualQuaternion<Y> const& r) {
+	return l * inverse(r);
+}
+template<class X, class Y = X, class Z = std::common_type_t<X,Y>>
+DualQuaternion<Z> operator/(DualQuaternion<X> const& l, Quaternion<Y> const& r) {
+	return l * inverse(r);
 }
 template<class X, class Y = X, class Z = std::common_type_t<X,Y>>
 DualQuaternion<Z> operator/(DualQuaternion<X> const& l, DualQuaternion<Y> const& r) {
@@ -230,17 +247,13 @@ std::common_type_t<S,T> dot(DualQuaternion<S> const& l, DualQuaternion<T> const&
 template<class L, class R, class T, class LRT = std::common_type_t<L,R,T>>
 DualQuaternion<LRT> lerp(DualQuaternion<L> const& lhs, DualQuaternion<R> const& rhs, T const& t)
 	{ return lhs*(1-t) + (rhs-lhs)*t; }
-/*template<class L1, class R1, class L2, class R2, class S, class T, class LRST>
-DualQuaternion<LRST> lerp(DualQuaternion<L1> const& l1, DualQuaternion<R1> const& r1,
-		DualQuaternion<L2> const& l2, DualQuaternion<R2> const& r2, S && s, T && t)
-	{ return lerp(lerp(l1, r1, s), lerp(l2, r2, s), t); }*/
 template<class L, class R, class T, class LRT = std::common_type_t<L,R,T>>
 DualQuaternion<LRT> sclerp(DualQuaternion<L> const& lhs, DualQuaternion<R> const& rhs,
 		T && t, bool normalize = false) {
-	auto ou = slerp(Quaternion<L>{lhs.s, lhs.t, lhs.u, lhs.v},
-			Quaternion<R>{rhs.s, rhs.t, rhs.u, rhs.v}, t, normalize),
-		ov = lerp(Quaternion<L>{lhs.w, lhs.x, lhs.y, lhs.z},
-			Quaternion<R>{rhs.w, rhs.x, rhs.y, rhs.z}, t);
+	auto ou = slerp(Quaternion<L>(lhs.s, lhs.t, lhs.u, lhs.v),
+			Quaternion<R>(rhs.s, rhs.t, rhs.u, rhs.v), t, normalize),
+		ov = lerp(Quaternion<L>(lhs.w, lhs.x, lhs.y, lhs.z),
+			Quaternion<R>(rhs.w, rhs.x, rhs.y, rhs.z), t);
 	return {ou.w, ou.x, ou.y, ou.z, ov.w, ov.x, ov.y, ov.z};
 }
 template<class L1, class R1 = L1, class L2 = L1, class R2 = R1, class S = L1, class T = S,
