@@ -139,12 +139,12 @@ template<class S, unsigned MD, unsigned ND>
 void binomialBasis(S (&basis) [MD] [ND]) {
 	static_assert(MD * ND > 0, "Must have nonzero dimensions!");
 	using namespace Detail;
-	typedef SeqArray<Value_t<false, Binomial<MD-1>>> mb_type;
-	typedef SeqArray<Value_t<false, Binomial<ND-1>>> nb_type;
+	typedef SeqArray<Value_t<Binomial<MD-1>>> mb_type;
+	typedef SeqArray<Value_t<Binomial<ND-1>>> nb_type;
 	static constexpr auto ub = nb_type::value;
 	static constexpr auto vb = mb_type::value;
-	/*typedef Value_t<false, Binomial<MD-1>> mb_type;
-	typedef Value_t<false, Binomial<ND-1>> nb_type;
+	/*typedef Value_t<Binomial<MD-1>> mb_type;
+	typedef Value_t<Binomial<ND-1>> nb_type;
 	static constexpr auto ub = nb_type::value;
 	static constexpr auto vb = mb_type::value;*/
 	for(unsigned i = 0; i < MD; i++) {
