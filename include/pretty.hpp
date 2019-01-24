@@ -15,34 +15,65 @@
 #define PRETTY_FUNCTION __func__
 #endif
 
-/** Very simple function for retrieving a signature containing the given template arguments. */
-template<class... T> constexpr auto pretty(void) -> const char * { return PRETTY_FUNCTION; }
-/** Very simple function for retrieving a signature containing the given arguments' types. */
-template<class... T> constexpr auto pretty(T &&... t) -> const char * { return PRETTY_FUNCTION; }
-/** Provides a filtered stream insertion operator to represent types as strings. */
-template<class... T> struct Pretty {
-	/** Same as top-level definitions of 'pretty'; returns compiler-defined function signature. */
-    static constexpr const char *pretty(void) { return PRETTY_FUNCTION; }
-	operator std::string(void) const;
-	/** Stream insertion operator; strips all but the type sequence from 'pretty'. */
-    template<class S>
-    friend S& operator<<(S& s, Pretty const& p) {
-		return s << std::string(p), s;
+template<class T> struct Pretty {
+	static constexpr const char *pretty(void) { return PRETTY_FUNCTION; }
+	operator std::string(void) const {
+		using namespace std;
+		string unknown = "(unknown)",
+				with = "with T = ",
+				orig = pretty(), lhs, rhs;
+#ifdef HAS_FUNCSIG
+		lhs = "<", rhs = ">";
+#elif defined HAS_PRETTY
+		lhs = "{[", rhs = "]}";
+#else
+		return "";
+#endif
+		// Match the earliest opening and latest closing brackets
+		auto p0 = orig.find_first_of(lhs), p1 = orig.find_last_of(rhs);
+		if(p0 == string::npos || p1 == string::npos) return std::move(unknown);
+		p0++; // Offset by the width of the opening character
+		auto result = orig.substr(p0, p1-p0);
+		if(orig.substr(p0, with.length()) == with)
+			result = result.substr(with.length());
+		return result;
 	}
-	// Pedantic version - insertion into ostringstream& returns ostream&, etc.
-	/*template<class S>
-	friend auto operator<<(S &s, Pretty const& p) -> decltype(s << std::string()) {
-		return s << std::string(p);
-	}*/
+	template<class S>
+	friend S& operator<<(S & s, Pretty const& p)
+		{ return s << std::string(p), s; }
 };
 
-/** Returns an instance of Pretty with the given types in the style of make_tuple. */
-template<class... R>
-Pretty<R...> make_pretty(R &&... r) { return {}; }
+template<class... T>
+std::string pretty(void) {
+	std::string strs[] = {std::string(Pretty<T>{})...};
+	std::string out, pfx = "";
+	for(auto const& str : strs) {
+		out += pfx + str;
+		pfx = ", ";
+	}
+	return out;
+}
+template<class... T>
+std::string pretty(T &&... t) {
+	return pretty<T...>();
+}
 
 template<class T>
-std::string prettyTrunc(void);
+std::string pretty_abbrev(void) {
+	std::string s = Pretty<T>(),
+			subs[][2] {{"std::", ""}, {"< <", "<<"}, {"> >", ">>"}};
+	std::size_t pos = 0;
+	for(auto const& sub : subs) {
+		pos = 0;
+		while((pos = s.find(sub[0], pos)) != std::string::npos) {
+			s.replace(pos, sub[0].length(), sub[1]);
+		}
+	}
+	return s;
+}
 template<class T>
-std::string prettyTrunc(T && t);
+std::string pretty_abbrev(T && t) {
+	return pretty_abbrev<T>();
+}
 
 #endif
