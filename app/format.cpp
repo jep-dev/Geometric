@@ -4,7 +4,7 @@
 #include <limits>
 #include <functional>
 
-#include "pretty.tpp"
+#include "pretty.hpp"
 #include "format.tpp"
 #include "math.tpp"
 #include "streams.tpp"
