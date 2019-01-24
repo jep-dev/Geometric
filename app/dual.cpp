@@ -5,7 +5,7 @@
 #include "dual.tpp"
 #include "point.hpp"
 
-#include "pretty.tpp"
+#include "pretty.hpp"
 
 #include "math.tpp"
 
