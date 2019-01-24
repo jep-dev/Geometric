@@ -60,6 +60,7 @@ namespace Detail {
 						+ (knots[i+d+1]-u)/(knots[i+d+1]-knots[i+1]) * out[i+1];
 			out[k] = (u-knots[k])/(knots[k+d]-knots[k]) * out[k];
 		}
+		return out;
 	}
 
 }
