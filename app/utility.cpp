@@ -1,14 +1,64 @@
-#include "pretty.tpp"
-#include "streams.tpp"
-#include "utility.hpp"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <map>
 
+#include "pretty.hpp"
+#include "streams.tpp"
+#include "utility.hpp"
+
+template<class S, class T>
+S& print_perfect(S& s, T && t) {
+	using namespace Detail;
+	using namespace std;
+
+	s << "Perfect (" << pretty_abbrev<T>() << ")\n";
+	s << "decltype(t): " << pretty_abbrev<decltype(t)>() << "\n";
+	s << "ADL of t: " << pretty_abbrev(t) << "\n";
+	s << "Value_t<T>: " << pretty_abbrev<Value_t<T>>() << "\n";
+	unsigned i = 0, j = 0;
+	for(auto && kv : t) {
+		s << "\tdecltype(auto &&) in t: " << pretty_abbrev<decltype(kv)>() << "\n";
+		s << "\tADL, auto && in t: " << pretty_abbrev(kv) << "\n";
+		s << "\tADL, fwd auto && in t: " << pretty_abbrev(forward<Value_t<T>>(kv)) << "\n";
+		j++;
+		break;
+	}
+	// for(Value_t<T> && kv : t)
+	i = 0;
+	for(auto && kv : forward<T>(t)) {
+		if(i++ < j) continue;
+		s << "\tADL, auto && in fwd t: " << pretty_abbrev(kv) << "\n";
+		s << "\tADL, fwd auto && in fwd t: " << pretty_abbrev(forward<Value_t<T>>(kv)) << "\n";
+		j++;
+		break;
+	}
+	s << "ADL of fwd t: " << pretty_abbrev(forward<T>(t)) << "\n";
+	return s;
+}
+template<class S, class T>
+S& print_concrete(S& s, std::map<T, T> && t) {
+	using namespace Detail;
+	using namespace std;
+
+	s << "Concrete:\n";
+	s << "ADL of t: " << pretty_abbrev(t) << "\n";
+	s << "decltype(t): " << pretty_abbrev<decltype(t)>() << "\n";
+	s << "decltype(fwd t): " << pretty_abbrev<decltype(forward<std::map<T,T>>(t))>() << "\n";
+	unsigned i = 0, j = 0;
+	for(auto && kv : t) {
+		s << "\tValue_t<T>: " << pretty_abbrev<Value_t<std::map<T,T>>>() << "\n";
+		s << "\tdecltype(auto &&): " << pretty_abbrev<decltype(kv)>() << "\n";
+		s << "\tADL, auto &&: " << pretty_abbrev(kv) << "\n";
+		j++;
+		break;
+	}
+	return s;
+}
 
 template<class S, class... T>
 S& print_types(S& s) {
-	for(std::string p : {prettyTrunc<T>()...})
+	for(std::string p : {pretty_abbrev<T>()...})
 		s << p << "; ";
 	return s;
 }
@@ -19,19 +69,19 @@ template<class S, class T>
 S& print_valueTypes(S& s, T const& rhs) {
 	using namespace Detail;
 	using namespace std;
-	s << INDENT << prettyTrunc<T>();
-	typedef Value_t<false, T> VT_T;
-	typedef Value_t<true, T> VTR_T;
+	s << INDENT << pretty_abbrev<T>();
+	typedef Value_t<T> VT_T;
+	typedef InnerValue_t<T> VTR_T;
 	if(!is_same<T, VTR_T>::value) {
 		s << ", contains ";
 		if(!is_same<T, VT_T>::value) {
 			s << "shallow ";
 			if(!is_same<VT_T, VTR_T>::value) {
-				s << prettyTrunc<VT_T>() << " ";
+				s << pretty_abbrev<VT_T>() << " ";
 			}
-			s << "and deep " << prettyTrunc<VTR_T>();
+			s << "and deep " << pretty_abbrev<VTR_T>();
 		} else {
-			s << "deep " << prettyTrunc<VTR_T>();
+			s << "deep " << pretty_abbrev<VTR_T>();
 		}
 	}
 	return endl(s), s;
@@ -40,29 +90,31 @@ template<class S, class T, class U>
 std::ostream& print_sumValueTypes(S &s, T const& t, U const& u) {
 	using namespace Detail;
 	typedef SumType_t<T, U> TU;
-	typedef Value_t<false, T> VT_T;
-	typedef Value_t<false, U> VT_U;
-	typedef Value_t<false, TU> VT_TU;
-	typedef Value_t<true, T> VTR_T;
-	typedef Value_t<true, U> VTR_U;
-	typedef Value_t<true, VT_TU> VTR_TU;
+	typedef Value_t<T> VT_T;
+	typedef Value_t<U> VT_U;
+	typedef Value_t<TU> VT_TU;
+	typedef InnerValue_t<T> VTR_T;
+	typedef InnerValue_t<U> VTR_U;
+	typedef InnerValue_t<VT_TU> VTR_TU;
 	s << "Sums of types...\n";
 	print_types<S, T, VT_T, VTR_T>(s << INDENT << "T: ") << "\n";
 	print_types<S, U, VT_U, VTR_U>(s << INDENT << "T: ") << "\n";
-	s << " Direct sum: " << prettyTrunc<T>() << " + " << prettyTrunc<U>()
-			<< " = " << prettyTrunc<TU>() << " (contains " << prettyTrunc<VT_TU>() << ")\n"
-		"Shallow sum: " << prettyTrunc<VT_T>() << " + " << prettyTrunc<VT_U>()
-			<< " = " << prettyTrunc<VT_TU>() << " (contains " << prettyTrunc<VTR_TU>() << ")\n"
-		"   Deep sum: " << prettyTrunc<VTR_T>() << " + " << prettyTrunc<VTR_U>()
-				<< " = " << prettyTrunc<VTR_TU>() << " (no deeper value_type)\n";
+	s << " Direct sum: " << pretty_abbrev<T>() << " + " << pretty_abbrev<U>()
+			<< " = " << pretty_abbrev<TU>() << " (contains " << pretty_abbrev<VT_TU>() << ")\n"
+		"Shallow sum: " << pretty_abbrev<VT_T>() << " + " << pretty_abbrev<VT_U>()
+			<< " = " << pretty_abbrev<VT_TU>() << " (contains " << pretty_abbrev<VTR_TU>() << ")\n"
+		"   Deep sum: " << pretty_abbrev<VTR_T>() << " + " << pretty_abbrev<VTR_U>()
+				<< " = " << pretty_abbrev<VTR_TU>() << " (no deeper value_type)\n";
 	return s;
 }
 
 template<class T> struct T1 { typedef T value_type; };
 template<class T> using T2 = T1<T1<T>>;
 
-template<class T> using VAL = Detail::Value_t<false, T>;
-template<class T> using VALR = Detail::Value_t<true, T>;
+//template<class T> using VAL = Detail::Value_t<T>;
+// TODO ^ internal compiler error (segmentation fault)?
+#define VAL(X) Detail::Value_t<X>
+template<class T> using VALR = Detail::InnerValue_t<T>;
 template<class S, class T> using ADD = Detail::SumType_t<S,T>;
 template<class S, class T> using ADDR = Detail::SumValue_t<true, S, T>;
 template<class S, class T> using SUB = Detail::DifferenceType_t<S,T>;
@@ -94,7 +146,7 @@ int main(int argc, const char *argv[]) {
 	typedef int I; typedef T1<I> I1; typedef T2<I> I2;
 	typedef float F; typedef T1<F> F1; typedef T2<F> F2;
 
-	static_assert(is_same<VAL<I2>, I1>::value && is_same<VAL<I1>, I>::value,
+	static_assert(is_same<VAL(I2), I1>::value && is_same<VAL(I1), I>::value,
 		"Value_t is the outermost value_type");
 	static_assert(is_same<VALR<I1>, I>::value && is_same<VALR<I2>, I>::value,
 		"Recursive Value_t is the innermost value_type");
@@ -140,4 +192,13 @@ int main(int argc, const char *argv[]) {
 
 	print_sumValueTypes(cout, I1{}, F1{}) << endl;
 	print_sumValueTypes(cout, I2{}, F2{}) << endl;
+
+	typedef map<string, string> Map;
+	Map ref {{"A", "a"}, {"B", "b"}, {"C", "c"}};
+	const Map cref {{"A", "a"}, {"B", "b"}, {"C", "c"}};
+	//print_perfect(cout, ref) << endl;
+	//print_perfect(cout, cref) << endl;
+	print_perfect(cout, Map {{"A", "a"}, {"B", "b"}, {"C", "c"}}) << endl;
+	print_concrete(cout, Map {{"A", "a"}, {"B", "b"}, {"C", "c"}}) << endl;
+
 }
