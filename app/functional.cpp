@@ -3,7 +3,6 @@
 #include <sstream>
 #include <tuple>
 
-#include "sequence.hpp"
 #include "functional.hpp"
 
 namespace Detail {
@@ -34,7 +33,7 @@ OS& operator<<(OS & os, std::tuple<S...> const& s)
 
 int main(int argc, const char *argv[]) {
 	using namespace std;
-	//using namespace Detail;
+	using Detail::transform;
 
 	auto tup = make_tuple("Hello", 2, "world", M_PI, 'a');
 	static constexpr auto N = tuple_size<decltype(tup)>();
