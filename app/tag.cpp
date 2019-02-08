@@ -3,10 +3,9 @@
 #include <sstream>
 #include <vector>
 
-#include "utility.hpp"
-#include "sequence.hpp"
-#include "tag.hpp"
+#include "functional.hpp"
 #include "pretty.hpp"
+#include "tag.hpp"
 
 template<class CRTP>
 struct Base {
@@ -171,16 +170,59 @@ int main(int argc, const char *argv[]) {
 				<< pretty(deval(F{})) << ";" << para
 			<< "deval(" << pretty(eval(U{})) << ") = "
 				<< pretty(deval(eval(U{}))) << ".\n";*/
-	static_assert(std::is_same<decltype(reverse(UV{})), decltype(rotate(UV{}))>::value,
+	/*static_assert(std::is_same<decltype(reverse(UV{})), decltype(rotate(UV{}))>::value,
 		"Rotate must move the head type to the end of the tail");
 	static_assert(std::is_same<UV, decltype(rotate(rotate(UV{})))>::value,
 		"N rotations of N elements must be the identity");
+	static_assert(std::is_same<decltype(rotate(rotate(UVW{}))),
+			decltype(UVW{} << SeqSz<2>{})>::value,
+			"N single rotations must be equivalent to one of size N");*/
+
+	/* There are false positives to this test, but extreme template arguments like this could be
+	 * a preliminary test of recursion limits - TODO create an implementation that fails. */
+	static_assert(std::is_same<decltype(UVW{} << SeqL<9000>{}), UVW>::value &&
+				std::is_same<decltype(UVW{} >> SeqL<9000>{}), UVW>::value,
+			"Forward and backward rotations must be cyclic");
+	static_assert(std::is_same<decltype(UVW{} << SeqL<-5>{}),
+		decltype(UVW{} >> SeqL<5>{})>::value, "Negative and inverse rotation must be identical");
+
+	/*
+	auto f_uvw = [] (auto && x, auto && y) {
+		return "(U+V+W)^" + pretty(y) + " = " + pretty(x << y);
+	};
+	auto g_uvw = [=] (auto && x) { return f(get<0>(x), get<1>(x)); };
+
+	auto inc_uvw = IncSeq<UVW::size, true, long>{};
+	auto rep_uvw = RepeatSeq<UVW::size, long, -UVW::size/2>{};
+
+	auto diff_uvw = inc_uvw - rep_uvw;
+	auto tag_uvw = seq_to_tag_seq(diff_uvw);
+	auto zip_uvw = zip_tag(UVW{}, tag_uvw);
+	auto tup_uvw = tag_to_tuple(zip_uvw);
+	auto tup_str = transform(tup_uvw, g_uvw);
+	//auto tup_str = transform(inc_uvw, tup_uvw, rot_uvw);
+	*/
+
 	oss << "Rotation:" << para
-			<< "rot(U+V+W) = " << pretty(rotate(UVW{})) << ";" << para
+			/*<< "rot(U+V+W) = " << pretty(rotate(UVW{})) << ";" << para
 			<< "rot^2(U+V+W) = " << pretty(rotate(rotate(UVW{}))) << ";" << para
-			<< "rot^3(U+V+W) = " << pretty(rotate(rotate(rotate(UVW{})))) << ".\n"
-		"Sequences:" << para
-			<< "seq(1,2) = " << pretty(Detail::SeqU<1,2>{}) << ".";
+			<< "rot^3(U+V+W) = " << pretty(rotate(rotate(rotate(UVW{})))) << ";" << para*/
+			<< "(U+V+W)^-9 = " << pretty(UVW{} << SeqL<-9>{}) << ';' << para
+			<< "(U+V+W)^-8 = " << pretty(UVW{} << SeqL<-8>{}) << ';' << para
+			<< "(U+V+W)^-7 = " << pretty(UVW{} << SeqL<-7>{}) << ';' << para
+			<< "(U+V+W)^-6 = " << pretty(UVW{} << SeqL<-6>{}) << ';' << para
+			<< "(U+V+W)^-5 = " << pretty(UVW{} << SeqL<-5>{}) << ';' << para
+			<< "(U+V+W)^-4 = " << pretty(UVW{} << SeqL<-4>{}) << ';' << para
+			<< "(U+V+W)^-3 = " << pretty(UVW{} << SeqL<-3>{}) << ';' << para
+			<< "(U+V+W)^-2 = " << pretty(UVW{} << SeqL<-2>{}) << ';' << para
+			<< "(U+V+W)^-1 = " << pretty(UVW{} << SeqL<-1>{}) << ';' << para
+			<< "(U+V+W)^0  = " << pretty(UVW{} << SeqL<0>{}) << ';' << para
+			<< "(U+V+W)^1  = " << pretty(UVW{} << SeqL<1>{}) << ';' << para
+			<< "(U+V+W)^2  = " << pretty(UVW{} << SeqL<2>{}) << ';' << para
+			<< "(U+V+W)^3  = " << pretty(UVW{} << SeqL<3>{}) << ';' << para
+			<< "(U+V+W)^4  = " << pretty(UVW{} << SeqL<4>{}) << ';' << para
+			<< "(U+V+W)^5  = " << pretty(UVW{} << SeqL<5>{}) << ';' << para
+			<< "(U+V+W)^6  = " << pretty(UVW{} << SeqL<6>{}) << '.';
 
 	auto res = oss.str();
 
