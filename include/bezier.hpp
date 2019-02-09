@@ -1,14 +1,10 @@
 #ifndef BEZIER_HPP
 #define BEZIER_HPP
 
-#include <utility>
+#include <functional> // TODO remove, used in poly-looping
 #include <vector>
 
-#include <functional> // TODO remove, used in poly-looping
-
 #include "binomial.hpp"
-#include "utility.hpp"
-#include "sequence.hpp"
 
 template<class T, class U>
 T linear(T x, T y, U u) {
