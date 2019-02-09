@@ -1,7 +1,6 @@
 #ifndef SEQUENCE_HPP
 #define SEQUENCE_HPP
 
-#include "utility.hpp"
 #include "tag.hpp"
 
 namespace Detail {
@@ -21,11 +20,6 @@ template<class T, T... I> struct Seq {
 	typedef T type;
 	static constexpr std::size_t size = 0;
 
-	//static constexpr T value[] = {I...};
-
-	/*template<class S>
-	constexpr explicit operator std::integral_constant<S, 0>(void) const { return {}; }*/
-
 	template<class S, S... J>
 	static constexpr Seq<S, J...> prepend(Seq<S, J...> = {}) { return {}; }
 	template<class S, S... J>
@@ -38,8 +32,6 @@ template<class T, T... I> struct Seq {
 template<class T, T I0, T... IN> struct Seq<T, I0, IN...> {
 	typedef T type;
 	static constexpr std::size_t size = 1 + sizeof...(IN);
-
-	//static constexpr T value[] = {I0, IN...};
 
 	template<std::size_t N>
 	static constexpr T get(std::integral_constant<std::size_t, N> = {})
@@ -95,53 +87,34 @@ template<std::size_t... I> using SeqSz = Seq<std::size_t, I...>;
  * behavior around the empty set is poorly defined, e.g.
  *     SeqI<> + SeqC<...> = SeqI<...> // SeqI<> carries type int; int + char = int; or
  *     SeqI<> + SeqC<...> = SeqC<...> // SeqI<> is memberless only int-related in name; or
- * or undefined in general, which might suggest Seq*<> should be undefined after all.
+ *     undefined in general, which might suggest Seq*<> should be undefined after all.
  */
 
 template<class T, T... IN>
 constexpr std::size_t getSize(Detail::Seq<T, IN...> = {}) { return sizeof...(IN); }
 
-/** Pairwise sum of sequences */
-template<class TI, TI... I, class TJ, TJ... J,
-		class T = SumType_t<TI, TJ>>
-constexpr auto operator+(Seq<TI, I...>, Seq<TJ, J...>) -> Seq<T, I+J...> { return {}; }
+template<class T, T... V>
+constexpr auto operator-(Seq<T, V...> const&) -> Seq<T, -V...> { return {}; }
 
-/** Pairwise difference of sequences */
-template<class TI, TI... I, class TJ, TJ... J,
-		class T = DifferenceType_t<TI, TJ>>
-constexpr auto operator-(Seq<TI, I...>, Seq<TJ, J...>) -> Seq<T, I-J...> { return {}; }
+/* To make sequences more expressive, operators between sequences are pairwise operators on
+ * their elements. PAIRWISE is a macro function of a binary operator symbol used to generate
+ * the corresponding operator overload. Its lifespan and all of its uses are inside this
+ * if block. */
+#ifndef PAIRWISE
+#define PAIRWISE(OP) \
+template<class TI, TI... I, class TJ, TJ... J, \
+	class T = decltype(declval<TI>() OP declval<TJ>())> \
+constexpr auto operator OP(Seq<TI, I...>, Seq<TJ, J...>) \
+	-> Seq<T, (I OP J)...> { return {}; }
 
-/** Pairwise product of sequences */
-template<class TI, TI... I, class TJ, TJ... J,
-		class T = ProductType_t<TI, TJ>>
-constexpr auto operator*(Seq<TI, I...>, Seq<TJ, J...>) -> Seq<T, I*J...> { return {}; }
+PAIRWISE(+) PAIRWISE(-) ///< Additive
+PAIRWISE(*) PAIRWISE(/) PAIRWISE(%) ///< Multiplicative
+PAIRWISE(<<) PAIRWISE(>>) ///< Bit shifts
+PAIRWISE(^) PAIRWISE(&) PAIRWISE(|) ///< Bitwise logic
+PAIRWISE(&&) PAIRWISE(||) ///< Bool logic
 
-/** Pairwise division of sequences */
-template<class TI, TI... I, class TJ, TJ... J,
-		class T = QuotientType_t<TI, TJ>>
-constexpr auto operator/(Seq<TI, I...>, Seq<TJ, J...>) -> Seq<T, I/J...> { return {}; }
-
-/** Pairwise insertion/shift of sequences */
-template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() << declval<T>())>
-constexpr Seq<ST, (I << J)...> operator<<(Seq<S, I...>, Seq<T, J...>) { return {}; }
-/** Pairwise extraction/shift of sequences */
-template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() >> declval<T>())>
-constexpr Seq<ST, (I >> J)...> operator>>(Seq<S, I...>, Seq<T, J...>) { return {}; }
-/** Pairwise XOR/power of sequences */
-template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() ^ declval<T>())>
-constexpr Seq<ST, (I ^ J)...> operator^(Seq<S, I...>, Seq<T, J...>) { return {}; }
-/** Pairwise (bitwise) and of sequences */
-template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() & declval<T>())>
-constexpr Seq<ST, (I & J)...> operator&(Seq<S, I...>, Seq<T, J...>) { return {}; }
-/** Pairwise (bitwise) or of sequences */
-template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() | declval<T>())>
-constexpr Seq<ST, (I | J)...> operator|(Seq<S, I...>, Seq<T, J...>) { return {}; }
-/** Pairwise (boolean) and of sequences */
-template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() && declval<T>())>
-constexpr Seq<ST, (I && J)...> operator&&(Seq<S, I...>, Seq<T, J...>) { return {}; }
-/** Pairwise (boolean) or of sequences */
-template<class S, S... I, class T, T... J, class ST = decltype(declval<S>() || declval<T>())>
-constexpr Seq<ST, (I || J)...> operator||(Seq<S, I...>, Seq<T, J...>) { return {}; }
+#undef PAIRWISE
+#endif
 
 template<class OS, class S, S... I>
 OS& operator<<(OS &os, Detail::Seq<S, I...> const&) {
@@ -289,6 +262,12 @@ struct DecSeq: decltype(reverse(IncSeq<N, zero_indexed, T>{})) {
 	typedef decltype(reverse(IncSeq<N, zero_indexed, T>{})) value_type;
 };
 
+template<class... T, long N>
+constexpr auto operator<<(Tag<T...> const& t, SeqL<N> const&)
+-> decltype(t << std::integral_constant<long, N>{}) { return {}; }
+template<class... T, long N>
+constexpr auto operator>>(Tag<T...> const& t, SeqL<N> const&)
+-> decltype(t >> std::integral_constant<long, N>{}) { return {}; }
 
 }
 
