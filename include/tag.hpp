@@ -80,19 +80,19 @@ auto operator%(Tag<U, V...>, Tag<X, Y...>) -> decltype(Tag<Tag<U, X>, Tag<V, X>.
 /** Eval's default case; identity with perfect forwarding */
 template<class U>
 auto eval(U && u = {}) -> U { return std::forward<U>(u); }
-/** Maps a value-free Tag to a tag-free Val (tuple) */
+/** Maps a value-free Tag to a tag-free std::tuple (tuple) */
 template<class... U>
-auto eval(Tag<U...>) -> Val<decltype(eval(std::declval<U>()))...> { return {eval(U{})...}; }
+auto eval(Tag<U...>) -> std::tuple<decltype(eval(std::declval<U>()))...> { return {eval(U{})...}; }
 
 /*template<class U>
 auto deval(U && u) -> Tag<U> { return Tag<U>{}; }
 //auto deval(U && u) -> U { return std::forward<U>(u); }
 template<class... U>
-auto deval(Val<U...> const&)
+auto deval(std::tuple<U...> const&)
 	-> Tag<decltype(deval(std::declval<U>()))...> { return {}; }
 template<class... U, class... V>
-auto deval(Val<Val<U...>, V...> const&)
-	-> decltype(deval(std::declval<Val<U...>>()) + deval(std::declval<Val<V...>>()))
+auto deval(std::tuple<std::tuple<U...>, V...> const&)
+	-> decltype(deval(std::declval<std::tuple<U...>>()) + deval(std::declval<std::tuple<V...>>()))
 	{ return {}; }
 	//{ return {deval(U{})...}; }
 */
@@ -103,47 +103,40 @@ auto access(T && t) -> decltype(t) { return std::forward<T>(t); }
 
 /** (Const reference) access's base case; delegates to std::get */
 template<unsigned I, class... T>
-auto access(Val<T...> const& t) -> decltype(std::get<I>(t)) { return std::get<I>(t); }
+auto access(std::tuple<T...> const& t) -> decltype(std::get<I>(t)) { return std::get<I>(t); }
 
 /** (Const reference) access's inductive case; recurses to compose the tail with std::get */
 template<unsigned I, unsigned J, unsigned... K, class... T>
-auto access(Val<T...> const& t) -> decltype(access<J, K...>(std::get<I>(t))) {
+auto access(std::tuple<T...> const& t) -> decltype(access<J, K...>(std::get<I>(t))) {
 	return access<J, K...>(access<I>(t));
 }
 
 /** (Reference) access's base case; delegates to std::get */
 template<unsigned I, class... T>
-auto access(Val<T...> & t) -> decltype(std::get<I>(t)) { return std::get<I>(t); }
+auto access(std::tuple<T...> & t) -> decltype(std::get<I>(t)) { return std::get<I>(t); }
 
 /** (Reference) access's inductive case; recurses to compose the tail with std::get */
 template<unsigned I, unsigned J, unsigned... K, class... T>
-auto access(Val<T...> & t) -> decltype(access<J, K...>(std::get<I>(t))) {
+auto access(std::tuple<T...> & t) -> decltype(access<J, K...>(std::get<I>(t))) {
 	return access<J, K...>(access<I>(t));
 }
 
 /** (Rvalue) access's base case; delegates to std::get */
 template<unsigned I, class... T>
-auto access(Val<T...> && t) -> decltype(std::get<I>(std::move(t))) {
+auto access(std::tuple<T...> && t) -> decltype(std::get<I>(std::move(t))) {
 	return std::get<I>(std::move(t));
 }
 
 /** (Rvalue) access's inductive case; recurses to compose the tail with std::get */
 template<unsigned I, unsigned J, unsigned... K, class... T>
-auto access(Val<T...> && t) -> decltype(access<J, K...>(access<I>(std::move(t)))) {
+auto access(std::tuple<T...> && t) -> decltype(access<J, K...>(access<I>(std::move(t)))) {
 	return access<J, K...>(std::get<I>(std::move(t)));
 }
 
-/** Reverse's inductive case; recurses after moving the head of the LHS to the RHS */
-template<class U, class... V, class X = Tag<>>
-auto reverse(Tag<U, V...>, X x = {})
--> decltype(reverse(Tag<V...>{}, Tag<U>{} + x)) { return {}; }
-
-/** Reverse's base case; simply returns the RHS */
-template<class... X>
-auto reverse(Tag<>, Tag<X...> x = {}) -> decltype(x) { return {}; }
-
-template<class X, class... Y>
-auto rotate(Tag<X, Y...> = {}) -> Tag<Y..., X> { return {}; }
+template<long I, class... T, std::size_t S = sizeof...(T)>
+constexpr auto get(Tag<T...> const& t)
+-> Tag<std::remove_reference_t<decltype(
+	std::get<(I % S + S) % S>(tag_to_tuple(t)))>> { return {}; }
 
 
 auto collapse(void) -> Tag<> { return {}; }
@@ -156,13 +149,50 @@ template<class U, class... V>
 auto collapse(Tag<U, V...>) -> Tag<decltype(collapse(std::declval<U>())),
 		decltype(collapse(std::declval<V>()))...> { return {}; }
 
+
+/** Reverse's inductive case; recurses after moving the head of the LHS to the RHS */
+template<class U, class... V, class X = Tag<>>
+auto reverse(Tag<U, V...>, X x = {})
+-> decltype(reverse(Tag<V...>{}, Tag<U>{} + x)) { return {}; }
+
+/** Reverse's base case; simply returns the RHS */
+template<class... X>
+auto reverse(Tag<>, Tag<X...> x = {}) -> decltype(x) { return {}; }
+
+/** Moves the head to the tail N times; defines type as the result */
+template<class T, long N = 0, class V = void>
+struct Rotate;
+
+template<class... T, long N>
+struct Rotate<Tag<T...>, N, std::enable_if_t<!(N % sizeof...(T)), void>> {
+	typedef Tag<T...> type;
+};
+
+template<class S, class... T, long N>
+struct Rotate<Tag<S, T...>, N, std::enable_if_t<(N % (sizeof...(T)+1)), void>> {
+	typedef typename Rotate<Tag<T..., S>, (N % (sizeof...(T)+1)
+		+ (sizeof...(T)*2+1)) % (sizeof...(T)+1)>::type type;
+};
+
+
 template<class... T>
 Tag<T...> tuple_to_tag(std::tuple<T...> const&) { return {}; }
-template<class... T>
-auto tag_to_tuple(T &&... t) -> decltype(std::make_tuple(std::forward<T>(t)...))
+
+template<class... S, class... T>
+auto tag_to_tuple(Tag<S...> const&, T &&... t)
+-> decltype(std::make_tuple(std::forward<T>(t)...))
 	{ return std::make_tuple(std::forward<T>(t)...); }
 
+/*template<class... T>
+auto tag_to_tuple(T &&... t) -> decltype(std::make_tuple(std::forward<T>(t)...))
+	{ return std::make_tuple(std::forward<T>(t)...); }*/
+
+template<class... T, long N> constexpr typename Rotate<Tag<T...>, N>::type
+operator<<(Tag<T...> const&, std::integral_constant<long, N> const&) { return {}; }
+template<class... T, long N> constexpr typename Rotate<Tag<T...>, N>::type
+operator>>(Tag<T...> const&, std::integral_constant<long, N> const&) { return {}; }
 
 }
+
 
 #endif
