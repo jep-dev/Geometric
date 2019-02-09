@@ -11,20 +11,27 @@ template<class S, class T>
 S& print_perfect(S& s, T && t) {
 	using namespace Detail;
 	using namespace std;
+	using U = RemoveCVRef_t<T>;
 
-	s << "Perfect (" << pretty_abbrev<T>() << ")\n";
+	s << "Perfect: " << pretty_abbrev<T>() << "\n"
+		"decltype(t): " << pretty_abbrev<decltype(t)>() << "\n"
+		"ADL of t: " << pretty_abbrev(t) << "\n"
+		"Value_t of t: " << pretty(Value_t<T>{}) << "\n"
+		"Value_t of unqualified t: " << pretty(Value_t<U>{}) << endl;
+		//"Potential Value_t: " << pretty_abbrev(Void_t<typename U::value_type>{}) << endl;
+
+	/*s << "Perfect (" << pretty_abbrev<T>() << ")\n";
 	s << "decltype(t): " << pretty_abbrev<decltype(t)>() << "\n";
 	s << "ADL of t: " << pretty_abbrev(t) << "\n";
-	s << "Value_t<T>: " << pretty_abbrev<Value_t<T>>() << "\n";
+	s << "Value_t<T>: " << pretty_abbrev<Value_t<T>>() << "\n";*/
 	unsigned i = 0, j = 0;
 	for(auto && kv : t) {
 		s << "\tdecltype(auto &&) in t: " << pretty_abbrev<decltype(kv)>() << "\n";
-		s << "\tADL, auto && in t: " << pretty_abbrev(kv) << "\n";
-		s << "\tADL, fwd auto && in t: " << pretty_abbrev(forward<Value_t<T>>(kv)) << "\n";
+		s << "\tADL, fwd auto && in t: " << pretty_abbrev(forward<decltype(kv)>(kv)) << "\n";
+		s << "\tADL, fwd auto && in t: " << pretty_abbrev(forward<decltype(kv)>(kv)) << "\n";
 		j++;
 		break;
 	}
-	// for(Value_t<T> && kv : t)
 	i = 0;
 	for(auto && kv : forward<T>(t)) {
 		if(i++ < j) continue;
@@ -193,12 +200,16 @@ int main(int argc, const char *argv[]) {
 	print_sumValueTypes(cout, I1{}, F1{}) << endl;
 	print_sumValueTypes(cout, I2{}, F2{}) << endl;
 
-	typedef map<string, string> Map;
+	typedef vector<string> Vec;
+	Vec vec { "A", "B", "C" };
+	print_perfect(cout, vec) << endl;
+
+	/*typedef map<string, string> Map;
 	Map ref {{"A", "a"}, {"B", "b"}, {"C", "c"}};
-	const Map cref {{"A", "a"}, {"B", "b"}, {"C", "c"}};
 	//print_perfect(cout, ref) << endl;
+	//auto const& cref = ref;
 	//print_perfect(cout, cref) << endl;
 	print_perfect(cout, Map {{"A", "a"}, {"B", "b"}, {"C", "c"}}) << endl;
-	print_concrete(cout, Map {{"A", "a"}, {"B", "b"}, {"C", "c"}}) << endl;
+	print_concrete(cout, Map {{"A", "a"}, {"B", "b"}, {"C", "c"}}) << endl;*/
 
 }
