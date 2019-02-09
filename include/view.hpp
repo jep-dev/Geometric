@@ -5,7 +5,6 @@
 #include <vector>
 ///@endcond
 
-#include <SDL.h>
 #include <glbinding/gl/gl.h>
 
 namespace View {
