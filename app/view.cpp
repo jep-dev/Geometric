@@ -10,7 +10,6 @@
 
 #include "quaternion.tpp"
 #include "dual.tpp"
-#include "point.hpp"
 #include "surface.hpp"
 
 #define USE_MODEL 0
@@ -415,8 +414,10 @@ int main(int argc, const char *argv[]) {
 
 	bufferData(GL_ARRAY_BUFFER, vbo[0], points, GL_STATIC_DRAW);
 	vector<GlslAttribute> attributes = {
-		{"pos_in", hnd.program, 0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), 0},
-		{"uv_in", hnd.program, 1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (GLvoid*) 9}};
+		GlslAttribute(hnd.program, 0, "pos_in")
+			.setPointer(3, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), nullptr),
+		GlslAttribute(hnd.program, 1, "uv_in")
+			.setPointer(2, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (GLvoid*) 9)};
 	for(auto & attr : attributes) {
 		cout << "Attrib '" << attr.name << "' (" << attr << ") "
 				"has size " << attr.size() << ", "
