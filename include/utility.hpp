@@ -27,8 +27,8 @@ template<class S> using RemoveCVRef_t = typename RemoveCVRef<S>::type;
 template<class...> struct Tag;
 
 /** Equivalent to std::tuple; see eval for conversion from Tag */
-template<class... U>
-using Val = std::tuple<U...>;
+/*template<class... U>
+using Val = std::tuple<U...>;*/
 
 template<class... T> struct Void { using value_type = void; };
 
@@ -37,8 +37,10 @@ struct RemoveCVRef { typedef std::remove_cv_t<std::remove_reference_t<S>> type; 
 template<class S, unsigned N>
 struct RemoveCVRef<S[N]> { typedef RemoveCVRef_t<S> type[N]; };
 
+/*template<class S, class T = std::remove_reference_t<std::remove_const_t<S>>>
+using Value_t = typename T::value_type;*/
 template<class S>
-using Value_t = typename S::value_type;
+using Value_t = typename RemoveCVRef_t<S>::value_type;
 
 template<class S, class V = void> struct InnerValue { typedef S value_type; };
 template<class S> struct InnerValue<S, Detail::Void_t<Value_t<S>>>
