@@ -92,35 +92,21 @@ auto make_attr(int value, CMP && comp = {})
  */
 
 struct GlslAttribute {
-	const char *name;
-	GLint location;
-	operator GLint(void) const {
-		return location;
-	}
-	GlslAttribute& enable(void) {
-		return glEnableVertexAttribArray(location), *this;
-	}
-	GlslAttribute& disable(void) {
-		return glDisableVertexAttribArray(location), *this;
-	}
-	GLint size(void) const {
-		GLint s = -1;
-		glGetVertexAttribiv(location, GL_VERTEX_ATTRIB_ARRAY_SIZE, &s);
-		return s;
-	}
-	GLint stride(void) const {
-		GLint s = -1;
-		glGetVertexAttribiv(location, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &s);
-		return s;
-	}
-	GLenum type(void) const {
-		GLenum e;
-		glGetVertexAttribiv(location, GL_VERTEX_ATTRIB_ARRAY_TYPE, &e);
-		return e;
-	}
-	GlslAttribute& setName(const char *n) {
-		return name = n, *this;
-	}
+	std::string name;
+	GLint location = -1;
+
+	operator GLint(void) const { return location; }
+	GlslAttribute& enable(void) { return glEnableVertexAttribArray(location), *this; }
+	GlslAttribute& disable(void) { return glDisableVertexAttribArray(location), *this; }
+
+	GLint size(void) const { GLint s = -1;
+		return glGetVertexAttribiv(location, GL_VERTEX_ATTRIB_ARRAY_SIZE, &s), s; }
+	GLint stride(void) const { GLint s = -1;
+		return glGetVertexAttribiv(location, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &s), s; }
+	GLenum type(void) const { GLenum e = GL_FLOAT;
+		return glGetVertexAttribiv(location, GL_VERTEX_ATTRIB_ARRAY_TYPE, &e), e; }
+
+	GlslAttribute& setName(std::string const& n) { return name = n, *this; }
 
 	GlslAttribute& setPointer(GLuint count, GLenum type, GLboolean normalized,
 		GLsizei stride, const void* ptr) {
@@ -128,31 +114,45 @@ struct GlslAttribute {
 	}
 
 	GlslAttribute& setLocation(GLuint program, GLint loc) {
-		glBindAttribLocation(program, loc, name);
-		location = glGetAttribLocation(program, name);
+		glBindAttribLocation(program, loc, name.c_str());
+		location = glGetAttribLocation(program, name.c_str());
 		enable();
 		return *this;
 	}
 
-	GlslAttribute(const char *name): name(name) {}
+	GlslAttribute(void) {}
 
-	/*template<class S, class... T>
-	GlslAttribute(const char *name, S && s, T &&... t):
-			GlslAttribute(name) {
-		setLocation(std::forward<S>(s), std::forward<T>(t)...);
-	}*/
-	GlslAttribute(const char *name, GLuint program, GLint loc):
-			GlslAttribute(name) {
-		setLocation(program, loc);
-	}
-	GlslAttribute(const char *name, GLuint program, GLint loc,
-			GLuint count, GLenum type, GLboolean normalized,
-			GLsizei stride, const void *ptr):
-				GlslAttribute(name, program, loc) {
-		setPointer(count, type, normalized, stride, ptr);
-	}
+	template<class... T>
+	GlslAttribute(std::string const& name, T &&... t):
+		GlslAttribute(std::forward<T>(t)...) {this -> name = name;}
 
+	template<class... T>
+	GlslAttribute(std::string && name, T &&... t):
+		GlslAttribute(std::forward<T>(t)...) {this -> name = name; }
+
+	template<class... T>
+	GlslAttribute(GLuint program, GLint loc, T &&... t):
+		GlslAttribute(std::forward<T>(t)...) { setLocation(program, loc); }
 };
+
+std::vector<GlslAttribute> get_attributes(GLuint program, GLsizei bufSize = 128) {
+
+	GLint N = 0;
+	glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &N);
+	if(!N) return {};
+	std::vector<GlslAttribute> out;
+
+	GLint size = 0;
+	GLenum type = GLenum::GL_FLOAT;
+	for(GLuint i = 0; i < N; i++) {
+		char buf[bufSize] = {0};
+		glGetActiveAttrib(program, i, bufSize, nullptr, &size, &type, buf);
+		if(!size) continue;
+		out.emplace_back(std::string(buf), program, i);
+	}
+	return out;
+}
+
 }
 
 
