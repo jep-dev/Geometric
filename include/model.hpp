@@ -1,8 +1,10 @@
 #ifndef MODEL_HPP
 #define MODEL_HPP
 
-#include "dual.hpp"
+///@cond
 #include <vector>
+///@endcond
+#include "dual.hpp"
 
 template<class T, class I = unsigned>
 struct Model;
