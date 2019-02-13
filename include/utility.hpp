@@ -8,7 +8,26 @@
 #include <type_traits>
 
 namespace Detail {
-	using std::declval;
+
+using std::declval;
+
+template<class...> struct Tag;
+template<class S, S...> struct Seq;
+template<template<class...> class...> struct TTag;
+template<template<class S, S...> class...> struct TSeq;
+
+// Enable more if you need them.
+template<bool... I> using SeqB = Seq<bool, I...>;
+template<char... I> using SeqC = Seq<char, I...>;
+//template<short... I> using SeqS = Seq<short, I...>;
+template<unsigned... I> using SeqU = Seq<unsigned, I...>;
+template<int... I> using SeqI = Seq<int, I...>;
+template<long... I> using SeqL = Seq<long, I...>;
+template<std::size_t... I> using SeqSz = Seq<std::size_t, I...>;
+//template<unsigned char... I> using SeqUC = Seq<unsigned char, I...>;
+//template<unsigned short... I> using SeqUS = Seq<unsigned short, I...>;
+//template<unsigned long... I> using SeqUL = Seq<unsigned long, I...>;
+
 
 /** Delimiter tag; only impacts compile-time resolution */
 struct Delim {};
@@ -22,6 +41,8 @@ template<class... T> using Void_t = typename Void<T...>::value_type;
 template<class S> struct RemoveCVRef;
 /** Helper for RemoveCVRef's type */
 template<class S> using RemoveCVRef_t = typename RemoveCVRef<S>::type;
+template<class S> RemoveCVRef_t<S> remove_cvref(S && s)
+	{ return static_cast<RemoveCVRef_t<S>>(s); }
 
 /** A variadic tag, essentially a type sequence. */
 template<class...> struct Tag;
@@ -37,8 +58,6 @@ struct RemoveCVRef { typedef std::remove_cv_t<std::remove_reference_t<S>> type; 
 template<class S, unsigned N>
 struct RemoveCVRef<S[N]> { typedef RemoveCVRef_t<S> type[N]; };
 
-/*template<class S, class T = std::remove_reference_t<std::remove_const_t<S>>>
-using Value_t = typename T::value_type;*/
 template<class S>
 using Value_t = typename RemoveCVRef_t<S>::value_type;
 
@@ -56,6 +75,13 @@ template<class S>
 auto get_inner_value_type(Detail::Tag<S> = {}) -> InnerValue_t<S> { return {}; }
 template<class S>
 auto get_inner_value_type(S && s) -> InnerValue_t<S> { return {}; }
+
+template<class S>
+using Head_t = decltype(head(std::declval<S>()));
+template<class S>
+using PopFront_t = decltype(pop_front(std::declval<S>()));
+template<class S>
+using PopBack_t = decltype(pop_back(std::declval<S>()));
 
 template<class... T>
 using CommonValue_t = std::common_type_t<Value_t<T>...>;
