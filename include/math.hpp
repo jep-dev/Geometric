@@ -2,9 +2,8 @@
 #define MATH_HPP
 
 #include <math.h>
-#include <limits>
 
-#include "utility.hpp"
+#include "numeric.hpp"
 
 template<class> struct Point;
 template<class> struct Quaternion;
