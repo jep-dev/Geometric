@@ -201,6 +201,20 @@ level_insert(O<S, SN...> & ss, T const& t, char fill = ' ', bool leveled = false
 	return ss;
 }
 
+template<class S, class V>
+std::string filter(S const& str, V const& words) {
+	std::string s = str;
+	for(auto const& word : words) {
+		std::string src = word[0], dest = word[1];
+		auto pos = s.find(src);
+		while(pos != std::string::npos) {
+			s.replace(pos, src.length(), dest);
+			pos = s.find(src, pos+1);
+		}
+	}
+	return s;
+}
+
 struct OStringStream;
 
 }
