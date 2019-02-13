@@ -15,7 +15,6 @@ img[src$='.png'] {
 .directory tr:not(.even) td {
     background: #151515;
 }
-.memdoc, .memproto {
-    text-shadow: -1px -1px white;
-}
 #MSearchBox img { background: transparent; }
+
+.el { color: #CCC; }
