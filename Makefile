@@ -124,7 +124,11 @@ $(DIR_O)%.o: $(DIR_SRC)%.cpp $(DIR_DEP)%.d \
 $(foreach L,$(NAMES_SO),$(eval \
 	$$(call PAT_SO,$L): $$(DEPS_$L)))
 
-#SOS_view=$(call REPAT,CPP,SO,$(wildcard $(call PAT_CPP,$(patsubst -l%,%,$(filter -l%,$(LDLIBS_view))))))
+# Inputs and makefiles are never targets - make can skip a lot of implicit rules
+$(foreach F, $(wildcard Makefile* *.mk $(DIR_APP)* $(DIR_SRC)* $(DIR_HDR)*),$(eval $(F):;))
+
+#SOS_view=$(call REPAT,CPP,SO,$(wildcard \
+	$(call PAT_CPP,$(patsubst -l%,%,$(filter -l%,$(LDLIBS_view))))))
 # Generate auto-dep injection - what could go wrong?
 #-include $(call PAT_D,$(NAMES_EXE) $(NAMES_SO))
 include $(wildcard $(DEPS_EXE) $(DEPS_SO)) Doxygen.mk $(wildcard $(POST))
