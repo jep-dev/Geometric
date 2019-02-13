@@ -1,9 +1,11 @@
 #ifndef READER_HPP
 #define READER_HPP
 
+///@cond
 #include <fstream>
 #include <string>
 #include <vector>
+///@endcond
 
 namespace Streams {
 
