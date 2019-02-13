@@ -1,49 +1,13 @@
 #ifndef TYPESORT_HPP
 #define TYPESORT_HPP
 
-#include <limits>
-
-#include "functional.hpp"
-#include "tag.hpp"
-#include "utility.hpp"
-#include <type_traits>
+#include "functional/transform.hpp"
+#include "comparable.hpp"
 
 namespace Detail {
 
 enum EDim : unsigned char {
 	e_width = 0, e_height, e_depth, en_dims
-};
-
-template<class C, class S, S U> struct Comparable;
-template<class C, class S, S U> struct Comparable: Tag<C, Seq<S, U>> {
-	typedef S key_type;
-	static constexpr S key_value = U;
-
-	template<class D, S V> using lesser =
-		std::conditional_t<(U < V), C, D>;
-	template<class D, S V> using lesser_comparable =
-		Comparable<lesser<D, V>, S, (U < V ? U : V)>;
-
-	/*template<class D, S V> using greater = typename Comparable<D, S, V>::lesser<C, U>;
-	template<class D, S V> using greater_comparable =
-		typename Comparable<D, S, V>::lesser_comparable<C, U>;*/
-	template<class D, S V> using greater =
-		std::conditional_t<(U > V), C, D>;
-	template<class D, S V> using greater_comparable =
-		Comparable<greater<D, V>, S, (U > V ? U : V)>;
-
-
-	// Comparison of comparables is comparison of keys
-	template<class D, S V> constexpr bool
-	operator<(Comparable<D, S, V> const&) const { return U < V; }
-	template<class D, S V> constexpr bool
-	operator==(Comparable<D, S, V> const&) const { return U == V; }
-	template<class D, S V> constexpr bool
-	operator>(Comparable<D, S, V> const&) const { return U > V; }
-	template<class D, S V> constexpr bool
-	operator!=(Comparable<D, S, V> const&) const { return U != V; }
-
-	constexpr Comparable(void) {}
 };
 
 template<class L, class C, class R>
@@ -76,33 +40,6 @@ using Remove = Removing<L, K, Tag<>, CMP>;
 template<class L, class K, template<class...> class CMP = std::is_same>
 using Remove_t = typename Remove<L, K, CMP>::type;
 
-template<std::size_t N, class... L, class... R, class V = std::enable_if_t<!N, void>>
-constexpr Tag<R...> head(SeqSz<N>, Tag<L...>, Tag<R...>, V = {}) { return {}; }
-
-template<std::size_t N, class L0, class... L, class... R, class V = std::enable_if_t<N, void>>
-constexpr auto head(SeqSz<N>, Tag<L0, L...>, Tag<R...>, V = {})
--> decltype(head<N>(Tag<L...>{}, Tag<R..., L0>{})) { return {}; }
-
-template<std::size_t N, class... L, class = std::enable_if_t<(N < sizeof...(L)-1), void>>
-constexpr auto tail(SeqSz<N>, Tag<L...> V = {})
--> decltype(head<N>(V >> SeqL<N>{})) { return {}; }
-
-template<class... L, class... R>
-constexpr bool match_head(Tag<L...>, Tag<R...>) { return false; }
-template<class... L, class... R>
-constexpr bool match_head(Tag<L...>, Tag<L..., R...>) { return true; }
-
-template<class... L, class... R>
-constexpr bool match_tail(Tag<L...> l, Tag<R...> r) { return match_head(reverse(l), reverse(r)); }
-
-template<class... L, class... R>
-constexpr Tag<R...> remove_head(Tag<L...>, Tag<R...>) { return {}; }
-template<class... L, class... R>
-constexpr Tag<R...> remove_head(Tag<L...>, Tag<L..., R...>) { return {}; }
-
-template<class... L, class... R>
-constexpr auto remove_tail(Tag<L...> l, Tag<R...> r)
--> decltype(reverse(remove_head(reverse(l), reverse(r)))) { return {}; }
 
 /*template<std::size_t N>
 constexpr auto pop_head(Tag<>) -> Tag<> { return {}; }
