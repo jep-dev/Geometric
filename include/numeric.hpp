@@ -1,8 +1,6 @@
 #ifndef NUMERIC_HPP
 #define NUMERIC_HPP
 
-//#include "math.tpp"
-#include "utility.hpp"
 #include "tag.hpp"
 
 template<class T>
