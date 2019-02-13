@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "pretty.hpp"
+#include "streams.hpp"
 #include "typesort.hpp"
 
 namespace Detail {
@@ -36,22 +37,6 @@ std::vector<std::pair<std::string, unsigned>> instances(S const& str, V const& w
 	}
 	return out;
 }*/
-
-template<class S, class V>
-std::string filter(S const& str, V const& words) {
-	std::string s = str;
-	for(auto const& word : words) {
-		//auto const& src = word.first;
-		//auto const& dest = word.second;
-		std::string src = word[0], dest = word[1];
-		auto pos = s.find(src);
-		while(pos != std::string::npos) {
-			s.replace(pos, src.length(), dest);
-			pos = s.find(src, pos+1);
-		}
-	}
-	return s;
-}
 
 namespace Detail {
 template<class S = void, class... T> constexpr bool all_same(Tag<S, T...> const&) { return true; }
@@ -115,7 +100,7 @@ int main(int argc, const char *argv[]) {
 		&& is_same<TWH, THW>::value && is_same<TWD, TDW>::value && is_same<THD, TDH>::value,
 		"Insertion sort (or any sort) should be commutative");
 
-	cout << filter(oss.str(), repls) << endl;
+	cout << Streams::filter(oss.str(), repls) << endl;
 	oss.str("");
 
 	/*static_assert(is_same<decltype(head(SeqSz<2>{}, TDHW{})), TDH>::value, "");
