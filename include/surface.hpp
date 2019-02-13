@@ -6,10 +6,11 @@
 ///@endcond
 
 #include "bezier.hpp"
-#include "quaternion.hpp" // Quaternion
 #include "dual.hpp" // Dual
 #include "point.hpp" // Point
 #include "math.tpp" // Point*Dual
+
+#include "model/cube.hpp"
 
 template<class R>
 R& emplace_vertices(R &vertices) { return vertices; }
@@ -204,7 +205,7 @@ unsigned surface3(V & vertices, W & indices,
 }
 
 template<class V, class W, class U, class FN>
-unsigned field(V& vertices, W& indices, FN xform,
+unsigned field(V& vertices, W& indices, FN const& xform,
 		Point<U> u0, Point<U> du, Point<U> dv, Point<U> center = {0, 0, 0},
 		unsigned wmesh = 100, unsigned hmesh = 100, unsigned offset = 0, bool uv = true) {
 	for(unsigned i = 0; i < hmesh; i++) {
@@ -225,7 +226,7 @@ unsigned field(V& vertices, W& indices, FN xform,
 	return offset + hmesh * wmesh;
 }
 template<class V, class W, class U, class FN>
-unsigned fieldCube(V& vertices, W& indices, FN xform,
+unsigned fieldCube(V& vertices, W& indices, FN const& xform,
 		Point<U> u0, Point<U> du, Point<U> dv, Point<U> dw, Point<U> center = {0, 0, 0},
 		unsigned wmesh = 100, unsigned hmesh = 100, unsigned offset = 0, bool uv = true) {
 	typedef Point<U> Pt;
