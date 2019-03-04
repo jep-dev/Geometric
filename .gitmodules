@@ -1,0 +1,3 @@
+[submodule "generica"]
+	path = generica
+	url = https://github.com/jep-dev/Generica
