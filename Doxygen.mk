@@ -11,13 +11,17 @@ BUILTIN_STL_SUPPORT?=YES
 COLS_IN_ALPHA_INDEX?=5
 DOT_TRANSPARENT?=YES
 EXCLUDE_PATTERNS?=*.o, *.d, *.h, */obj/*
+EXTENSION_MAPPING=tpp=C++
 EXTRACT_ALL?=YES
 EXTRACT_PRIVATE?=YES
 EXTRACT_PACKAGE?=YES
+FILE_PATTERNS?=*.hpp *.tpp *.cpp *.ipp *.markdown *.md
 FULL_PATH_NAMES=YES
 INCLUDE_PATH=$(DIR_HDR)
+#INPUT=include/ src/ app/
 INPUT=$(DIR_HDR) $(DIR_SRC) $(DIR_APP)
-INPUTS=$(foreach I,$(INPUT),$(wildcard $I*))
+#INPUT=$(foreach D,HDR SRC APP,$(foreach P,$(FILE_PATTERNS),$(wildcard $D$P $D*/$P)))
+INPUTS=$(INPUT)
 OUTPUT_DIRECTORY=$(DIR_DOC)
 QT_AUTOBRIEF?=YES
 MULTILINE_CPP_IS_BRIEF=YES
@@ -27,13 +31,16 @@ STRIP_FROM_PATH?=./
 STRIP_FROM_INC_PATH?=include/
 WARNINGS=NO
 
+#TAG_DIRNAMES?=html latex
 TAG_DIRNAMES?=html latex rtf man
 TAG_FILENAMES:=$(TAG_DIRNAMES:%=$(DIR_DOC)%.tag)
 TAG_FILEMAPS:=$(join $(TAG_FILENAMES),$(addprefix =,$(TAG_FILENAMES:.tag=)))
 DOXY_FILENAMES?=$(addprefix $(DIR_DOC)Doxyfile_,$(TAG_DIRNAMES))
 DOXY_FILENAMES:=$(DOXY_FILENAMES) $(DOXY_FILENAMES:%=%.bak)
 
-DOXY_LOCATE=$(foreach D,HDR SRC APP,$(foreach X,.hpp .tpp .cpp,$(wildcard $(DIR_$D)*$X)))
+#DOXY_LOCATE=$(foreach D,HDR SRC APP,$(foreach X,.hpp .tpp .cpp,$(wildcard $(DIR_$D)*$X)))
+DOXY_LOCATE:=$(wildcard $(DIR_HDR)*.hpp $(DIR_HDR)*.tpp $(DIR_SRC)*.cpp $(DIR_APP)*.cpp)
+DOXY_LOCATE:=$(DOXY_LOCATE:/home/john/dev/geometric/include/=)
 
 $(DIR_DOC)%.tag: $(DOXY_LOCATE)
 	$(doxymake) $(DIR_DOC)Doxyfile_$* >$(NULL)
@@ -52,9 +59,6 @@ $(DIR_DOC)%.tag: $(DOXY_LOCATE)
 $(TAG_DIRNAMES): %: $(DIR_DOC)%.tag
 doc: $(TAG_FILENAMES)
 
-clean-doc:; $(RM) -R $(DOXY_FILENAMES) $(TAG_FILENAMES) \
-	$(addprefix $(DIR_DOC)latex/*.,tex md5 pdf) \
-	$(addprefix $(DIR_DOC)html/*.,css js html map md5 pdf png) \
-	$(DIR_DOC)man/man3/*.3* \
-	$(addsuffix /*,$(addprefix $(DIR_DOC),$(TAG_DIRNAMES)))
+clean-doc:; $(RM) -R $(DOXY_FILENAMES) $(TAG_FILENAMES) $(TAG_DIRNAMES:%=$(DIR_DOC)%/*)
+
 .PHONY: doc doxy-reset-% clean-doc $(TAG_DIRNAMES)
