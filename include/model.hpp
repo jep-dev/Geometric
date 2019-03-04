@@ -4,7 +4,7 @@
 ///@cond
 #include <vector>
 ///@endcond
-#include "dual.hpp"
+#include "generica/dual.hpp"
 
 template<class T, class I = unsigned>
 struct Model;
