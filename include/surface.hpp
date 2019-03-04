@@ -5,10 +5,10 @@
 #include <vector>
 ///@endcond
 
-#include "bezier.hpp"
-#include "dual.hpp" // Dual
-#include "point.hpp" // Point
-#include "math.tpp" // Point*Dual
+#include "generica/bezier.hpp"
+#include "generica/dual.hpp" // Dual
+#include "generica/point.hpp" // Point
+#include "generica/math.tpp" // Point*Dual
 
 #include "model/cube.hpp"
 

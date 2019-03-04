@@ -8,7 +8,7 @@
 #include <vector>
 ///@endcond
 
-#include "reader.hpp"
+#include "generica/reader.hpp"
 #include "view.hpp"
 
 namespace View {
