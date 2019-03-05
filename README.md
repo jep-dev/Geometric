@@ -3,6 +3,7 @@ A combination of the RAII approaches from Glaii and new abstract/geometric algeb
 
 ## Setup
 First, clone the repository: `git clone https://github.com/jep-dev/geometric`
+Next (and any time later) update the submodule(s): 'git submodule update --init --recursive'
 
 On Linux, you will need the following libraries:
 * glbinding: `sudo apt-get install libglbinding-dev`
