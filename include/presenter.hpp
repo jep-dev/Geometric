@@ -3,8 +3,9 @@
 
 #include <map>
 
-#include "frame.hpp"
 #include "model.hpp"
+
+#include "frame.hpp"
 #include "shader.hpp"
 
 template<class S>
