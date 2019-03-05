@@ -5,12 +5,12 @@
 #include "presenter.hpp"
 
 #include "resource.hpp"
-#include "streams.tpp"
-#include "timing.hpp"
+#include "generica/streams.tpp"
+#include "generica/timing.hpp"
 
-#include "quaternion.tpp"
-#include "dual.tpp"
-#include "surface.hpp"
+#include "generica/quaternion.tpp"
+#include "generica/dual.tpp"
+#include "generica/surface.hpp"
 
 #define USE_MODEL 0
 
